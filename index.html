@@ -1019,7 +1019,7 @@ addAiMsg('bot','',renderBotMsg(m.content,true))}}});
 
 const c=document.getElementById('aiMessages');c.scrollTop=c.scrollHeight;
 const msgCount=msgs.length;
-document.getElementById('aiStatus').textContent=msgCount>0?`${msgCount} msgs`:'Assistente'}}
+document.getElementById('aiStatus').textContent=msgCount>0?`${msgCount} msgs`:'Assistente'}
 
 function showChatList(){const list=document.getElementById('aiChatList');const msgs=document.getElementById('aiMessages');const input=document.getElementById('aiInputArea');
 if(list.style.display==='none'){list.style.display='block';msgs.style.display='none';input.style.display='none';

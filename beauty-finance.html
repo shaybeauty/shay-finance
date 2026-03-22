@@ -186,11 +186,10 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 
 #fcCalendar{--fc-border-color:var(--bd);--fc-page-bg-color:transparent;--fc-neutral-bg-color:var(--s1);--fc-list-event-hover-bg-color:var(--s2);--fc-today-bg-color:rgba(212,175,106,.04);--fc-highlight-color:rgba(212,175,106,.08);--fc-non-business-color:rgba(0,0,0,.15)}
 #fcCalendar .fc{font-family:'Manrope',sans-serif;font-size:.78rem}
-#fcCalendar .fc-toolbar{flex-wrap:wrap!important;gap:8px}
-#fcCalendar .fc-toolbar-title{font-size:.88rem!important;font-weight:700;color:var(--g);width:100%;text-align:center;order:10}
+#fcCalendar .fc-toolbar{flex-wrap:nowrap!important;gap:6px;align-items:center;margin-bottom:8px!important}
+#fcCalendar .fc-toolbar-title{font-size:.82rem!important;font-weight:700;color:var(--g);flex:1;text-align:center}
 #fcCalendar .fc-toolbar-chunk{display:flex;gap:4px}
-#fcCalendar .fc-toolbar-chunk:last-child{margin-left:auto}
-@media(min-width:768px){#fcCalendar .fc-toolbar-title{width:auto;order:0}}
+#fcCalendar .fc-footer-toolbar{justify-content:center!important;gap:8px;margin-top:4px!important;margin-bottom:12px!important}
 #fcCalendar .fc-button{background:var(--s2)!important;border:1px solid var(--bd)!important;color:var(--t2)!important;font-size:.72rem!important;font-weight:600;padding:4px 10px!important;border-radius:8px!important}
 #fcCalendar .fc-button:hover,#fcCalendar .fc-button-active{background:rgba(212,175,106,.1)!important;color:var(--g)!important;border-color:rgba(212,175,106,.25)!important}
 #fcCalendar .fc-col-header-cell{background:var(--s1);color:var(--t3);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:8px 0}
@@ -1451,7 +1450,7 @@ const events=[];
 if(showRec){
 const rec=q1(`SELECT * FROM receitas ORDER BY date`);
 rec.forEach(r=>{events.push({
-id:'r_'+r.id,title:(r.type==='comissao'?'💰 ':'💎 ')+f$(r.amount)+(r.servico&&r.servico!=='Serviços do dia'?' · '+r.servico:''),
+id:'r_'+r.id,title:f$(r.amount)+(r.servico&&r.servico!=='Serviços do dia'?' · '+r.servico:''),
 start:r.date,allDay:true,color:r.type==='comissao'?'#D4AF6A':'#4EEAA0',textColor:'#0C0C10',
 extendedProps:{src:'receita',recId:r.id}})})}
 
@@ -1459,7 +1458,7 @@ extendedProps:{src:'receita',recId:r.id}})})}
 if(showDesp){
 const desp=q1(`SELECT * FROM despesas ORDER BY date`);
 desp.forEach(d=>{events.push({
-id:'d_'+d.id,title:'📤 '+d.descricao+' −'+f$(d.amount),
+id:'d_'+d.id,title:d.descricao+' −'+f$(d.amount),
 start:d.date,allDay:true,color:catColor(d.categoria),textColor:'#0C0C10',
 extendedProps:{src:'despesa',dspId:d.id}})})}
 
@@ -1502,7 +1501,8 @@ fcCalendar=new FullCalendar.Calendar(el,{
 initialView:'dayGridMonth',
 initialDate:`${cY}-${String(cM+1).padStart(2,'0')}-01`,
 locale:'pt',firstDay:1,height:'auto',
-headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,timeGridWeek,listWeek'},
+headerToolbar:{left:'prev',center:'title',right:'next'},
+footerToolbar:{left:'today',center:'',right:'dayGridMonth,timeGridWeek,listWeek'},
 buttonText:{today:'Hoje',month:'Mês',week:'Semana',list:'Lista'},
 events:events,
 eventClick:function(info){

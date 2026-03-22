@@ -186,10 +186,8 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 
 #fcCalendar{--fc-border-color:var(--bd);--fc-page-bg-color:transparent;--fc-neutral-bg-color:var(--s1);--fc-list-event-hover-bg-color:var(--s2);--fc-today-bg-color:rgba(212,175,106,.04);--fc-highlight-color:rgba(212,175,106,.08);--fc-non-business-color:rgba(0,0,0,.15)}
 #fcCalendar .fc{font-family:'Manrope',sans-serif;font-size:.78rem}
-#fcCalendar .fc-toolbar{flex-wrap:nowrap!important;gap:6px;align-items:center;margin-bottom:8px!important}
-#fcCalendar .fc-toolbar-title{font-size:.82rem!important;font-weight:700;color:var(--g);flex:1;text-align:center}
-#fcCalendar .fc-toolbar-chunk{display:flex;gap:4px}
-#fcCalendar .fc-footer-toolbar{justify-content:center!important;gap:8px;margin-top:4px!important;margin-bottom:12px!important}
+#fcCalendar .fc-toolbar{display:none!important}
+#fcCalendar .fc-footer-toolbar{display:none!important}
 #fcCalendar .fc-button{background:var(--s2)!important;border:1px solid var(--bd)!important;color:var(--t2)!important;font-size:.72rem!important;font-weight:600;padding:4px 10px!important;border-radius:8px!important}
 #fcCalendar .fc-button:hover,#fcCalendar .fc-button-active{background:rgba(212,175,106,.1)!important;color:var(--g)!important;border-color:rgba(212,175,106,.25)!important}
 #fcCalendar .fc-col-header-cell{background:var(--s1);color:var(--t3);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:8px 0}
@@ -364,7 +362,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 
 <!-- DASHBOARD -->
 <section class="sp active" id="pg-dashboard">
-<div style="text-align:center;margin-bottom:4px">
+<div id="dashMonthNav" style="text-align:center;margin-bottom:4px">
 <div class="mnv"><button onclick="chM(-1)"><i class="bi bi-chevron-left"></i></button><span id="mL"></span><button onclick="chM(1)"><i class="bi bi-chevron-right"></i></button></div>
 </div>
 
@@ -448,10 +446,19 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 <div style="margin-bottom:4px">
 <span style="font-size:.72rem;color:var(--t3)"><span id="evtCount">0</span> eventos</span>
 </div>
-<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="agendaFilters">
+<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap" id="agendaFilters">
 <button class="tl-btn active" data-af="eventos" onclick="toggleAgendaFilter(this)"><i class="bi bi-calendar-event me-1"></i>Eventos</button>
 <button class="tl-btn" data-af="receitas" onclick="toggleAgendaFilter(this)"><i class="bi bi-arrow-up-circle me-1"></i>Receitas</button>
 <button class="tl-btn" data-af="despesas" onclick="toggleAgendaFilter(this)"><i class="bi bi-arrow-down-circle me-1"></i>Despesas</button>
+</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px">
+<div class="mnv" style="flex:1;max-width:360px"><button onclick="if(fcCalendar){fcCalendar.prev();updateFcTitle()}"><i class="bi bi-chevron-left"></i></button><span id="fcTitle" style="flex:1;text-align:center"></span><button onclick="if(fcCalendar){fcCalendar.next();updateFcTitle()}"><i class="bi bi-chevron-right"></i></button></div>
+</div>
+<div style="display:flex;justify-content:center;gap:6px;margin-bottom:12px">
+<button class="tl-btn" onclick="if(fcCalendar){fcCalendar.today();updateFcTitle()}">Hoje</button>
+<button class="tl-btn active" id="fcViewMonth" onclick="setFcView('dayGridMonth')">Mês</button>
+<button class="tl-btn" id="fcViewWeek" onclick="setFcView('timeGridWeek')">Semana</button>
+<button class="tl-btn" id="fcViewList" onclick="setFcView('listWeek')">Lista</button>
 </div>
 <div id="fcCalendar" style="border-radius:12px;overflow:hidden;margin-bottom:16px"></div>
 <div id="evtList"></div>
@@ -1299,6 +1306,7 @@ document.querySelectorAll('#dashTabs .tl-btn').forEach(b=>b.classList.toggle('ac
 document.getElementById('dashResumo').style.display=tab==='resumo'?'block':'none';
 document.getElementById('dashAgenda').style.display=tab==='agenda'?'block':'none';
 document.getElementById('dashNotas').style.display=tab==='notas'?'block':'none';
+document.getElementById('dashMonthNav').style.display=tab==='agenda'?'none':'block';
 if(tab==='agenda')initCalendar();
 if(tab==='notas')renderNotas()}
 
@@ -1316,8 +1324,8 @@ const dy=e.changedTouches[0].clientY-startY;
 if(Math.abs(dx)<60||Math.abs(dy)>Math.abs(dx))return;
 // If swipe is on calendar, navigate FC instead of switching tabs
 if(onCalendar&&fcCalendar){
-if(dx<-60)fcCalendar.next();
-else if(dx>60)fcCalendar.prev();
+if(dx<-60){fcCalendar.next();updateFcTitle()}
+else if(dx>60){fcCalendar.prev();updateFcTitle()}
 return}
 const cur=document.querySelector('#dashTabs .tl-btn.active')?.dataset.tab||'resumo';
 const idx=DASH_TABS.indexOf(cur);
@@ -1334,6 +1342,19 @@ btn.classList.toggle('active');initCalendar()}
 function getAgendaFilters(){
 const btns=document.querySelectorAll('#agendaFilters .tl-btn.active');
 return [...btns].map(b=>b.dataset.af)}
+
+function updateFcTitle(){
+if(!fcCalendar)return;
+const titleEl=document.getElementById('fcTitle');
+if(titleEl)titleEl.textContent=fcCalendar.view.title}
+
+function setFcView(view){
+if(!fcCalendar)return;
+fcCalendar.changeView(view);updateFcTitle();
+document.querySelectorAll('#fcViewMonth,#fcViewWeek,#fcViewList').forEach(b=>b.classList.remove('active'));
+if(view==='dayGridMonth')document.getElementById('fcViewMonth').classList.add('active');
+else if(view==='timeGridWeek')document.getElementById('fcViewWeek').classList.add('active');
+else if(view==='listWeek')document.getElementById('fcViewList').classList.add('active')}
 
 function openEvento(dateStr){
 editEvId=null;
@@ -1525,6 +1546,7 @@ info.el.style.fontWeight='600';info.el.style.boxShadow='0 2px 8px rgba(0,0,0,.2)
 if(info.event.extendedProps.done){info.el.style.opacity='0.45';info.el.style.textDecoration='line-through'}}
 });
 fcCalendar.render();
+updateFcTitle();
 
 // Render upcoming events list
 const evtList=document.getElementById('evtList');

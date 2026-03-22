@@ -601,10 +601,10 @@ const fD=d=>d?new Date(d).toLocaleDateString('pt-PT',{day:'2-digit',month:'short
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 
 // DB persistence via IndexedDB
-async function saveDB(){if(!db)return;const data=db.export();const blob=new Uint8Array(data);
+async function saveDB(){if(!db)return;try{const data=db.export();const blob=new Uint8Array(data);
 return new Promise((res,rej)=>{const r=indexedDB.open('ShayFinDB',1);
 r.onupgradeneeded=e=>{e.target.result.createObjectStore('db')};
-r.onsuccess=e=>{const tx=e.target.result.transaction('db','readwrite');tx.objectStore('db').put(blob,'main');tx.oncomplete=res};r.onerror=rej})}
+r.onsuccess=e=>{const tx=e.target.result.transaction('db','readwrite');tx.objectStore('db').put(blob,'main');tx.oncomplete=res};r.onerror=rej})}catch(e){console.error('saveDB:',e)}}
 
 async function loadDB(){return new Promise((res,rej)=>{const r=indexedDB.open('ShayFinDB',1);
 r.onupgradeneeded=e=>{e.target.result.createObjectStore('db')};
@@ -612,12 +612,31 @@ r.onsuccess=e=>{const tx=e.target.result.transaction('db','readonly');const req=
 req.onsuccess=()=>res(req.result||null);req.onerror=()=>res(null)};r.onerror=()=>res(null)})}
 
 async function initDB(){
+try{
 const SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`});
 const saved=await loadDB();
-if(saved){db=new SQL.Database(saved)}else{db=new SQL.Database();createSchema()}
-return db}
+if(saved){db=new SQL.Database(saved);ensureSchema()}
+else{db=new SQL.Database();createSchema()}
+return db
+}catch(e){console.error('InitDB failed:',e);toast('Erro a iniciar base de dados: '+e.message,'w');return null}}
+
+function ensureSchema(){
+// Ensure all tables exist (for DB upgrades from older versions)
+const tables=['config','categorias_servico','servicos','categorias_despesa','subcategorias_despesa','receitas','despesas','chats','chat_messages'];
+const existing=q1(`SELECT name FROM sqlite_master WHERE type='table'`).map(t=>t.name);
+if(!tables.every(t=>existing.includes(t))){createSchema();return}
+// Ensure all config keys exist
+const cfgKeys=['comissao_pct','nome','moeda','system_prompt_full','image_prompt','custom_prompt','ai_confirm_threshold','ai_language'];
+cfgKeys.forEach(k=>{try{db.run(`INSERT OR IGNORE INTO config VALUES(?,'')`,[k])}catch(e){}});
+try{db.run(`UPDATE config SET value='50' WHERE key='comissao_pct' AND value=''`)}catch(e){}
+try{db.run(`UPDATE config SET value='Shay' WHERE key='nome' AND value=''`)}catch(e){}
+try{db.run(`UPDATE config SET value='EUR' WHERE key='moeda' AND value=''`)}catch(e){}
+try{db.run(`UPDATE config SET value='0' WHERE key='ai_confirm_threshold' AND value=''`)}catch(e){}
+try{db.run(`UPDATE config SET value='pt-PT' WHERE key='ai_language' AND value=''`)}catch(e){}
+saveDB()}
 
 function createSchema(){
+// Tables
 db.run(`CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)`);
 db.run(`CREATE TABLE IF NOT EXISTS categorias_servico (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT UNIQUE, ativa INTEGER DEFAULT 1)`);
 db.run(`CREATE TABLE IF NOT EXISTS servicos (id INTEGER PRIMARY KEY AUTOINCREMENT, categoria_id INTEGER, nome TEXT, preco REAL DEFAULT 0, duracao INTEGER DEFAULT 0, ativo INTEGER DEFAULT 1, FOREIGN KEY(categoria_id) REFERENCES categorias_servico(id))`);
@@ -626,34 +645,32 @@ db.run(`CREATE TABLE IF NOT EXISTS subcategorias_despesa (id INTEGER PRIMARY KEY
 db.run(`CREATE TABLE IF NOT EXISTS receitas (id TEXT PRIMARY KEY, date TEXT, type TEXT, categoria TEXT, servico TEXT, descricao TEXT, amount REAL, comissao REAL, client TEXT, notes TEXT)`);
 db.run(`CREATE TABLE IF NOT EXISTS despesas (id TEXT PRIMARY KEY, date TEXT, categoria TEXT, subcategoria TEXT, descricao TEXT, amount REAL, pagamento TEXT, notes TEXT)`);
 db.run(`CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, title TEXT, created_at TEXT, updated_at TEXT)`);
-db.run(`CREATE TABLE IF NOT EXISTS chat_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id TEXT, role TEXT, content TEXT, created_at TEXT, FOREIGN KEY(chat_id) REFERENCES chats(id))`);
+db.run(`CREATE TABLE IF NOT EXISTS chat_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id TEXT, role TEXT, content TEXT, created_at TEXT)`);
 
-// Seed default data
-db.run(`INSERT OR IGNORE INTO config VALUES('comissao_pct','50')`);
-db.run(`INSERT OR IGNORE INTO config VALUES('nome','Shay')`);
-db.run(`INSERT OR IGNORE INTO config VALUES('moeda','EUR')`);
-db.run(`INSERT OR IGNORE INTO config VALUES('system_prompt','')`);
-db.run(`INSERT OR IGNORE INTO config VALUES('ai_confirm_threshold','0')`);
-db.run(`INSERT OR IGNORE INTO config VALUES('ai_language','pt-PT')`);
+// Config seed
+const cfgSeed=[['comissao_pct','50'],['nome','Shay'],['moeda','EUR'],['system_prompt_full',''],['image_prompt',''],['custom_prompt',''],['ai_confirm_threshold','0'],['ai_language','pt-PT']];
+cfgSeed.forEach(([k,v])=>db.run(`INSERT OR IGNORE INTO config VALUES(?,?)`,[k,v]));
 
-// Default service categories
+// Service categories seed
 const cats=[['Sobrancelhas',['Microblading','Microblading Retoque','Microblading Labial','Design Sobrancelhas']],['Unhas',['Gel','Acrílico','Verniz Semipermanente','Manicure','Pedicure']],['Pestanas',['Extensão','Lifting']]];
-cats.forEach(([cat,srvs])=>{db.run(`INSERT OR IGNORE INTO categorias_servico(nome) VALUES(?)`,cat);
+cats.forEach(([cat,srvs])=>{db.run(`INSERT OR IGNORE INTO categorias_servico(nome) VALUES(?)`,[cat]);
 const r=db.exec(`SELECT id FROM categorias_servico WHERE nome=?`,[cat]);if(r.length){const cid=r[0].values[0][0];
-srvs.forEach(s=>db.run(`INSERT OR IGNORE INTO servicos(categoria_id,nome) VALUES(?,?)`,cid,s))}});
+srvs.forEach(s=>db.run(`INSERT OR IGNORE INTO servicos(categoria_id,nome) VALUES(?,?)`,[cid,s]))}});
 
-// Default expense categories
+// Expense categories seed
 const dcats=[['Pessoal',['Alimentação','Casa','Transporte','Saúde','Lazer']],['Actividade',['Material','Equipamento','Formação','Seg. Social','Contabilidade']],['Marketing',['Redes Sociais','Cartões/Flyers','Fotografia','Website']],['Produtos',['Unhas','Pestanas','Sobrancelhas','Cabelo','Revenda']]];
-dcats.forEach(([cat,subs])=>{db.run(`INSERT OR IGNORE INTO categorias_despesa(nome) VALUES(?)`,cat);
+dcats.forEach(([cat,subs])=>{db.run(`INSERT OR IGNORE INTO categorias_despesa(nome) VALUES(?)`,[cat]);
 const r=db.exec(`SELECT id FROM categorias_despesa WHERE nome=?`,[cat]);if(r.length){const cid=r[0].values[0][0];
-subs.forEach(s=>db.run(`INSERT OR IGNORE INTO subcategorias_despesa(categoria_id,nome) VALUES(?,?)`,cid,s))}});
-saveDB()}
+subs.forEach(s=>db.run(`INSERT OR IGNORE INTO subcategorias_despesa(categoria_id,nome) VALUES(?,?)`,[cid,s]))}});
+
+saveDB();
+console.log('Schema created with seed data')}
 
 // ===== QUERY HELPERS =====
-function q1(sql,...args){const params=args.length===1&&Array.isArray(args[0])?args[0]:args.length?args:[];const r=db.exec(sql,params);return r.length?r[0].values.map(row=>{const o={};r[0].columns.forEach((c,i)=>o[c]=row[i]);return o}):[]}
+function q1(sql,...args){if(!db)return[];try{const params=args.length===1&&Array.isArray(args[0])?args[0]:args.length?args:[];const r=db.exec(sql,params);return r.length?r[0].values.map(row=>{const o={};r[0].columns.forEach((c,i)=>o[c]=row[i]);return o}):[]}catch(e){console.error('q1:',e.message);return[]}}
 function q0(sql,...args){const r=q1(sql,...args);return r.length?r[0]:null}
-function qv(sql,...args){const params=args.length===1&&Array.isArray(args[0])?args[0]:args.length?args:[];const r=db.exec(sql,params);return r.length?r[0].values[0][0]:0}
-function run(sql,...args){try{const params=args.length===1&&Array.isArray(args[0])?args[0]:args;db.run(sql,params);saveDB()}catch(e){console.error('SQL Error:',e.message,sql);toast('Erro DB: '+e.message,'w')}}
+function qv(sql,...args){if(!db)return 0;try{const params=args.length===1&&Array.isArray(args[0])?args[0]:args.length?args:[];const r=db.exec(sql,params);return r.length?r[0].values[0][0]:0}catch(e){console.error('qv:',e.message);return 0}}
+function run(sql,...args){if(!db)return;try{const params=args.length===1&&Array.isArray(args[0])?args[0]:args;db.run(sql,params);saveDB()}catch(e){console.error('run:',e.message,sql);toast('Erro DB: '+e.message,'w')}}
 
 function getRecMes(){return q1(`SELECT * FROM receitas WHERE substr(date,1,7)=? ORDER BY date DESC`,[`${cY}-${String(cM+1).padStart(2,'0')}`])}
 function getDespMes(){return q1(`SELECT * FROM despesas WHERE substr(date,1,7)=? ORDER BY date DESC`,[`${cY}-${String(cM+1).padStart(2,'0')}`])}
@@ -1505,14 +1522,18 @@ toast('Parâmetros guardados!')}
 
 // ===== INIT =====
 async function boot(){
+// Always show month and enable basic UI first
+uM();
 try{
 document.getElementById('sB').textContent='A carregar...';
-await initDB();goToLastMonth();uM();rA();initAiChat();
+const dbResult=await initDB();
+if(dbResult){goToLastMonth();uM();rA();initAiChat()}
+else{document.getElementById('sB').textContent='€0';toast('Base de dados indisponível. Verifica a ligação.','w')}
 gsap.from('.nb',{y:-20,opacity:0,duration:.5,delay:.1});gsap.from('.sc',{opacity:0,y:25,duration:.4,stagger:.08,delay:.3,ease:'power2.out'});
 gsap.from('.cc',{opacity:0,y:15,duration:.4,stagger:.12,delay:.7});gsap.from('.dc',{opacity:0,y:15,duration:.4,delay:.9});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
-console.log('Shay Finance SQLite loaded ✨');
-}catch(e){document.getElementById('sB').textContent='Erro!';toast('Erro ao iniciar: '+e.message,'w');console.error(e)}}
+console.log('Shay Finance loaded');
+}catch(e){document.getElementById('sB').textContent='Erro!';console.error('Boot error:',e);toast('Erro ao iniciar: '+e.message,'w')}}
 boot();
 </script>
 </body>

@@ -178,8 +178,8 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 <!-- NAVBAR -->
 <nav class="navbar nb navbar-expand-lg">
 <div class="container-fluid px-3 px-lg-4">
-<button class="btn d-lg-none p-1 me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" style="color:var(--g);font-size:1.3rem"><i class="bi bi-list"></i></button>
-<a class="navbar-brand me-4" href="#" style="display:flex;align-items:center;gap:10px"><svg viewBox="0 0 32 32" width="30" height="30"><rect width="32" height="32" rx="7" fill="#1a1a20"/><rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="#D4AF6A" stroke-width=".5" opacity=".4"/><text x="16" y="22" text-anchor="middle" font-family="Manrope,sans-serif" font-size="16" font-weight="300" fill="#D4AF6A">S</text></svg><div><span style="font-weight:300;letter-spacing:3px">S</span><span style="color:var(--t3);font-weight:200;margin:0 3px">·</span><span style="font-weight:300;letter-spacing:1px">Finance</span></div></a>
+<button class="btn d-lg-none p-1 me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" style="color:var(--g);font-size:1.6rem"><i class="bi bi-list"></i></button>
+<a class="navbar-brand me-4" href="#" style="display:flex;align-items:center;gap:10px"><svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="7" fill="#1a1a20"/><rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="#D4AF6A" stroke-width=".5" opacity=".4"/><text x="16" y="22" text-anchor="middle" font-family="Manrope,sans-serif" font-size="16" font-weight="300" fill="#D4AF6A">S</text></svg><span style="font-weight:300;letter-spacing:1px">Finance</span></a>
 <div class="d-none d-lg-flex"><ul class="nav np" id="mainNav">
 <li class="nav-item"><a class="nav-link active" href="#" data-page="dashboard"><i class="bi bi-grid-1x2 me-1"></i> Dashboard</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="receitas"><i class="bi bi-cash-coin me-1"></i> Receitas</a></li>
@@ -193,7 +193,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 
 <!-- OFFCANVAS -->
 <div class="offcanvas offcanvas-start" tabindex="-1" id="sideMenu">
-<div class="offcanvas-header"><h5 style="color:var(--g);font-size:1.2rem;font-weight:300;letter-spacing:2px;margin:0"><svg viewBox="0 0 32 32" width="24" height="24" style="vertical-align:middle;margin-right:8px"><rect width="32" height="32" rx="7" fill="#1a1a20"/><rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="#D4AF6A" stroke-width=".5" opacity=".4"/><text x="16" y="22" text-anchor="middle" font-family="Manrope,sans-serif" font-size="16" font-weight="300" fill="#D4AF6A">S</text></svg>S <span style="color:var(--t3);font-weight:200">·</span> Finance</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div>
+<div class="offcanvas-header"><h5 style="color:var(--g);font-size:1.2rem;font-weight:300;letter-spacing:1px;margin:0;display:flex;align-items:center;gap:10px"><svg viewBox="0 0 32 32" width="30" height="30"><rect width="32" height="32" rx="7" fill="#1a1a20"/><rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="#D4AF6A" stroke-width=".5" opacity=".4"/><text x="16" y="22" text-anchor="middle" font-family="Manrope,sans-serif" font-size="16" font-weight="300" fill="#D4AF6A">S</text></svg>Finance</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div>
 <div class="offcanvas-body p-3"><nav class="nav flex-column oc-nav" id="mobNav">
 <a class="nav-link active" href="#" data-page="dashboard"><i class="bi bi-grid-1x2 me-2"></i> Dashboard</a>
 <a class="nav-link" href="#" data-page="receitas"><i class="bi bi-cash-coin me-2"></i> Receitas</a>
@@ -1474,30 +1474,57 @@ Ano ${cY}: Receita €${yRec.toFixed(2)} | Despesas €${yDesp.toFixed(2)} | Luc
 NOTA: Para detalhes, usa action "query_sql" com SELECT. Podes consultar qualquer tabela.`}
 
 // ===== AI ROUTER (1st call) + EXECUTION (2nd call) =====
-const ROUTER_PROMPT=`Classifica a intenção do utilizador. Responde APENAS com JSON, sem texto.
+const ROUTER_PROMPT=`REGRA CRÍTICA: Analisa a mensagem e responde com UM bloco JSON entre \`\`\`json e \`\`\`.
 
-INTENÇÕES:
-- "query": Pergunta sobre dados (quanto gastei, quanto ganhei, qual o melhor, mostra, resume, compara, lista)
-  → Gera o SQL SELECT necessário
-- "add_receita": Quer registar receita/serviço (comissão X, extra X, fiz microblading)
-  → Extrai os dados
-- "add_despesa": Quer registar despesa (gastei X, paguei X, seg social X, insta X)
-  → Extrai os dados
-- "run_sql": Quer alterar esquema/categorias (adiciona, remove, muda)
-  → Gera o SQL
-- "deploy_code": Quer alterar a app (muda cor, layout, texto, adiciona menu, altera visual, adiciona funcionalidade)
-  → Responde APENAS com: {"intent":"deploy_code","description":"o que o utilizador quer mudar"}
-  → NÃO geres o código — o sistema vai buscar o HTML actual e pedir-te as alterações depois
-- "chat": Conversa geral, saudação, ajuda
-  → Responde directamente
+COMO DECIDIR (exemplos reais):
 
-Responde SEMPRE com UM JSON:
-{"intent":"query","sql":"SELECT ...","description":"..."}
-{"intent":"add_receita","data":{...}}
-{"intent":"add_despesa","data":{...}}
-{"intent":"run_sql","sql":"...","description":"..."}
-{"intent":"deploy_code","description":"...","changes":[...]}
-{"intent":"chat","response":"..."}`;
+→ "query_sql" — Perguntas sobre dados:
+  "quanto gastei este mês", "quanto ganhei em Janeiro", "qual o meu melhor mês",
+  "mostra as despesas de marketing", "quanto fiz no gabinete", "total de comissões",
+  "quanto paguei de seg social", "compara Janeiro com Fevereiro", "qual o serviço mais rentável",
+  "quantas micros fiz", "média por dia", "lista as despesas acima de 100€"
+
+→ "add_receita" — Registar receita/serviço:
+  "comissão 50", "extra 20 extensão Ana", "fiz uma micro 80€",
+  "hoje fiz 3 serviços no salão: 50+30+45", "gabinete 35€ gel Maria",
+  "fiz micro retoque 60 extra", "45 de comissão lifting"
+
+→ "add_despesa" — Registar despesa:
+  "gastei 30 em material", "paguei seg social 210€", "insta 50€",
+  "renda 400", "telemóvel 50€ multibanco", "comprei kerastase 67€",
+  "gasolina 40 transferência", "formação 150€"
+
+→ "run_sql" — Alterar categorias/esquema:
+  "adiciona categoria Corpo", "remove subcategoria X",
+  "muda o nome da categoria Unhas para Nail Art",
+  "adiciona um serviço Lash Lift na categoria Pestanas"
+
+→ "deploy_code" — Alterar visual/código da app:
+  "muda a cor do título", "adiciona item Clientes ao menu",
+  "torna os botões maiores", "altera o layout dos cards"
+
+→ "chat" — Conversa, saudação, ajuda:
+  "olá", "obrigada", "como funciona", "ajuda", "o que consegues fazer"
+
+FORMATOS (usa exactamente estes):
+\`\`\`json
+{"action":"query_sql","sql":"SELECT ...","description":"..."}
+\`\`\`
+\`\`\`json
+{"action":"add_receita","data":{"date":"YYYY-MM-DD","type":"comissao","categoria":"...","servico":"...","descricao":"...","amount":0,"client":"","notes":""}}
+\`\`\`
+\`\`\`json
+{"action":"add_despesa","data":{"date":"YYYY-MM-DD","categoria":"...","subcategoria":"...","descricao":"...","amount":0,"pagamento":"...","notes":""}}
+\`\`\`
+\`\`\`json
+{"action":"run_sql","sql":"INSERT/UPDATE/DELETE ...","description":"..."}
+\`\`\`
+\`\`\`json
+{"action":"deploy_code","description":"o que mudar"}
+\`\`\`
+\`\`\`json
+{"action":"chat","response":"resposta em texto"}
+\`\`\``;
 
 async function routeAndExecute(msg,hasImage,ctx){
 // STEP 1: Router call — classify intent
@@ -1546,36 +1573,39 @@ if(start>=0){
 let depth=0,end=-1;
 for(let i=start;i<reply.length;i++){if(reply[i]==='{')depth++;if(reply[i]==='}')depth--;if(depth===0){end=i;break}}
 if(end>start)decision=JSON.parse(reply.slice(start,end+1))}}
-}catch(e){decision=null}
+}catch(e){decision=null;console.warn('Router parse:',e.message)}
 
-// Extract any text outside the JSON
 const textBefore=decision?reply.replace(/```json[\s\S]*?```/g,'').replace(/\{[\s\S]*\}/g,'').trim():'';
 
-if(!decision||!decision.intent){
-// No valid JSON — treat as direct chat response
+// Normalize action field
+if(decision){
+if(!decision.action&&decision.intent){decision.action=decision.intent;delete decision.intent}
+if(!decision.action)decision.action='chat'}
+
+if(!decision){
 const clean=reply.replace(/```json[\s\S]*?```/g,'').trim();
 hideTyping();addAiMsg('bot',clean||'Não percebi. Tenta reformular.');return}
 
+console.log('Router:',decision.action,decision);
+
 try{
-// Route based on intent
-if(decision.intent==='query'&&decision.sql){
+if((decision.action==='query_sql'||decision.action==='query')&&decision.sql){
 hideTyping();
 await executeQueryAndRespond({action:'query_sql',sql:decision.sql,description:decision.description||msg});
 return}
 
-if(decision.intent==='chat'){
+if(decision.action==='chat'){
 hideTyping();
 addAiMsg('bot',decision.response||textBefore||'Como posso ajudar?');return}
 
 // deploy_code: Fetch real HTML, then ask AI to generate changes
-if(decision.intent==='deploy_code'){
+if(decision.action==='deploy_code'){
 await handleAppModification(decision.description||msg);
 return}
 
 // Actions that need confirmation (add_receita, add_despesa, run_sql)
 hideTyping();
-const action={...decision, action:decision.intent};
-delete action.intent;
+const action={...decision};
 
 aiPending=action;
 addAiMsg('bot','',(textBefore?textBefore.replace(/\n/g,'<br>')+'<br>':'')+renderCard(action,false));
@@ -1618,14 +1648,19 @@ const _p=getActiveProvider();document.getElementById('aiStatus').textContent=(_p
 
 // ===== PREVIEW CARD RENDERER =====
 function renderCard(a,readonly){
+// Normalize: if AI put fields flat instead of in data object
+if((a.action==='add_receita'||a.action==='add_despesa')&&!a.data){
+a.data={date:a.date,type:a.type,categoria:a.categoria,servico:a.servico,descricao:a.descricao,amount:a.amount||a.valor||a.montante,client:a.client||a.cliente,notes:a.notes||a.notas,subcategoria:a.subcategoria,pagamento:a.pagamento}}
+const d=a.data||{};
 const footer=readonly?'':
 `<div class="ai-card-footer"><button class="ai-yes" onclick="confirmAiAction()"><i class="bi bi-check-lg me-1"></i>${a.action==='deploy_code'?'Deploy':a.action==='run_sql'?'Executar':'Confirmar'}</button><button class="ai-no" onclick="cancelAiAction()"><i class="bi bi-x-lg me-1"></i>Cancelar</button></div>`;
 
-if(a.action==='add_receita'){const d=a.data;return `<div class="ai-card rec"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(212,175,106,.1);color:var(--g)"><i class="bi bi-cash-coin"></i></div><div><div class="ai-card-type" style="color:var(--g)">Receita</div></div><span class="bb b-${d.type||'comissao'}" style="margin-left:auto">${CL[d.type]||'Salão 50%'}</span></div><div class="ai-card-rows"><div class="ai-card-row"><span class="ai-card-label">Serviço</span><span class="ai-card-val">${d.servico||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Valor</span><span class="ai-card-val amount">${f$(d.amount||0)}</span></div><div class="ai-card-row"><span class="ai-card-label">Categoria</span><span class="ai-card-val">${d.categoria||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Data</span><span class="ai-card-val">${d.date||'—'}</span></div>${d.client?`<div class="ai-card-row"><span class="ai-card-label">Cliente</span><span class="ai-card-val">${d.client}</span></div>`:''}</div>${footer}</div>`}
-if(a.action==='add_despesa'){const d=a.data;return `<div class="ai-card desp"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(232,132,92,.1);color:var(--coral)"><i class="bi bi-receipt"></i></div><div><div class="ai-card-type" style="color:var(--coral)">Despesa</div></div><span class="bb b-${(d.categoria||'pessoal').toLowerCase()}" style="margin-left:auto">${d.categoria||'Pessoal'}</span></div><div class="ai-card-rows"><div class="ai-card-row"><span class="ai-card-label">Descrição</span><span class="ai-card-val">${d.descricao||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Valor</span><span class="ai-card-val amount">${f$(d.amount||0)}</span></div><div class="ai-card-row"><span class="ai-card-label">Subcategoria</span><span class="ai-card-val">${d.subcategoria||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Data</span><span class="ai-card-val">${d.date||'—'}</span></div></div>${footer}</div>`}
+if(a.action==='add_receita'){return `<div class="ai-card rec"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(212,175,106,.1);color:var(--g)"><i class="bi bi-cash-coin"></i></div><div><div class="ai-card-type" style="color:var(--g)">Receita</div></div><span class="bb b-${d.type||'comissao'}" style="margin-left:auto">${CL[d.type]||'Salão 50%'}</span></div><div class="ai-card-rows"><div class="ai-card-row"><span class="ai-card-label">Serviço</span><span class="ai-card-val">${d.servico||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Valor</span><span class="ai-card-val amount">${f$(d.amount||0)}</span></div><div class="ai-card-row"><span class="ai-card-label">Categoria</span><span class="ai-card-val">${d.categoria||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Data</span><span class="ai-card-val">${d.date||'—'}</span></div>${d.client?`<div class="ai-card-row"><span class="ai-card-label">Cliente</span><span class="ai-card-val">${d.client}</span></div>`:''}</div>${footer}</div>`}
+if(a.action==='add_despesa'){return `<div class="ai-card desp"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(232,132,92,.1);color:var(--coral)"><i class="bi bi-receipt"></i></div><div><div class="ai-card-type" style="color:var(--coral)">Despesa</div></div><span class="bb b-${(d.categoria||'pessoal').toLowerCase()}" style="margin-left:auto">${d.categoria||'Pessoal'}</span></div><div class="ai-card-rows"><div class="ai-card-row"><span class="ai-card-label">Descrição</span><span class="ai-card-val">${d.descricao||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Valor</span><span class="ai-card-val amount">${f$(d.amount||0)}</span></div><div class="ai-card-row"><span class="ai-card-label">Subcategoria</span><span class="ai-card-val">${d.subcategoria||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Data</span><span class="ai-card-val">${d.date||'—'}</span></div></div>${footer}</div>`}
 if(a.action==='run_sql'){return `<div class="ai-card sql"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(176,160,224,.1);color:var(--lav)"><i class="bi bi-database-gear"></i></div><div><div class="ai-card-type" style="color:var(--lav)">SQL</div><div style="font-size:.78rem;color:var(--t2)">${a.description||''}</div></div></div><div class="ai-card-sql">${(a.sql||'').replace(/</g,'&lt;')}</div>${footer}</div>`}
 if(a.action==='deploy_code'){return `<div class="ai-card deploy"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(232,112,144,.1);color:var(--rose)"><i class="bi bi-rocket-takeoff"></i></div><div><div class="ai-card-type" style="color:var(--rose)">Deploy</div><div style="font-size:.78rem;color:var(--t2)">${a.description||''}</div></div></div><div style="font-size:.75rem;color:var(--t3);margin-top:6px"><i class="bi bi-github me-1"></i>${a.changes?a.changes.length:0} alteração(ões)</div>${footer}</div>`}
-return ''}
+// Unknown action — show generic card
+return `<div class="ai-card sql"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(176,160,224,.1);color:var(--lav)"><i class="bi bi-gear"></i></div><div><div class="ai-card-type" style="color:var(--lav)">${a.action||'Acção'}</div><div style="font-size:.78rem;color:var(--t2)">${a.description||JSON.stringify(a).slice(0,80)}</div></div></div>${footer}</div>`}
 
 // Render a bot message — detect JSON cards and render them (readonly in history)
 function renderBotMsg(content,readonly){
@@ -1762,12 +1797,12 @@ async function confirmAiAction(){if(!aiPending)return;const a=aiPending;aiPendin
 addAiMsg('user','✅ Confirmado');
 if(currentChatId)saveChatMsg(currentChatId,'user','✅ Confirmado');
 
-if(a.action==='add_receita'){const d=a.data;
+if(a.action==='add_receita'){const d=a.data||a;
 if(!d.amount||d.amount<=0){const msg='⚠️ Valor inválido (€0). Diz-me o valor correcto.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
 run(`INSERT INTO receitas VALUES(?,?,?,?,?,?,?,?,?,?)`,uid(),d.date||new Date().toISOString().slice(0,10),d.type||'comissao',d.categoria||'',d.servico||'',d.descricao||'',d.amount||0,d.type==='comissao'?d.amount:0,d.client||'',d.notes||'');
 const msg=`Receita registada! ${d.servico||''} · ${f$(d.amount||0)} · ${CL[d.type]||''}`;
 addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);saveDB()}
-else if(a.action==='add_despesa'){const d=a.data;
+else if(a.action==='add_despesa'){const d=a.data||a;
 if(!d.amount||d.amount<=0){const msg='⚠️ Valor inválido (€0). Diz-me o valor correcto.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
 run(`INSERT INTO despesas VALUES(?,?,?,?,?,?,?,?)`,uid(),d.date||new Date().toISOString().slice(0,10),d.categoria||'Pessoal',d.subcategoria||'Outro',d.descricao||'',d.amount||0,d.pagamento||'Outro',d.notes||'');
 const msg=`Despesa registada! ${d.descricao||''} · ${f$(d.amount||0)} · ${d.categoria||''}`;

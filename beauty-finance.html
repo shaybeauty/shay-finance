@@ -70,6 +70,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 .b-salao,.b-comissao{background:rgba(212,175,106,.08);color:var(--g);border-color:rgba(212,175,106,.15)}.b-extra{background:rgba(78,234,160,.08);color:var(--mint);border-color:rgba(78,234,160,.15)}
 .b-pessoal{background:rgba(184,168,240,.08);color:var(--lav);border-color:rgba(184,168,240,.15)}.b-profissional,.b-actividade{background:rgba(255,96,144,.08);color:var(--rose);border-color:rgba(255,96,144,.15)}
 .b-marketing{background:rgba(255,136,85,.08);color:var(--coral);border-color:rgba(255,136,85,.15)}.b-produto,.b-produtos{background:rgba(255,208,80,.08);color:var(--warn);border-color:rgba(255,208,80,.15)}
+.bb:not([class*="b-salao"]):not([class*="b-comissao"]):not([class*="b-extra"]):not([class*="b-pessoal"]):not([class*="b-actividade"]):not([class*="b-marketing"]):not([class*="b-produto"]){background:rgba(184,168,240,.06);color:var(--lav);border-color:rgba(184,168,240,.12)}
 
 .bg2{background:linear-gradient(135deg,var(--g),var(--gD));color:#0C0C10;border:none;font-weight:700;font-size:.8rem;border-radius:10px;padding:10px 22px;transition:.3s;box-shadow:0 2px 12px rgba(212,175,106,.2)}
 .bg2:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(212,175,106,.35);color:#0C0C10}
@@ -112,7 +113,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 }
 /* AI CHAT */
 #aiFab{transition:all .3s}
-#aiFab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(212,175,106,.4)}
+#aiFab:hover{transform:scale(1.08);box-shadow:0 4px 20px rgba(0,0,0,.4),0 0 36px rgba(212,175,106,.2);border-color:rgba(212,175,106,.5)}
 #fabMenu{position:fixed;bottom:92px;right:24px;z-index:1050;display:none;flex-direction:column;gap:10px;align-items:flex-end}
 #fabMenu.open{display:flex}
 .fab-item{display:flex;align-items:center;gap:10px;cursor:pointer;opacity:0;transform:translateY(10px) scale(.8);transition:all .25s}
@@ -243,11 +244,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 <!-- DESPESAS -->
 <section class="sp" id="pg-despesas">
 <div class="ph"><h2>Despesas</h2><button class="btn bg2 btn-sm" onclick="oM('despesa')"><i class="bi bi-plus-lg me-1"></i> Nova Despesa</button></div>
-<ul class="nav nt mb-3" id="dT"><li class="nav-item"><a class="nav-link active" href="#" data-filter="all">Todas</a></li>
-<li class="nav-item"><a class="nav-link" href="#" data-filter="pessoal">Pessoais</a></li>
-<li class="nav-item"><a class="nav-link" href="#" data-filter="actividade">Actividade</a></li>
-<li class="nav-item"><a class="nav-link" href="#" data-filter="marketing">Marketing</a></li>
-<li class="nav-item"><a class="nav-link" href="#" data-filter="produtos">Produtos</a></li></ul>
+<ul class="nav nt mb-3" id="dT"></ul>
 <div class="dc"><div class="table-responsive"><table class="tb"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Montante</th><th>Pagamento</th><th></th></tr></thead><tbody id="tDp"></tbody></table></div>
 <div class="es" id="eDP" style="display:none"><i class="bi bi-inbox" style="font-size:2.5rem;opacity:.3"></i><p class="mt-2">Nenhuma despesa</p></div></div>
 </section>
@@ -526,9 +523,7 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 <div class="modal-body"><div class="row g-3">
 <div class="col-6"><label class="fl">Data</label><input type="date" class="form-control" id="fRD"></div>
 <div class="col-6"><label class="fl">Tipo de Sala</label><select class="form-select" id="fRT"><option value="comissao">Salão — 50%</option><option value="extra">Extra — 100%</option></select></div>
-<div class="col-6"><label class="fl">Categoria</label><select class="form-select" id="fRCat" onchange="updateRecSub()">
-<option value="sobrancelhas">Sobrancelhas</option><option value="unhas">Unhas</option><option value="pestanas">Pestanas</option><option value="_outro_cat">Outro...</option>
-</select></div>
+<div class="col-6"><label class="fl">Categoria</label><select class="form-select" id="fRCat" onchange="updateRecSub(this.value)"></select></div>
 <div class="col-6"><label class="fl">Serviço</label><select class="form-select" id="fRS"></select></div>
 <div class="col-12" id="fROw" style="display:none"><label class="fl">Especificar</label><input type="text" class="form-control" id="fRO" placeholder="Nome do serviço..."></div>
 <div class="col-12"><label class="fl">Descrição</label><input type="text" class="form-control" id="fRDesc" placeholder="Detalhes do que foi feito..."></div>
@@ -544,9 +539,7 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 <div class="modal-header"><h5 class="modal-title">Nova Despesa</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
 <div class="modal-body"><div class="row g-3">
 <div class="col-6"><label class="fl">Data</label><input type="date" class="form-control" id="fDD"></div>
-<div class="col-6"><label class="fl">Categoria</label><select class="form-select" id="fDC" onchange="updateDespSub()">
-<option value="pessoal">Pessoal</option><option value="actividade">Actividade</option><option value="marketing">Marketing</option><option value="produtos">Produtos</option>
-</select></div>
+<div class="col-6"><label class="fl">Categoria</label><select class="form-select" id="fDC" onchange="updateDespSub(this.value)"></select></div>
 <div class="col-6"><label class="fl">Subcategoria</label><select class="form-select" id="fDSub"></select></div>
 <div class="col-6" id="fDSubOw" style="display:none"><label class="fl">Especificar</label><input type="text" class="form-control" id="fDSubO" placeholder="Qual?"></div>
 <div class="col-12"><label class="fl">Descrição</label><input type="text" class="form-control" id="fDDs" placeholder="Detalhe da despesa..."></div>
@@ -560,12 +553,12 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 <!-- AI CHAT FAB -->
 <!-- FAB MENU -->
 <div id="fabMenu">
-<div class="fab-item" onclick="fabAction('ai')"><span class="fab-label">Shay AI</span><button class="fab-btn" style="background:linear-gradient(135deg,var(--g),var(--gD));color:#0C0C10"><i class="bi bi-stars"></i></button></div>
-<div class="fab-item" onclick="fabAction('receita')"><span class="fab-label">Receita</span><button class="fab-btn" style="background:var(--mint);color:#0C0C10"><i class="bi bi-plus-lg"></i></button></div>
-<div class="fab-item" onclick="fabAction('despesa')"><span class="fab-label">Despesa</span><button class="fab-btn" style="background:var(--coral);color:#0C0C10"><i class="bi bi-plus-lg"></i></button></div>
+<div class="fab-item" onclick="fabAction('ai')"><span class="fab-label">Shay AI</span><button class="fab-btn" style="background:rgba(16,16,21,.85);border:1.5px solid rgba(212,175,106,.35);color:var(--g);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 0 20px rgba(212,175,106,.12)"><i class="bi bi-stars"></i></button></div>
+<div class="fab-item" onclick="fabAction('receita')"><span class="fab-label">Receita</span><button class="fab-btn" style="background:rgba(16,16,21,.85);border:1.5px solid rgba(78,234,160,.3);color:var(--mint);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 0 16px rgba(78,234,160,.1)"><i class="bi bi-plus-lg"></i></button></div>
+<div class="fab-item" onclick="fabAction('despesa')"><span class="fab-label">Despesa</span><button class="fab-btn" style="background:rgba(16,16,21,.85);border:1.5px solid rgba(255,136,85,.3);color:var(--coral);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 0 16px rgba(255,136,85,.1)"><i class="bi bi-plus-lg"></i></button></div>
 </div>
 <div id="fabBackdrop" onclick="toggleFab()" style="display:none;position:fixed;inset:0;z-index:1049;background:rgba(4,4,8,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)"></div>
-<button id="aiFab" onclick="toggleFab()" style="position:fixed;bottom:24px;right:24px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--g),var(--gD));border:none;color:#0C0C10;font-size:1.4rem;z-index:1050;box-shadow:0 4px 24px rgba(212,175,106,.3),0 0 40px rgba(212,175,106,.1);transition:all .3s;display:flex;align-items:center;justify-content:center"><i class="bi bi-plus-lg" id="fabIcon"></i></button>
+<button id="aiFab" onclick="toggleFab()" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:rgba(16,16,21,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid rgba(212,175,106,.35);color:var(--g);font-size:1.3rem;z-index:1050;box-shadow:0 4px 20px rgba(0,0,0,.4),0 0 24px rgba(212,175,106,.12);transition:all .3s;display:flex;align-items:center;justify-content:center"><i class="bi bi-plus-lg" id="fabIcon"></i></button>
 
 <!-- AI CHAT PANEL -->
 <div id="aiBackdrop" onclick="toggleChat()"></div>
@@ -627,7 +620,30 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 // ===== SQLITE ENGINE =====
 let db=null;
 const MN=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const CL={comissao:'Salão 50%',extra:'Extra 100%',pessoal:'Pessoal',actividade:'Actividade',marketing:'Marketing',produtos:'Produtos'};
+const CL={comissao:'Salão 50%',extra:'Extra 100%'};
+const CAT_META={
+'Actividade — Material & Consumíveis':{icon:'bi-scissors',color:'#FF6090'},
+'Actividade — Equipamento':{icon:'bi-tools',color:'#FF8855'},
+'Actividade — Espaço':{icon:'bi-building',color:'#B8A8F0'},
+'Actividade — Marketing':{icon:'bi-megaphone',color:'#FF70B8'},
+'Actividade — Produtos (stock)':{icon:'bi-box-seam',color:'#FFD050'},
+'Actividade — Formação':{icon:'bi-mortarboard',color:'#5CB8FF'},
+'Actividade — Administrativo':{icon:'bi-file-earmark-text',color:'#C8A0FF'},
+'Actividade — Transporte Prof.':{icon:'bi-car-front',color:'#70D0D0'},
+'Pessoal — Habitação':{icon:'bi-house',color:'#4EEAA0'},
+'Pessoal — Alimentação':{icon:'bi-basket',color:'#FFB060'},
+'Pessoal — Saúde':{icon:'bi-heart-pulse',color:'#FF6060'},
+'Pessoal — Transporte':{icon:'bi-bus-front',color:'#A0E050'},
+'Pessoal — Lazer':{icon:'bi-controller',color:'#FF70B8'},
+'Pessoal — Educação':{icon:'bi-book',color:'#5CB8FF'},
+'Pessoal — Telecomunicações':{icon:'bi-phone',color:'#70D0D0'},
+'Pessoal — Vestuário':{icon:'bi-bag',color:'#C8A0FF'},
+'Pessoal — Seguros':{icon:'bi-shield-check',color:'#4EEAA0'},
+'Impostos — Obrigações Fiscais':{icon:'bi-bank',color:'#FFD050'},
+'Impostos — Contribuições':{icon:'bi-cash-stack',color:'#FF8855'}
+};
+function catIcon(name){return CAT_META[name]?.icon||'bi-tag'}
+function catColor(name){return CAT_META[name]?.color||'#B8A8F0'}
 let cM=new Date().getMonth(),cY=new Date().getFullYear(),ch={};
 
 const f$=n=>'€'+(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
@@ -658,7 +674,50 @@ function ensureSchema(){
 const tables=['config','categorias_servico','servicos','categorias_despesa','subcategorias_despesa','receitas','despesas','chats','chat_messages','ai_providers'];
 const existing=q1(`SELECT name FROM sqlite_master WHERE type='table'`).map(t=>t.name);
 if(!tables.every(t=>existing.includes(t))){createSchema();return}
-const cfgKeys=['comissao_pct','nome','moeda','system_prompt_full','image_prompt','custom_prompt','ai_confirm_threshold','ai_language','ai_active_provider','ai_deploy_provider'];
+
+// Schema version migration — v2: expanded category tree
+const schemaVer=qv(`SELECT value FROM config WHERE key='schema_version'`)||0;
+if(parseInt(schemaVer)<2){
+// Clear old categories and reseed with new expanded tree
+try{
+db.run(`DELETE FROM subcategorias_despesa`);
+db.run(`DELETE FROM categorias_despesa`);
+db.run(`DELETE FROM servicos`);
+db.run(`DELETE FROM categorias_servico`);
+}catch(e){}
+db.run(`INSERT OR REPLACE INTO config VALUES('schema_version','2')`);
+// Reseed categories (createSchema seeds will run via INSERT OR IGNORE below)
+const cats=[['Sobrancelhas',['Microblading','Microblading Retoque','Microblading Labial','Design Sobrancelhas']],['Unhas',['Gel','Acrílico','Verniz Semipermanente','Manicure','Pedicure']],['Pestanas',['Extensão','Lifting']]];
+cats.forEach(([cat,srvs])=>{db.run(`INSERT OR IGNORE INTO categorias_servico(nome) VALUES(?)`,[cat]);
+const r=db.exec(`SELECT id FROM categorias_servico WHERE nome=?`,[cat]);if(r.length){const cid=r[0].values[0][0];
+srvs.forEach(s=>db.run(`INSERT OR IGNORE INTO servicos(categoria_id,nome) VALUES(?,?)`,[cid,s]))}});
+const dcats=[
+['Actividade — Material & Consumíveis',['Pigmentos/Agulhas','Gel/Verniz/Acrílico','Extensões/Cola','Cera/Linha','Cremes/Máscaras','Descartáveis','Outros Consumíveis']],
+['Actividade — Equipamento',['Aparelhos','Mobiliário','Ferramentas','Manutenção Equipamento']],
+['Actividade — Espaço',['Aluguer Gabinete/Sala','Água/Luz/Gás','Internet/Telefone','Limpeza/Higiene','Obras/Remodelação']],
+['Actividade — Marketing',['Redes Sociais','Cartões/Flyers','Fotografia/Vídeo','Website/Domínio','Brindes/Amostras']],
+['Actividade — Produtos (stock)',['Unhas','Pestanas','Sobrancelhas','Cabelo','Rosto/Corpo','Revenda Clientes']],
+['Actividade — Formação',['Cursos/Workshops','Certificações','Congressos/Eventos','Material Didáctico']],
+['Actividade — Administrativo',['Contabilidade/TOC','Seg. Social','Seguro Profissional','Licenças/Alvará','Software/Apps','Material Escritório']],
+['Actividade — Transporte Prof.',['Gasolina/Gasóleo','Portagens','Estacionamento','Manutenção Viatura']],
+['Pessoal — Habitação',['Renda/Prestação','Condomínio','Água/Luz/Gás','Obras/Reparações']],
+['Pessoal — Alimentação',['Supermercado','Refeições Fora','Café/Snacks']],
+['Pessoal — Saúde',['Médico/Consultas','Farmácia','Dentista','Óptica']],
+['Pessoal — Transporte',['Combustível','Passe/Transportes','Seguro Automóvel','Inspecção/Manutenção']],
+['Pessoal — Lazer',['Restaurantes','Viagens/Férias','Cinema/Cultura','Ginásio/Desporto']],
+['Pessoal — Educação',['Propinas/Escola','Material Escolar','Actividades Extra']],
+['Pessoal — Telecomunicações',['Telemóvel','Internet/TV']],
+['Pessoal — Vestuário',['Roupa/Calçado','Fardas Trabalho']],
+['Pessoal — Seguros',['Seguro Vida','Seguro Casa','Plano Saúde']],
+['Impostos — Obrigações Fiscais',['IRS','IVA','IMI','Outros Impostos']],
+['Impostos — Contribuições',['Seg. Social (pessoal)','Fundos/PPR']]
+];
+dcats.forEach(([cat,subs])=>{db.run(`INSERT OR IGNORE INTO categorias_despesa(nome) VALUES(?)`,[cat]);
+const r=db.exec(`SELECT id FROM categorias_despesa WHERE nome=?`,[cat]);if(r.length){const cid=r[0].values[0][0];
+subs.forEach(s=>db.run(`INSERT OR IGNORE INTO subcategorias_despesa(categoria_id,nome) VALUES(?,?)`,[cid,s]))}});
+console.log('Migration v2: expanded category tree applied')}
+
+const cfgKeys=['comissao_pct','nome','moeda','system_prompt_full','image_prompt','custom_prompt','ai_confirm_threshold','ai_language','ai_active_provider','ai_deploy_provider','schema_version'];
 cfgKeys.forEach(k=>{try{db.run(`INSERT OR IGNORE INTO config VALUES(?,'')`,[k])}catch(e){}});
 try{db.run(`UPDATE config SET value='50' WHERE key='comissao_pct' AND value=''`)}catch(e){}
 try{db.run(`UPDATE config SET value='Shay' WHERE key='nome' AND value=''`)}catch(e){}
@@ -690,7 +749,7 @@ db.run(`CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, title TEXT, creat
 db.run(`CREATE TABLE IF NOT EXISTS chat_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id TEXT, role TEXT, content TEXT, created_at TEXT)`);
 
 // Config seed
-const cfgSeed=[['comissao_pct','50'],['nome','Shay'],['moeda','EUR'],['system_prompt_full',''],['image_prompt',''],['custom_prompt',''],['ai_confirm_threshold','0'],['ai_language','pt-PT'],['ai_active_provider',''],['ai_deploy_provider','']];
+const cfgSeed=[['comissao_pct','50'],['nome','Shay'],['moeda','EUR'],['system_prompt_full',''],['image_prompt',''],['custom_prompt',''],['ai_confirm_threshold','0'],['ai_language','pt-PT'],['ai_active_provider',''],['ai_deploy_provider',''],['schema_version','2']];
 cfgSeed.forEach(([k,v])=>db.run(`INSERT OR IGNORE INTO config VALUES(?,?)`,[k,v]));
 
 // AI Providers table
@@ -713,7 +772,27 @@ const r=db.exec(`SELECT id FROM categorias_servico WHERE nome=?`,[cat]);if(r.len
 srvs.forEach(s=>db.run(`INSERT OR IGNORE INTO servicos(categoria_id,nome) VALUES(?,?)`,[cid,s]))}});
 
 // Expense categories seed
-const dcats=[['Pessoal',['Alimentação','Casa','Transporte','Saúde','Lazer']],['Actividade',['Material','Equipamento','Formação','Seg. Social','Contabilidade']],['Marketing',['Redes Sociais','Cartões/Flyers','Fotografia','Website']],['Produtos',['Unhas','Pestanas','Sobrancelhas','Cabelo','Revenda']]];
+const dcats=[
+['Actividade — Material & Consumíveis',['Pigmentos/Agulhas','Gel/Verniz/Acrílico','Extensões/Cola','Cera/Linha','Cremes/Máscaras','Descartáveis','Outros Consumíveis']],
+['Actividade — Equipamento',['Aparelhos','Mobiliário','Ferramentas','Manutenção Equipamento']],
+['Actividade — Espaço',['Aluguer Gabinete/Sala','Água/Luz/Gás','Internet/Telefone','Limpeza/Higiene','Obras/Remodelação']],
+['Actividade — Marketing',['Redes Sociais','Cartões/Flyers','Fotografia/Vídeo','Website/Domínio','Brindes/Amostras']],
+['Actividade — Produtos (stock)',['Unhas','Pestanas','Sobrancelhas','Cabelo','Rosto/Corpo','Revenda Clientes']],
+['Actividade — Formação',['Cursos/Workshops','Certificações','Congressos/Eventos','Material Didáctico']],
+['Actividade — Administrativo',['Contabilidade/TOC','Seg. Social','Seguro Profissional','Licenças/Alvará','Software/Apps','Material Escritório']],
+['Actividade — Transporte Prof.',['Gasolina/Gasóleo','Portagens','Estacionamento','Manutenção Viatura']],
+['Pessoal — Habitação',['Renda/Prestação','Condomínio','Água/Luz/Gás','Obras/Reparações']],
+['Pessoal — Alimentação',['Supermercado','Refeições Fora','Café/Snacks']],
+['Pessoal — Saúde',['Médico/Consultas','Farmácia','Dentista','Óptica']],
+['Pessoal — Transporte',['Combustível','Passe/Transportes','Seguro Automóvel','Inspecção/Manutenção']],
+['Pessoal — Lazer',['Restaurantes','Viagens/Férias','Cinema/Cultura','Ginásio/Desporto']],
+['Pessoal — Educação',['Propinas/Escola','Material Escolar','Actividades Extra']],
+['Pessoal — Telecomunicações',['Telemóvel','Internet/TV']],
+['Pessoal — Vestuário',['Roupa/Calçado','Fardas Trabalho']],
+['Pessoal — Seguros',['Seguro Vida','Seguro Casa','Plano Saúde']],
+['Impostos — Obrigações Fiscais',['IRS','IVA','IMI','Outros Impostos']],
+['Impostos — Contribuições',['Seg. Social (pessoal)','Fundos/PPR']]
+];
 dcats.forEach(([cat,subs])=>{db.run(`INSERT OR IGNORE INTO categorias_despesa(nome) VALUES(?)`,[cat]);
 const r=db.exec(`SELECT id FROM categorias_despesa WHERE nome=?`,[cat]);if(r.length){const cid=r[0].values[0][0];
 subs.forEach(s=>db.run(`INSERT OR IGNORE INTO subcategorias_despesa(categoria_id,nome) VALUES(?,?)`,[cid,s]))}});
@@ -764,25 +843,29 @@ document.querySelectorAll('.nt .nav-link').forEach(a=>a.addEventListener('click'
 const mR=new bootstrap.Modal(document.getElementById('mR')),mD=new bootstrap.Modal(document.getElementById('mDp'));
 function oM(t){if(t==='receita'){document.getElementById('fRD').value=new Date().toISOString().slice(0,10);updateRecSub();mR.show()}else{document.getElementById('fDD').value=new Date().toISOString().slice(0,10);updateDespSub();mD.show()}}
 
-function updateRecSub(){
+function updateRecSub(keepCat){
 const sel=document.getElementById('fRCat');const sSel=document.getElementById('fRS');
 // Build categories from DB
 const cats=[...new Set(getCatServicos().map(r=>r.cat))];
-sel.innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('')+`<option value="_outro">Outro...</option>`;
-const curCat=sel.value;const srvs=getCatServicos().filter(r=>r.cat===curCat).map(r=>r.srv);
+const prevCat=keepCat||sel.value;
+sel.innerHTML=cats.map(c=>`<option value="${c}" ${c===prevCat?'selected':''}>${c}</option>`).join('')+`<option value="_outro" ${prevCat==='_outro'?'selected':''}>Outro...</option>`;
+const curCat=sel.value;
+if(curCat==='_outro'){
+sSel.innerHTML='<option>Outro</option>';
+document.getElementById('fROw').style.display='block';return}
+const srvs=getCatServicos().filter(r=>r.cat===curCat).map(r=>r.srv);
 sSel.innerHTML=srvs.map(s=>`<option>${s}</option>`).join('')+`<option value="Outro">Outro...</option>`;
 sSel.onchange=function(){document.getElementById('fROw').style.display=this.value==='Outro'?'block':'none'};
-sel.onchange=function(){updateRecSub()};
 document.getElementById('fROw').style.display='none'}
 
-function updateDespSub(){
+function updateDespSub(keepCat){
 const sel=document.getElementById('fDC');const sSel=document.getElementById('fDSub');
 const cats=[...new Set(getCatDespesas().map(r=>r.cat))];
-sel.innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+const prevCat=keepCat||sel.value;
+sel.innerHTML=cats.map(c=>`<option value="${c}" ${c===prevCat?'selected':''}>${c}</option>`).join('');
 const curCat=sel.value;const subs=getCatDespesas().filter(r=>r.cat===curCat).map(r=>r.sub);
 sSel.innerHTML=subs.map(s=>`<option>${s}</option>`).join('')+`<option value="Outro">Outro...</option>`;
 sSel.onchange=function(){document.getElementById('fDSubOw').style.display=this.value==='Outro'?'block':'none'};
-sel.onchange=function(){updateDespSub()};
 document.getElementById('fDSubOw').style.display='none'}
 
 // ===== SAVE =====
@@ -825,26 +908,35 @@ document.getElementById('sN').textContent=nServ;
 
 // Recent transactions
 const rec=getRecMes().slice(0,5).map(r=>({date:r.date,desc:r.servico+(r.descricao?' — '+r.descricao:'')+(r.client?' ('+r.client+')':''),cat:r.type,amt:r.amount,inc:true,id:r.id}));
-const desp=getDespMes().slice(0,5).map(d=>({date:d.date,desc:d.descricao,cat:d.categoria.toLowerCase(),amt:d.amount,inc:false,id:d.id}));
+const desp=getDespMes().slice(0,5).map(d=>({date:d.date,desc:d.descricao,cat:d.categoria,amt:d.amount,inc:false,id:d.id}));
 const all=[...rec,...desp].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
 const tb=document.getElementById('tR'),em=document.getElementById('eD');
 if(!all.length){tb.innerHTML='';em.style.display='block'}else{em.style.display='none';
-tb.innerHTML=all.map(t=>`<tr><td data-label="Data">${fD(t.date)}</td><td data-label="Desc">${t.desc}</td><td data-label="Tipo"><span class="bb b-${t.cat}">${CL[t.cat]||t.cat}</span></td><td data-label="Valor"><span class="mn ${t.inc?'inc':'exp'}">${t.inc?'+':'−'}${f$(t.amt)}</span></td><td><button class="bd2" onclick="${t.inc?'dR':'dD'}('${t.id}')"><i class="bi bi-trash3"></i></button></td></tr>`).join('')}
+tb.innerHTML=all.map(t=>`<tr><td data-label="Data">${fD(t.date)}</td><td data-label="Desc">${t.desc}</td><td data-label="Tipo"><span class="bb b-${(t.cat||'').toLowerCase()}">${CL[t.cat]||t.cat}</span></td><td data-label="Valor"><span class="mn ${t.inc?'inc':'exp'}">${t.inc?'+':'−'}${f$(t.amt)}</span></td><td><button class="bd2" onclick="${t.inc?'dR':'dD'}('${t.id}')"><i class="bi bi-trash3"></i></button></td></tr>`).join('')}
 rCh()}
 
 function rRec(){
 let rc=getRecMes();const f=document.querySelector('#rT .nav-link.active')?.dataset.filter;
 if(f&&f!=='all')rc=rc.filter(r=>r.type===f);
+const comPct=parseInt(qv(`SELECT value FROM config WHERE key='comissao_pct'`))||50;
+const brutoMul=100/comPct;
 const tb=document.getElementById('tRc'),em=document.getElementById('eR');
 if(!rc.length){tb.innerHTML='';em.style.display='block'}else{em.style.display='none';
-tb.innerHTML=rc.map(r=>{const br=r.type==='comissao'?f$(r.amount*2):'—';return `<tr><td data-label="Data">${fD(r.date)}</td><td data-label="Serviço">${r.servico}${r.descricao?` <span style="color:var(--t2);font-size:.8rem">— ${r.descricao}</span>`:''}${r.client?` <span style="color:var(--t3)">(${r.client})</span>`:''}</td><td data-label="Cat"><span style="color:var(--t3);font-size:.72rem">${r.categoria||''}</span></td><td data-label="Tipo"><span class="bb b-${r.type}">${CL[r.type]}</span></td><td data-label="Receita" class="mn inc" style="font-weight:700">${f$(r.amount)}</td><td data-label="Bruto" class="mn" style="color:var(--t3)">${br}</td><td><button class="bd2" onclick="dR('${r.id}')"><i class="bi bi-trash3"></i></button></td></tr>`}).join('')}}
+tb.innerHTML=rc.map(r=>{const br=r.type==='comissao'?f$(r.amount*brutoMul):'—';return `<tr><td data-label="Data">${fD(r.date)}</td><td data-label="Serviço">${r.servico}${r.descricao?` <span style="color:var(--t2);font-size:.8rem">— ${r.descricao}</span>`:''}${r.client?` <span style="color:var(--t3)">(${r.client})</span>`:''}</td><td data-label="Cat"><span style="color:var(--t3);font-size:.72rem">${r.categoria||''}</span></td><td data-label="Tipo"><span class="bb b-${r.type}">${CL[r.type]}</span></td><td data-label="Receita" class="mn inc" style="font-weight:700">${f$(r.amount)}</td><td data-label="Bruto" class="mn" style="color:var(--t3)">${br}</td><td><button class="bd2" onclick="dR('${r.id}')"><i class="bi bi-trash3"></i></button></td></tr>`}).join('')}}
 
 function rDsp(){
+// Build tabs dynamically from DB categories
+const dTabs=document.getElementById('dT');
+const activeFilter=document.querySelector('#dT .nav-link.active')?.dataset.filter||'all';
+const despCats=[...new Set(getDespMes().map(d=>d.categoria))].sort();
+dTabs.innerHTML='<li class="nav-item"><a class="nav-link '+(activeFilter==='all'?'active':'')+'" href="#" data-filter="all">Todas</a></li>'+
+despCats.map(c=>'<li class="nav-item"><a class="nav-link '+(activeFilter===c.toLowerCase()?'active':'')+'" href="#" data-filter="'+c.toLowerCase()+'"><i class="'+catIcon(c)+' me-1"></i>'+c.replace(/^(Actividade|Pessoal|Impostos) — /,'')+'</a></li>').join('');
+dTabs.querySelectorAll('.nav-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();dTabs.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));a.classList.add('active');rDsp()}));
 let dp=getDespMes();const f=document.querySelector('#dT .nav-link.active')?.dataset.filter;
 if(f&&f!=='all')dp=dp.filter(d=>d.categoria.toLowerCase()===f);
 const tb=document.getElementById('tDp'),em=document.getElementById('eDP');
 if(!dp.length){tb.innerHTML='';em.style.display='block'}else{em.style.display='none';
-tb.innerHTML=dp.map(d=>`<tr><td data-label="Data">${fD(d.date)}</td><td data-label="Desc">${d.descricao}${d.notes?` <span style="color:var(--t3);font-size:.76rem">(${d.notes})</span>`:''}</td><td data-label="Cat"><span class="bb b-${d.categoria.toLowerCase()}">${d.categoria}</span>${d.subcategoria?` <span style="color:var(--t3);font-size:.72rem">· ${d.subcategoria}</span>`:''}</td><td data-label="Valor"><span class="mn exp">−${f$(d.amount)}</span></td><td data-label="Pag" style="color:var(--t3)">${d.pagamento}</td><td><button class="bd2" onclick="dD('${d.id}')"><i class="bi bi-trash3"></i></button></td></tr>`).join('')}}
+tb.innerHTML=dp.map(d=>`<tr><td data-label="Data">${fD(d.date)}</td><td data-label="Desc">${d.descricao}${d.notes?` <span style="color:var(--t3);font-size:.76rem">(${d.notes})</span>`:''}</td><td data-label="Cat"><span class="bb" style="background:${catColor(d.categoria)}15;color:${catColor(d.categoria)};border-color:${catColor(d.categoria)}25"><i class="${catIcon(d.categoria)} me-1"></i>${d.categoria.replace(/^(Actividade|Pessoal|Impostos) — /,'')}</span>${d.subcategoria?` <span style="color:var(--t3);font-size:.72rem">· ${d.subcategoria}</span>`:''}</td><td data-label="Valor"><span class="mn exp">−${f$(d.amount)}</span></td><td data-label="Pag" style="color:var(--t3)">${d.pagamento}</td><td><button class="bd2" onclick="dD('${d.id}')"><i class="bi bi-trash3"></i></button></td></tr>`).join('')}}
 
 // ===== CHARTS =====
 const cO={responsive:true,plugins:{legend:{labels:{color:'#A09888',font:{family:'Manrope',size:11}}}},scales:{x:{ticks:{color:'#605848',font:{size:10}},grid:{color:'rgba(44,44,53,.6)'}},y:{ticks:{color:'#605848',font:{size:10},callback:v=>'€'+v},grid:{color:'rgba(44,44,53,.6)'}}}};
@@ -862,9 +954,8 @@ ch.l=new Chart(c1,{type:'line',data:{labels:M,datasets:[{label:'Minha Receita',d
 const ym=`${cY}-${String(cM+1).padStart(2,'0')}`;
 const dByCat=q1(`SELECT categoria, SUM(amount) as total FROM despesas WHERE substr(date,1,7)=? GROUP BY categoria`,ym);
 const catNames=dByCat.map(r=>r.categoria);const catVals=dByCat.map(r=>r.total);
-const catCols={'Pessoal':'#B0A0E0','Actividade':'#E87090','Marketing':'#E8845C','Produtos':'#F0C850'};
 const c2=document.getElementById('cD').getContext('2d');if(ch.d)ch.d.destroy();
-ch.d=new Chart(c2,{type:'doughnut',data:{labels:catNames,datasets:[{data:catVals,backgroundColor:catNames.map(c=>catCols[c]||'#888'),borderWidth:0}]},options:{responsive:true,cutout:'70%',plugins:{legend:{position:'bottom',labels:{color:'#A09888',font:{family:'Manrope',size:11},padding:14}}}}})}
+ch.d=new Chart(c2,{type:'doughnut',data:{labels:catNames,datasets:[{data:catVals,backgroundColor:catNames.map(c=>catColor(c)),borderWidth:0}]},options:{responsive:true,cutout:'70%',plugins:{legend:{position:'bottom',labels:{color:'#A09888',font:{family:'Manrope',size:11},padding:14}}}}})}
 
 function rRpt(){
 const yr=String(cY);
@@ -1010,7 +1101,8 @@ if(r&&r.date){const d=new Date(r.date);cM=d.getMonth();cY=d.getFullYear();uM()}}
 // ===== EXPORT =====
 function expXL(){const wb=XLSX.utils.book_new();
 const rec=q1(`SELECT * FROM receitas ORDER BY date`);
-XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rec.map(r=>({Data:r.date,Categoria:r.categoria,Serviço:r.servico,Descrição:r.descricao,Tipo:r.type==='comissao'?'Salão 50%':'Extra 100%','Minha Receita€':r.amount,'Bruto Salão€':r.type==='comissao'?r.amount*2:r.amount,Cliente:r.client,Notas:r.notes}))),'Receitas');
+const comPctExp=parseInt(qv(`SELECT value FROM config WHERE key='comissao_pct'`))||50;const brutoMulExp=100/comPctExp;
+XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rec.map(r=>({Data:r.date,Categoria:r.categoria,Serviço:r.servico,Descrição:r.descricao,Tipo:r.type==='comissao'?`Salão ${comPctExp}%`:'Extra 100%','Minha Receita€':r.amount,'Bruto Salão€':r.type==='comissao'?r.amount*brutoMulExp:r.amount,Cliente:r.client,Notas:r.notes}))),'Receitas');
 const desp=q1(`SELECT * FROM despesas ORDER BY date`);
 XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(desp.map(d=>({Data:d.date,Categoria:d.categoria,Subcategoria:d.subcategoria,Descrição:d.descricao,'Montante€':d.amount,Pagamento:d.pagamento,Notas:d.notes}))),'Despesas');
 const res=MN.map((m,i)=>{const ym=`${cY}-${String(i+1).padStart(2,'0')}`;
@@ -1274,6 +1366,7 @@ User: "Quanto ganhei este mês?"
 const DEFAULT_IMAGE_PROMPT=`A utilizadora enviou uma FOTO. Analisa com muita atenção.
 
 # COMO INTERPRETAR
+
 1. FOLHA/CADERNO COM DADOS:
    - O formato habitual tem colunas: Dia | 50% (valor da parte dela no salão) | Extra (100% gabinete)
    - À direita pode ter notas de despesas com sinal negativo (ex: -369 Marketing, -210 Seg.Social)
@@ -1281,9 +1374,20 @@ const DEFAULT_IMAGE_PROMPT=`A utilizadora enviou uma FOTO. Analisa com muita ate
    - Extrai CADA LINHA e propõe registar como receitas (e despesas se houver)
    - Indica o total que encontraste para a utilizadora confirmar
 
-2. RECIBO/FATURA:
-   - Extrai: data, descrição/loja, valor total, possível categoria
-   - Propõe registar como despesa com a categoria mais adequada
+2. RECIBO/FATURA/COMPROVATIVO:
+   - Extrai: data, descrição/loja/entidade, valor total
+   - MAPEIA para a categoria e subcategoria MAIS ADEQUADA das CATEGORIAS ACTUAIS listadas no contexto
+   - Exemplos de mapeamento:
+     • Factura de electricidade → "Actividade — Espaço" / "Água/Luz/Gás" (se for do gabinete) OU "Pessoal — Habitação" / "Água/Luz/Gás" (se for de casa)
+     • Compra na farmácia → "Pessoal — Saúde" / "Farmácia"
+     • Factura Instagram Ads → "Actividade — Marketing" / "Redes Sociais"
+     • Compra de verniz gel → "Actividade — Material & Consumíveis" / "Gel/Verniz/Acrílico"
+     • Recibo Seg. Social → "Actividade — Administrativo" / "Seg. Social"
+     • Gasolineira → perguntar: "É para deslocações profissionais ou pessoais?"
+   - Se NÃO ENCAIXA em nenhuma categoria existente, sugere criar nova:
+     "Não encontrei categoria adequada. Queres que crie 'Actividade — [nome]' com subcategoria '[sub]'?"
+   - Se AMBÍGUO entre pessoal e actividade, PERGUNTA: "Esta despesa é profissional ou pessoal?"
+   - Propõe registar como add_despesa com todos os campos preenchidos
 
 3. TABELA DE PREÇOS:
    - Lê serviços e valores
@@ -1293,9 +1397,11 @@ const DEFAULT_IMAGE_PROMPT=`A utilizadora enviou uma FOTO. Analisa com muita ate
    - Diz o que consegues ver e pede para tirar outra foto com melhor luz/ângulo
 
 # IMPORTANTE
-- Para múltiplos valores, propõe UM DE CADA VEZ (não tentes inserir tudo de uma vez)
-- Mostra sempre o que leste para a utilizadora validar antes de registar
-- Se tens dúvida num valor, pergunta em vez de adivinhar`;
+- Para múltiplos valores, propõe UM DE CADA VEZ
+- Mostra SEMPRE o que leste para a utilizadora validar: "Li: [entidade] · [valor] · [data]"
+- Indica a categoria escolhida e PORQUÊ: "Sugiro: Actividade — Marketing / Redes Sociais (porque é uma factura do Instagram)"
+- Se tens dúvida num valor ou categoria, pergunta em vez de adivinhar
+- Extrai também o método de pagamento se visível (Multibanco, MB Way, etc)`;
 
 
 function getSchemaForAI(){
@@ -1303,9 +1409,17 @@ const cats=getCatServicos();const dcats=getCatDespesas();
 // Only send relevant config — exclude prompts (they're already in systemInstruction)
 const cfg=q1(`SELECT * FROM config WHERE key NOT IN ('system_prompt_full','image_prompt','custom_prompt','ai_active_provider','ai_deploy_provider')`);
 return `ESQUEMA:
-Tabelas: receitas(id,date,type,categoria,servico,descricao,amount,comissao,client,notes), despesas(id,date,categoria,subcategoria,descricao,amount,pagamento,notes)
-Serviços: ${[...new Set(cats.map(c=>c.cat))].map(cat=>`${cat}(${cats.filter(c=>c.cat===cat).map(c=>c.srv).join(',')})`).join('; ')}
-Despesas: ${[...new Set(dcats.map(c=>c.cat))].map(cat=>`${cat}(${dcats.filter(c=>c.cat===cat).map(c=>c.sub).join(',')})`).join('; ')}
+Tabelas principais: receitas(id,date,type,categoria,servico,descricao,amount,comissao,client,notes), despesas(id,date,categoria,subcategoria,descricao,amount,pagamento,notes)
+
+Tabelas de configuração (árvore hierárquica):
+- categorias_servico(id,nome,ativa) → servicos(id,categoria_id→categorias_servico.id,nome,preco,duracao,ativo)
+- categorias_despesa(id,nome,ativa) → subcategorias_despesa(id,categoria_id→categorias_despesa.id,nome,ativa)
+
+Para INSERT com FK, usa subquery: INSERT INTO servicos(categoria_id,nome) VALUES((SELECT id FROM categorias_servico WHERE nome='X'),'Y')
+Para INSERT nova categoria+sub: primeiro INSERT INTO categorias_despesa(nome) VALUES('X'), depois INSERT INTO subcategorias_despesa(categoria_id,nome) VALUES((SELECT id FROM categorias_despesa WHERE nome='X'),'Y')
+
+Serviços actuais: ${[...new Set(cats.map(c=>c.cat))].map(cat=>`${cat}(${cats.filter(c=>c.cat===cat).map(c=>c.srv).join(',')})`).join('; ')}
+Despesas actuais: ${[...new Set(dcats.map(c=>c.cat))].map(cat=>`${cat}(${dcats.filter(c=>c.cat===cat).map(c=>c.sub).join(',')})`).join('; ')}
 Config: ${cfg.map(c=>`${c.key}=${c.value}`).join(', ')}`}
 
 function getAiSystem(){
@@ -1316,22 +1430,27 @@ const basePrompt=sp?.value||DEFAULT_SYSTEM_PROMPT;
 const customPrompt=cp?.value||'';
 return `${basePrompt}
 
+# CATEGORIAS ACTUAIS (lidas da base de dados)
+Serviços: ${(()=>{const cats=getCatServicos();const uCats=[...new Set(cats.map(c=>c.cat))];return uCats.map(cat=>`${cat} (${cats.filter(c=>c.cat===cat).map(c=>c.srv).join(', ')})`).join(' | ')||'Sem categorias definidas'})()}
+Despesas: ${(()=>{const dcats=getCatDespesas();const uCats=[...new Set(dcats.map(c=>c.cat))];return uCats.map(cat=>`${cat} (${dcats.filter(c=>c.cat===cat).map(c=>c.sub).join(', ')})`).join(' | ')||'Sem categorias definidas'})()}
+
 # ACÇÕES DISPONÍVEIS
 Quando quiseres executar uma acção, devolve JSON entre \`\`\`json e \`\`\`.
 NUNCA inventes campos — usa exactamente estes schemas:
 
 ## Registar Receita
 \`\`\`json
-{"action":"add_receita","data":{"date":"YYYY-MM-DD","type":"comissao","categoria":"Sobrancelhas","servico":"Microblading","descricao":"retoque","amount":45,"client":"Ana","notes":""}}
+{"action":"add_receita","data":{"date":"YYYY-MM-DD","type":"comissao","categoria":"<uma das categorias acima>","servico":"<um dos serviços acima>","descricao":"","amount":0,"client":"","notes":""}}
 \`\`\`
 - type: "comissao" (salão 50%) ou "extra" (gabinete 100%)
 - amount: SEMPRE a parte da utilizadora
+- categoria e servico: usar os nomes EXACTOS das categorias/serviços listados acima
 
 ## Registar Despesa
 \`\`\`json
-{"action":"add_despesa","data":{"date":"YYYY-MM-DD","categoria":"Marketing","subcategoria":"Redes Sociais","descricao":"Instagram Ads","amount":30,"pagamento":"MB Way","notes":""}}
+{"action":"add_despesa","data":{"date":"YYYY-MM-DD","categoria":"<uma das categorias de despesa acima>","subcategoria":"<uma subcategoria>","descricao":"","amount":0,"pagamento":"","notes":""}}
 \`\`\`
-- categorias: Pessoal, Actividade, Marketing, Produtos
+- categorias: usar os nomes EXACTOS das categorias de despesa listadas acima
 - pagamento: Multibanco, MB Way, Transferência, Dinheiro, Crédito, Outro
 
 ## Consultar dados (SELECT — só leitura)
@@ -1342,14 +1461,27 @@ USA ESTA ACÇÃO para responder a QUALQUER pergunta sobre dados:
 - "Quanto gastei em X?" → query_sql com SELECT SUM(amount) ... WHERE ...
 - "Quais foram as receitas de Janeiro?" → query_sql com SELECT ... WHERE substr(date,1,7)='2026-01'
 - "Qual o meu melhor mês?" → query_sql com GROUP BY + ORDER BY
+- "Que categorias tenho?" → query_sql com SELECT nome FROM categorias_servico WHERE ativa=1
+- "Que serviços tenho em Pestanas?" → query_sql com SELECT s.nome FROM servicos s JOIN categorias_servico cs ON s.categoria_id=cs.id WHERE cs.nome='Pestanas' AND s.ativo=1
+- "Quanto gastei em Marketing?" → query_sql com SELECT SUM(amount) FROM despesas WHERE categoria='Marketing'
 - A app executa a query, devolve os resultados, e tu interpretas para o utilizador
 - Podes fazer queries complexas: JOINs, GROUP BY, SUM, COUNT, AVG, etc.
 - NÃO precisas de confirmação para SELECT — é só leitura
 
 ## Alterar esquema/categorias (INSERT/UPDATE/DELETE)
+Exemplos com relações hierárquicas (FK com subquery):
 \`\`\`json
-{"action":"run_sql","sql":"INSERT INTO categorias_servico(nome) VALUES('Corpo')","description":"Adiciona categoria Corpo"}
+{"action":"run_sql","sql":"INSERT INTO categorias_servico(nome) VALUES('Corpo')","description":"Adiciona categoria de serviço Corpo"}
 \`\`\`
+\`\`\`json
+{"action":"run_sql","sql":"INSERT INTO servicos(categoria_id,nome) VALUES((SELECT id FROM categorias_servico WHERE nome='Corpo'),'Massagem')","description":"Adiciona serviço Massagem na categoria Corpo"}
+\`\`\`
+\`\`\`json
+{"action":"run_sql","sql":"INSERT INTO subcategorias_despesa(categoria_id,nome) VALUES((SELECT id FROM categorias_despesa WHERE nome='Actividade'),'Seguro')","description":"Adiciona subcategoria Seguro em Actividade"}
+\`\`\`
+- Para adicionar categoria + serviço/subcategoria juntos: propõe 2 SQLs separados (UM de cada vez)
+- Para renomear: UPDATE categorias_servico SET nome='Novo' WHERE nome='Antigo'
+- Para desactivar (sem apagar): UPDATE servicos SET ativo=0 WHERE nome='X'
 ⚠️ PROIBIDO: DROP TABLE, DELETE FROM sem WHERE, TRUNCATE. SEMPRE pede confirmação.
 
 ## Deploy (alterar a app via GitHub)
@@ -1612,8 +1744,8 @@ addAiMsg('bot','',(textBefore?textBefore.replace(/\n/g,'<br>')+'<br>':'')+render
 
 }catch(e){
 hideTyping();
-addAiMsg('bot',textBefore||'Não percebi. Podes reformular?')}}
-
+addAiMsg('bot',textBefore||'Não percebi. Podes reformular?')}
+}
 let aiSending=false;
 async function sendAiMsg(){if(aiSending)return;
 const input=document.getElementById('aiInput');const msg=input.value.trim();
@@ -1801,12 +1933,12 @@ if(a.action==='add_receita'){const d=a.data||a;
 if(!d.amount||d.amount<=0){const msg='⚠️ Valor inválido (€0). Diz-me o valor correcto.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
 run(`INSERT INTO receitas VALUES(?,?,?,?,?,?,?,?,?,?)`,uid(),d.date||new Date().toISOString().slice(0,10),d.type||'comissao',d.categoria||'',d.servico||'',d.descricao||'',d.amount||0,d.type==='comissao'?d.amount:0,d.client||'',d.notes||'');
 const msg=`Receita registada! ${d.servico||''} · ${f$(d.amount||0)} · ${CL[d.type]||''}`;
-addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);saveDB()}
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);rA()}
 else if(a.action==='add_despesa'){const d=a.data||a;
 if(!d.amount||d.amount<=0){const msg='⚠️ Valor inválido (€0). Diz-me o valor correcto.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
 run(`INSERT INTO despesas VALUES(?,?,?,?,?,?,?,?)`,uid(),d.date||new Date().toISOString().slice(0,10),d.categoria||'Pessoal',d.subcategoria||'Outro',d.descricao||'',d.amount||0,d.pagamento||'Outro',d.notes||'');
 const msg=`Despesa registada! ${d.descricao||''} · ${f$(d.amount||0)} · ${d.categoria||''}`;
-addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);saveDB()}
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);rA()}
 else if(a.action==='run_sql'){
 // If it's a SELECT, redirect to the agentic query system (no confirmation needed)
 if((a.sql||'').trim().toUpperCase().startsWith('SELECT')){
@@ -1815,7 +1947,7 @@ const forbidden=['DROP TABLE','DROP DATABASE','DROP INDEX','TRUNCATE','DELETE FR
 const sqlUp=(a.sql||'').toUpperCase().replace(/\s+/g,' ');
 if(forbidden.some(f=>sqlUp.includes(f.toUpperCase()))){const msg='⚠️ SQL bloqueado por segurança.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
 if((a.sql.match(/;/g)||[]).length>1){const msg='⚠️ SQL bloqueado — apenas uma instrução por vez.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
-try{const r=db.exec(a.sql);saveDB();let msg='✅ '+(a.description||'SQL executado');
+try{const r=db.exec(a.sql);saveDB();rA();let msg='✅ '+(a.description||'SQL executado');
 if(r.length&&r[0].values.length){msg+='\n'+r[0].columns.join(' | ')+'\n'+r[0].values.slice(0,10).map(v=>v.map(x=>x===null?'—':x).join(' | ')).join('\n')}
 addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}
 catch(e){const msg='Erro SQL: '+e.message;addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}}

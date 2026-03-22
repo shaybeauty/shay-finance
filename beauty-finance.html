@@ -19,7 +19,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-:root{--g:#D4AF6A;--gL:#F5E0A0;--gD:#9B7B3C;--bg:#08080C;--s1:#101015;--s2:#18181F;--s3:#22222A;--bd:#1E1E28;--mint:#4EEAA0;--rose:#FF6090;--lav:#B8A8F0;--coral:#FF8855;--warn:#FFD050;--t1:#F0EBE0;--t2:#A09888;--t3:#605848;--r:16px;--glow-g:rgba(212,175,106,.15);--glow-m:rgba(78,234,160,.12);--glow-r:rgba(255,96,144,.12);--glow-l:rgba(184,168,240,.12);--glow-c:rgba(255,136,85,.12)}
+:root{--g:#D4AF6A;--gL:#F5E0A0;--gD:#9B7B3C;--bg:#08080C;--s1:#101015;--s2:#18181F;--s3:#22222A;--bd:#1E1E28;--mint:#4EEAA0;--rose:#FF6090;--lav:#B8A8F0;--coral:#FF8855;--warn:#FFD050;--t1:#F5F0E8;--t2:#C0B098;--t3:#8A7A68;--r:16px;--glow-g:rgba(212,175,106,.15);--glow-m:rgba(78,234,160,.12);--glow-r:rgba(255,96,144,.12);--glow-l:rgba(184,168,240,.12);--glow-c:rgba(255,136,85,.12)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--t1);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-spacing:-.5px}
@@ -1350,27 +1350,115 @@ currentDashTab=tab;
 if(tab==='agenda')initCalendar();
 if(tab==='notas')renderNotas()}
 
-// Swipe between dashboard tabs
+// Swipe with real-time finger tracking
 (function(){
-const el=document.getElementById('pg-dashboard');
-let startX=0,startY=0,swiping=false,onCalendar=false;
-el.addEventListener('touchstart',function(e){
-startX=e.touches[0].clientX;startY=e.touches[0].clientY;swiping=true;
-onCalendar=!!e.target.closest('#fcCalendar')},{passive:true});
-el.addEventListener('touchend',function(e){
-if(!swiping)return;swiping=false;
-const dx=e.changedTouches[0].clientX-startX;
-const dy=e.changedTouches[0].clientY-startY;
+const slider=document.getElementById('dashSlider');
+let startX=0,startY=0,dragging=false,dx=0;
+let curPanel=null,nextPanel=null,prevPanel=null;
+let sliderW=0,vertical=false;
+
+function getPanels(){
+const idx=DASH_TABS.indexOf(currentDashTab);
+const cur=document.getElementById(DASH_PANELS[currentDashTab]);
+const nxt=idx<DASH_TABS.length-1?document.getElementById(DASH_PANELS[DASH_TABS[idx+1]]):null;
+const prv=idx>0?document.getElementById(DASH_PANELS[DASH_TABS[idx-1]]):null;
+return{cur,nxt,prv,idx}}
+
+slider.addEventListener('touchstart',function(e){
+if(dashAnimating)return;
+if(e.target.closest('#fcCalendar'))return;
+startX=e.touches[0].clientX;startY=e.touches[0].clientY;
+dx=0;dragging=true;vertical=false;
+sliderW=slider.offsetWidth;
+const p=getPanels();curPanel=p.cur;nextPanel=p.nxt;prevPanel=p.prv;
+
+// Prepare panels off-screen
+curPanel.style.position='absolute';
+if(nextPanel){nextPanel.style.display='block';nextPanel.style.position='absolute';gsap.set(nextPanel,{x:sliderW})}
+if(prevPanel){prevPanel.style.display='block';prevPanel.style.position='absolute';gsap.set(prevPanel,{x:-sliderW})}
+// Set slider height
+slider.style.height=curPanel.offsetHeight+'px'
+},{passive:true});
+
+slider.addEventListener('touchmove',function(e){
+if(!dragging)return;
+const mx=e.touches[0].clientX-startX;
+const my=e.touches[0].clientY-startY;
+
+// First move: decide if horizontal or vertical scroll
+if(!vertical&&Math.abs(mx)<8&&Math.abs(my)<8)return;
+if(!vertical){
+if(Math.abs(my)>Math.abs(mx)){dragging=false;resetPanels();return}
+vertical=true}
+
+dx=mx;
+// Clamp: can't drag if no panel in that direction
+if(dx>0&&!prevPanel)dx=dx*0.2;
+if(dx<0&&!nextPanel)dx=dx*0.2;
+
+// Move panels in real-time
+gsap.set(curPanel,{x:dx});
+if(dx<0&&nextPanel)gsap.set(nextPanel,{x:sliderW+dx});
+if(dx>0&&prevPanel)gsap.set(prevPanel,{x:-sliderW+dx})
+},{passive:true});
+
+slider.addEventListener('touchend',function(){
+if(!dragging){return}dragging=false;
+const threshold=sliderW*0.25;
+
+// Decide: complete or snap back
+if(dx<-threshold&&nextPanel){
+// Complete: slide left to next
+const newTab=DASH_TABS[DASH_TABS.indexOf(currentDashTab)+1];
+dashAnimating=true;
+gsap.to(curPanel,{x:-sliderW,duration:0.25,ease:'power2.out',onComplete:()=>{curPanel.style.display='none'}});
+gsap.to(nextPanel,{x:0,duration:0.25,ease:'power2.out',onComplete:()=>{
+finishSlide(newTab,nextPanel);if(prevPanel)prevPanel.style.display='none'}})
+}else if(dx>threshold&&prevPanel){
+// Complete: slide right to prev
+const newTab=DASH_TABS[DASH_TABS.indexOf(currentDashTab)-1];
+dashAnimating=true;
+gsap.to(curPanel,{x:sliderW,duration:0.25,ease:'power2.out',onComplete:()=>{curPanel.style.display='none'}});
+gsap.to(prevPanel,{x:0,duration:0.25,ease:'power2.out',onComplete:()=>{
+finishSlide(newTab,prevPanel);if(nextPanel)nextPanel.style.display='none'}})
+}else{
+// Snap back
+gsap.to(curPanel,{x:0,duration:0.25,ease:'power2.out'});
+if(nextPanel)gsap.to(nextPanel,{x:sliderW,duration:0.25,ease:'power2.out',onComplete:()=>{nextPanel.style.display='none'}});
+if(prevPanel)gsap.to(prevPanel,{x:-sliderW,duration:0.25,ease:'power2.out',onComplete:()=>{prevPanel.style.display='none'}});
+// Restore current panel
+setTimeout(()=>{curPanel.style.position='relative';gsap.set(curPanel,{x:0});slider.style.height='auto'},300)}
+},{passive:true});
+
+function finishSlide(tab,panel){
+panel.style.position='relative';gsap.set(panel,{x:0});
+slider.style.height='auto';dashAnimating=false;
+currentDashTab=tab;
+document.querySelectorAll('#dashTabs .tl-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+document.getElementById('dashMonthNav').style.display=tab==='agenda'?'none':'block';
+if(tab==='agenda')initCalendar();
+if(tab==='notas')renderNotas()}
+
+function resetPanels(){
+if(curPanel){curPanel.style.position='relative';gsap.set(curPanel,{x:0})}
+if(nextPanel){nextPanel.style.display='none'}
+if(prevPanel){prevPanel.style.display='none'}
+slider.style.height='auto'}
+})()
+
+// Calendar swipe (navigate months/weeks)
+;(function(){
+let sx=0,sy=0;
+document.addEventListener('touchstart',function(e){
+if(!e.target.closest('#fcCalendar'))return;
+sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+document.addEventListener('touchend',function(e){
+if(!e.target.closest('#fcCalendar')||!fcCalendar)return;
+const dx=e.changedTouches[0].clientX-sx;
+const dy=e.changedTouches[0].clientY-sy;
 if(Math.abs(dx)<60||Math.abs(dy)>Math.abs(dx))return;
-// If swipe is on calendar, navigate FC instead of switching tabs
-if(onCalendar&&fcCalendar){
 if(dx<-60){fcCalendar.next();updateFcTitle()}
-else if(dx>60){fcCalendar.prev();updateFcTitle()}
-return}
-const cur=document.querySelector('#dashTabs .tl-btn.active')?.dataset.tab||'resumo';
-const idx=DASH_TABS.indexOf(cur);
-if(dx<-60&&idx<DASH_TABS.length-1&&!dashAnimating)switchDashTab(DASH_TABS[idx+1]);
-else if(dx>60&&idx>0&&!dashAnimating)switchDashTab(DASH_TABS[idx-1])},{passive:true})
+else if(dx>60){fcCalendar.prev();updateFcTitle()}},{passive:true})
 })()
 
 // ===== EVENTOS (Agenda) =====
@@ -3251,7 +3339,8 @@ list.innerHTML=html;
 
 // Browser notification for urgent items (today's events)
 if(todayEvts.length>0&&notifs.length>lastNotifCount&&'Notification' in window&&Notification.permission==='granted'){
-new Notification('S · Finance',{body:todayEvts[0].title+(todayEvts[0].time_start?' às '+todayEvts[0].time_start:''),icon:'icon-192.png'})}
+if('serviceWorker' in navigator&&navigator.serviceWorker.ready){
+navigator.serviceWorker.ready.then(reg=>{reg.showNotification('S · Finance',{body:todayEvts[0].title+(todayEvts[0].time_start?' às '+todayEvts[0].time_start:''),icon:'icon-192.png'})}).catch(()=>{})}}
 lastNotifCount=notifs.length}
 
 function clearNotifications(){
@@ -3271,12 +3360,11 @@ try{
 document.getElementById('sB').textContent='A carregar...';
 const dbResult=await initDB();
 if(dbResult){goToLastMonth();uM();rA();initAiChat();
-// Notifications
-checkNotifications();
-setInterval(checkNotifications,5*60*1000);
-// Request browser notification permission
+// Notifications (safe - won't crash boot)
+try{checkNotifications()}catch(e){console.warn('Notif check error:',e)}
+setInterval(()=>{try{checkNotifications()}catch(e){}},5*60*1000);
 if('Notification' in window&&Notification.permission==='default'){
-setTimeout(()=>Notification.requestPermission(),3000)}}
+setTimeout(()=>{try{Notification.requestPermission()}catch(e){}},3000)}}
 else{document.getElementById('sB').textContent='€0';toast('Base de dados indisponível. Verifica a ligação.','w')}
 gsap.from('.nb',{y:-20,opacity:0,duration:.5,delay:.1});gsap.from('.sc',{opacity:0,y:25,duration:.4,stagger:.08,delay:.3,ease:'power2.out'});
 gsap.from('.cc',{opacity:0,y:15,duration:.4,stagger:.12,delay:.7});gsap.from('.dc',{opacity:0,y:15,duration:.4,delay:.9});

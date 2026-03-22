@@ -37,7 +37,7 @@
     <path d="M256 85L309 215"/>
   </g>
   <circle cx="256" cy="252" r="175" fill="none" stroke="url(#gold)" stroke-width="0.7" opacity="0.05"/>
-  <text x="256" y="320" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="255" font-weight="400" fill="url(#goldV)" filter="url(#sh)">S</text>
+  <text x="256" y="320" text-anchor="middle" font-family="Manrope,sans-serif" font-size="255" font-weight="400" fill="url(#goldV)" filter="url(#sh)">S</text>
   <line x1="168" y1="362" x2="344" y2="362" stroke="url(#gold)" stroke-width="2.5" stroke-linecap="round" opacity="0.45"/>
   <circle cx="168" cy="362" r="3" fill="url(#gold)" opacity="0.35"/>
   <circle cx="344" cy="362" r="3" fill="url(#gold)" opacity="0.35"/>

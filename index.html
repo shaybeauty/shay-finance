@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -21,12 +21,12 @@
 :root{--g:#D4AF6A;--gL:#F0D89A;--gD:#9B7B3C;--bg:#0C0C10;--s1:#141418;--s2:#1C1C22;--s3:#26262E;--bd:#2C2C35;--mint:#5FD4A0;--rose:#E87090;--lav:#B0A0E0;--coral:#E8845C;--warn:#F0C850;--t1:#F0EBE0;--t2:#A09888;--t3:#605848;--r:16px}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--t1);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-h1,h2,h3,h4,h5,.serif{font-family:'Playfair Display',serif;font-weight:600}
+h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-spacing:-.5px}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--gD);border-radius:3px}
 
 .nb{background:var(--s1)!important;border-bottom:1px solid var(--bd);padding:10px 0;position:sticky;top:0;z-index:1030}
-.nb .navbar-brand{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--g)!important}
-.nb .navbar-brand small{font-family:'Manrope',sans-serif;font-size:.5rem;color:var(--t3);text-transform:uppercase;letter-spacing:4px;display:block;margin-top:-2px;font-weight:600}
+.nb .navbar-brand{font-family:'Manrope',sans-serif;font-size:1.3rem;font-weight:300;letter-spacing:2px;color:var(--g)!important}
+.nb .navbar-brand small{font-family:'Manrope',sans-serif;font-size:.48rem;color:var(--t3);text-transform:uppercase;letter-spacing:5px;display:block;margin-top:1px;font-weight:500}
 .np .nav-link{color:var(--t2);font-size:.8rem;font-weight:500;padding:8px 16px;border-radius:10px;transition:.25s;border:1px solid transparent}
 .np .nav-link:hover{color:var(--t1);background:var(--s2)}
 .np .nav-link.active{background:rgba(212,175,106,.1)!important;color:var(--g)!important;border-color:rgba(212,175,106,.15)}
@@ -85,7 +85,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Playfair Display',serif;font-weight:600}
 
 .modal-content{background:var(--s1)!important;border:1px solid var(--bd)!important;border-radius:18px!important}
 .modal-header{border-bottom:1px solid var(--bd)!important;padding:24px 28px!important}
-.modal-header .modal-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--g)}
+.modal-header .modal-title{font-family:'Manrope',sans-serif;font-size:1.1rem;font-weight:700;color:var(--g);letter-spacing:.5px}
 .modal-body{padding:28px!important}.modal-footer{border-top:1px solid var(--bd)!important;padding:16px 28px!important}
 .fl{font-family:'Manrope',sans-serif;font-size:.68rem;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;font-weight:700}
 .form-control,.form-select{background:var(--s2)!important;border:1px solid var(--bd)!important;color:var(--t1)!important;border-radius:10px!important;padding:11px 16px!important;font-size:.86rem!important;font-family:'Manrope',sans-serif!important}
@@ -170,7 +170,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Playfair Display',serif;font-weight:600}
 <nav class="navbar nb navbar-expand-lg">
 <div class="container-fluid px-3 px-lg-4">
 <button class="btn d-lg-none p-1 me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" style="color:var(--g);font-size:1.3rem"><i class="bi bi-list"></i></button>
-<a class="navbar-brand me-4" href="#"><svg viewBox="0 0 32 32" width="28" height="28" style="vertical-align:middle;margin-right:8px;margin-top:-3px"><rect width="32" height="32" rx="7" fill="#1a1a20"/><rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="#D4AF6A" stroke-width=".5" opacity=".4"/><text x="16" y="23" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#D4AF6A">S</text></svg>Shay Finance<small>Gestão Financeira</small></a>
+<a class="navbar-brand me-4" href="#"><svg viewBox="0 0 32 32" width="28" height="28" style="vertical-align:middle;margin-right:8px;margin-top:-3px"><rect width="32" height="32" rx="7" fill="#1a1a20"/><rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="#D4AF6A" stroke-width=".5" opacity=".4"/><text x="16" y="22" text-anchor="middle" font-family="Manrope,sans-serif" font-size="16" font-weight="300" fill="#D4AF6A">S</text></svg>Shay Finance<small>Gestão Financeira</small></a>
 <div class="d-none d-lg-flex"><ul class="nav np" id="mainNav">
 <li class="nav-item"><a class="nav-link active" href="#" data-page="dashboard"><i class="bi bi-grid-1x2 me-1"></i> Dashboard</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="receitas"><i class="bi bi-cash-coin me-1"></i> Receitas</a></li>
@@ -185,7 +185,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Playfair Display',serif;font-weight:600}
 
 <!-- OFFCANVAS -->
 <div class="offcanvas offcanvas-start" tabindex="-1" id="sideMenu">
-<div class="offcanvas-header"><h5 class="serif" style="color:var(--g);font-size:1.3rem"><svg viewBox="0 0 32 32" width="24" height="24" style="vertical-align:middle;margin-right:6px;margin-top:-2px"><rect width="32" height="32" rx="7" fill="#1a1a20"/><rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="#D4AF6A" stroke-width=".5" opacity=".4"/><text x="16" y="23" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#D4AF6A">S</text></svg>Shay Finance</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div>
+<div class="offcanvas-header"><h5 class="serif" style="color:var(--g);font-size:1.3rem"><svg viewBox="0 0 32 32" width="24" height="24" style="vertical-align:middle;margin-right:6px;margin-top:-2px"><rect width="32" height="32" rx="7" fill="#1a1a20"/><rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="#D4AF6A" stroke-width=".5" opacity=".4"/><text x="16" y="22" text-anchor="middle" font-family="Manrope,sans-serif" font-size="16" font-weight="300" fill="#D4AF6A">S</text></svg>Shay Finance</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div>
 <div class="offcanvas-body p-3"><nav class="nav flex-column oc-nav" id="mobNav">
 <a class="nav-link active" href="#" data-page="dashboard"><i class="bi bi-grid-1x2 me-2"></i> Dashboard</a>
 <a class="nav-link" href="#" data-page="receitas"><i class="bi bi-cash-coin me-2"></i> Receitas</a>
@@ -366,6 +366,7 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 <div class="row g-3">
 <div class="col-12">
 <label class="fl">Provedor de IA</label>
+<div style="font-size:.72rem;color:var(--t3);margin-bottom:8px">Selecciona o provider com o <strong style="color:var(--t2)">radio button</strong>, insere a <strong style="color:var(--t2)">API key</strong>, e carrega <strong style="color:var(--t2)">Guardar</strong>. O provider activo fica marcado com <span style="background:var(--g);color:var(--bg);padding:0 4px;border-radius:3px;font-size:.6rem;font-weight:700">EM USO</span>.</div>
 <div id="cfgProviders" style="display:flex;flex-direction:column;gap:8px"></div>
 <button class="btn bo btn-sm mt-2" onclick="saveProviderKeys()"><i class="bi bi-check-lg me-1"></i>Guardar Chaves</button>
 <div style="margin-top:14px;padding:12px;background:var(--bg);border:1px solid var(--bd);border-radius:12px">
@@ -1077,7 +1078,7 @@ addAiMsg('bot','',renderBotMsg(m.content,true))}}});
 
 const c=document.getElementById('aiMessages');c.scrollTop=c.scrollHeight;
 const msgCount=msgs.length;
-document.getElementById('aiStatus').textContent=msgCount>0?`${msgCount} msgs`:'Assistente'}
+const _p=getActiveProvider();document.getElementById('aiStatus').textContent=(_p?_p.nome:'IA')+(msgCount?' · '+msgCount+' msgs':'')}
 
 function showChatList(){const list=document.getElementById('aiChatList');const msgs=document.getElementById('aiMessages');const input=document.getElementById('aiInputArea');
 if(list.style.display==='none'){list.style.display='block';msgs.style.display='none';input.style.display='none';
@@ -1400,6 +1401,7 @@ toast('Shay AI ativada com '+provider?.nome+'!')}
 function initAiChat(){
 const provider=getActiveProvider();
 if(provider){document.getElementById('aiKeySetup').style.display='none';document.getElementById('aiMessages').style.display='flex';document.getElementById('aiInputArea').style.display='block';
+document.getElementById('aiStatus').textContent=provider.nome;
 const chats=getChats();if(chats.length){loadChat(chats[0].id)}else{newChat()}}
 else{
 // Populate provider dropdown in setup
@@ -1562,7 +1564,7 @@ if(chat)document.getElementById('aiChatTitle').textContent=chat.title;
 }catch(e){hideTyping();const errMsg='Erro: '+e.message;addAiMsg('bot',errMsg);if(currentChatId)saveChatMsg(currentChatId,'bot',errMsg);clearAiImage()}
 aiSending=false;document.getElementById('aiInput').disabled=false;document.getElementById('aiInput').focus();
 const msgCount=currentChatId?getChatMessages(currentChatId).length:0;
-document.getElementById('aiStatus').textContent=msgCount>0?`${msgCount} msgs`:'Assistente'}
+const _p=getActiveProvider();document.getElementById('aiStatus').textContent=(_p?_p.nome:'IA')+(msgCount?' · '+msgCount+' msgs':'')}
 
 // ===== PREVIEW CARD RENDERER =====
 function renderCard(a,readonly){
@@ -2000,11 +2002,11 @@ const header=p.empresa!==lastEmpresa?`<div style="font-size:.72rem;font-weight:7
 lastEmpresa=p.empresa;
 const isActive=String(p.id)===String(activeId);
 const hasKey=!!p.api_key;
-return header+`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:${isActive?'rgba(212,175,106,.06)':'var(--bg)'};border:1px solid ${isActive?'rgba(212,175,106,.2)':'var(--bd)'};border-radius:10px">
+return header+`<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:${isActive?'rgba(212,175,106,.08)':'var(--bg)'};border:1px solid ${isActive?'rgba(212,175,106,.25)':'var(--bd)'};border-radius:10px;transition:.2s">
 <input type="radio" name="cfgActiveProvider" value="${p.id}" ${isActive?'checked':''} style="accent-color:var(--g)">
-<div style="flex:1;min-width:0"><div style="font-size:.78rem;font-weight:600;color:var(--t1)">${p.nome}</div><div style="font-size:.65rem;color:var(--t3)">${p.modelo}</div></div>
-<input type="password" id="cfgProvKey_${p.id}" class="form-control" style="font-size:.75rem!important;max-width:160px;padding:4px 8px" placeholder="${p.empresa==='Google'?'AIza...':'sk-ant-...'}" value="${hasKey?'••••••••':''}">
-${hasKey?'<span style="color:var(--mint);font-size:.7rem">✓</span>':''}
+<div style="flex:1;min-width:0"><div style="font-size:.78rem;font-weight:600;color:${isActive?'var(--g)':'var(--t1)'}">${p.nome} ${isActive?'<span style="font-size:.58rem;background:var(--g);color:var(--bg);padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:700;vertical-align:middle">EM USO</span>':''}</div><div style="font-size:.65rem;color:var(--t3)">${p.modelo}</div></div>
+<input type="password" id="cfgProvKey_${p.id}" class="form-control" style="font-size:.75rem!important;max-width:150px;padding:4px 8px" placeholder="${p.empresa==='Google'?'AIza...':'sk-ant-...'}" value="${hasKey?'••••••••':''}">
+${hasKey?'<span style="color:var(--mint);font-size:.8rem" title="Key configurada">✓</span>':'<span style="color:var(--t3);font-size:.7rem">—</span>'}
 </div>`}).join('')}
 // Load GitHub
 document.getElementById('cfgGhToken').value=ghToken?'••••••••••':'';
@@ -2030,7 +2032,13 @@ const inp=document.getElementById('cfgProvKey_'+p.id);
 if(inp&&inp.value&&!inp.value.includes('•')){run(`UPDATE ai_providers SET api_key=? WHERE id=?`,[inp.value,p.id])}});
 // Set active provider
 const radio=document.querySelector('input[name="cfgActiveProvider"]:checked');
-if(radio)run(`INSERT OR REPLACE INTO config VALUES('ai_active_provider',?)`,[radio.value]);
+if(radio){
+run(`INSERT OR REPLACE INTO config VALUES('ai_active_provider',?)`,[radio.value]);
+// Check if selected provider has a key
+const selProv=q0(`SELECT * FROM ai_providers WHERE id=?`,[parseInt(radio.value)]);
+const inp=document.getElementById('cfgProvKey_'+radio.value);
+const hasNewKey=inp&&inp.value&&!inp.value.includes('•');
+if(!selProv?.api_key&&!hasNewKey){toast('⚠️ Provider seleccionado não tem API key!','w')}}
 // Set deploy provider
 const dpSel=document.getElementById('cfgDeployProvider');
 run(`INSERT OR REPLACE INTO config VALUES('ai_deploy_provider',?)`,[dpSel?.value||'']);

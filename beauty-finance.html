@@ -16,7 +16,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14/dist/Observer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{--g:#D4AF6A;--gL:#F5E0A0;--gD:#9B7B3C;--bg:#08080C;--s1:#101015;--s2:#18181F;--s3:#22222A;--bd:#1E1E28;--mint:#4EEAA0;--rose:#FF6090;--lav:#B8A8F0;--coral:#FF8855;--warn:#FFD050;--t1:#F5F0E8;--t2:#C0B098;--t3:#8A7A68;--r:16px;--glow-g:rgba(212,175,106,.15);--glow-m:rgba(78,234,160,.12);--glow-r:rgba(255,96,144,.12);--glow-l:rgba(184,168,240,.12);--glow-c:rgba(255,136,85,.12)}
@@ -362,20 +363,21 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 
 <!-- DASHBOARD -->
 <section class="sp active" id="pg-dashboard">
-<div id="dashMonthNav" style="text-align:center;margin-bottom:4px">
-<div class="mnv"><button onclick="chM(-1)"><i class="bi bi-chevron-left"></i></button><span id="mL"></span><button onclick="chM(1)"><i class="bi bi-chevron-right"></i></button></div>
-</div>
-
-<!-- Dashboard tabs -->
-<div style="display:flex;gap:6px;margin-bottom:16px" id="dashTabs">
+<!-- Dashboard tabs (fixed, never slides) -->
+<div style="display:flex;gap:6px;margin-bottom:12px" id="dashTabs">
 <button class="tl-btn active" data-tab="resumo" onclick="switchDashTab('resumo')"><i class="bi bi-bar-chart-line me-1"></i>Resumo</button>
 <button class="tl-btn" data-tab="agenda" onclick="switchDashTab('agenda')"><i class="bi bi-calendar3 me-1"></i>Agenda</button>
 <button class="tl-btn" data-tab="notas" onclick="switchDashTab('notas')"><i class="bi bi-sticky me-1"></i>Notas</button>
 </div>
 
-<!-- TAB: Resumo -->
+<!-- All panels inside slider -->
 <div id="dashSlider" style="position:relative;overflow:hidden">
 <div id="dashResumo" class="dash-panel" style="position:relative">
+
+<!-- Month nav (inside Resumo panel) -->
+<div style="text-align:center;margin-bottom:12px">
+<div class="mnv"><button onclick="chM(-1)"><i class="bi bi-chevron-left"></i></button><span id="mL"></span><button onclick="chM(1)"><i class="bi bi-chevron-right"></i></button></div>
+</div>
 
 <!-- Hero stat -->
 <div class="ds-hero" id="dsHero">
@@ -467,6 +469,9 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 
 <!-- TAB: Notas -->
 <div id="dashNotas" class="dash-panel" style="position:absolute;top:0;left:0;width:100%;display:none">
+<div style="text-align:center;margin-bottom:12px">
+<div class="mnv"><button onclick="chM(-1)"><i class="bi bi-chevron-left"></i></button><span id="mLNotas" class="mL-mirror"></span><button onclick="chM(1)"><i class="bi bi-chevron-right"></i></button></div>
+</div>
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
 <span style="font-size:.78rem;color:var(--t3)"><span id="notasCount">0</span> notas</span>
 <button class="tl-btn" onclick="criarNota()"><i class="bi bi-plus-lg me-1"></i>Nova Nota</button>
@@ -1151,7 +1156,7 @@ function getDespCatsByGroup(grupo){return [...new Set(getCatDespesas().filter(r=
 function getDespSubsByCat(cat){return getCatDespesas().filter(r=>r.cat===cat).map(r=>r.sub)}
 
 // ===== UI HELPERS =====
-function uM(){document.getElementById('mL').textContent=`${MN[cM]} ${cY}`}
+function uM(){const t=`${MN[cM]} ${cY}`;document.getElementById('mL').textContent=t;const n=document.getElementById('mLNotas');if(n)n.textContent=t}
 function chM(d){cM+=d;if(cM>11){cM=0;cY++}if(cM<0){cM=11;cY--}uM();rA()}
 function toast(msg,t='ok'){const a=document.getElementById('tA'),el=document.createElement('div');el.className='toast toast-bf show';el.setAttribute('role','alert');
 el.innerHTML=`<div class="toast-body d-flex align-items-center gap-2"><i class="bi ${t==='ok'?'bi-check-circle-fill text-success':'bi-exclamation-triangle-fill text-warning'}"></i> ${msg}</div>`;
@@ -1310,7 +1315,7 @@ let dashAnimating=false;
 function switchDashTab(tab){
 if(tab===currentDashTab||dashAnimating)return;
 document.querySelectorAll('#dashTabs .tl-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
-document.getElementById('dashMonthNav').style.display=tab==='agenda'?'none':'block';
+
 
 const oldIdx=DASH_TABS.indexOf(currentDashTab);
 const newIdx=DASH_TABS.indexOf(tab);
@@ -1350,115 +1355,94 @@ currentDashTab=tab;
 if(tab==='agenda')initCalendar();
 if(tab==='notas')renderNotas()}
 
-// Swipe with real-time finger tracking
-(function(){
+// ===== GSAP Observer — Dashboard Slider =====
+gsap.registerPlugin(Observer);
+
+;(function(){
 const slider=document.getElementById('dashSlider');
-let startX=0,startY=0,dragging=false,dx=0;
-let curPanel=null,nextPanel=null,prevPanel=null;
-let sliderW=0,vertical=false;
+let curPanel=null,nextPanel=null,prevPanel=null,sliderW=0,totalDx=0;
 
 function getPanels(){
 const idx=DASH_TABS.indexOf(currentDashTab);
-const cur=document.getElementById(DASH_PANELS[currentDashTab]);
-const nxt=idx<DASH_TABS.length-1?document.getElementById(DASH_PANELS[DASH_TABS[idx+1]]):null;
-const prv=idx>0?document.getElementById(DASH_PANELS[DASH_TABS[idx-1]]):null;
-return{cur,nxt,prv,idx}}
+return{
+cur:document.getElementById(DASH_PANELS[currentDashTab]),
+nxt:idx<DASH_TABS.length-1?document.getElementById(DASH_PANELS[DASH_TABS[idx+1]]):null,
+prv:idx>0?document.getElementById(DASH_PANELS[DASH_TABS[idx-1]]):null,
+idx}}
 
-slider.addEventListener('touchstart',function(e){
-if(dashAnimating)return;
-if(e.target.closest('#fcCalendar'))return;
-startX=e.touches[0].clientX;startY=e.touches[0].clientY;
-dx=0;dragging=true;vertical=false;
-sliderW=slider.offsetWidth;
+function preparePanels(){
+sliderW=slider.offsetWidth;totalDx=0;
 const p=getPanels();curPanel=p.cur;nextPanel=p.nxt;prevPanel=p.prv;
-
-// Prepare panels off-screen
 curPanel.style.position='absolute';
+slider.style.height=curPanel.offsetHeight+'px';
 if(nextPanel){nextPanel.style.display='block';nextPanel.style.position='absolute';gsap.set(nextPanel,{x:sliderW})}
-if(prevPanel){prevPanel.style.display='block';prevPanel.style.position='absolute';gsap.set(prevPanel,{x:-sliderW})}
-// Set slider height
-slider.style.height=curPanel.offsetHeight+'px'
-},{passive:true});
-
-slider.addEventListener('touchmove',function(e){
-if(!dragging)return;
-const mx=e.touches[0].clientX-startX;
-const my=e.touches[0].clientY-startY;
-
-// First move: decide if horizontal or vertical scroll
-if(!vertical&&Math.abs(mx)<8&&Math.abs(my)<8)return;
-if(!vertical){
-if(Math.abs(my)>Math.abs(mx)){dragging=false;resetPanels();return}
-vertical=true}
-
-dx=mx;
-// Clamp: can't drag if no panel in that direction
-if(dx>0&&!prevPanel)dx=dx*0.2;
-if(dx<0&&!nextPanel)dx=dx*0.2;
-
-// Move panels in real-time
-gsap.set(curPanel,{x:dx});
-if(dx<0&&nextPanel)gsap.set(nextPanel,{x:sliderW+dx});
-if(dx>0&&prevPanel)gsap.set(prevPanel,{x:-sliderW+dx})
-},{passive:true});
-
-slider.addEventListener('touchend',function(){
-if(!dragging){return}dragging=false;
-const threshold=sliderW*0.25;
-
-// Decide: complete or snap back
-if(dx<-threshold&&nextPanel){
-// Complete: slide left to next
-const newTab=DASH_TABS[DASH_TABS.indexOf(currentDashTab)+1];
-dashAnimating=true;
-gsap.to(curPanel,{x:-sliderW,duration:0.25,ease:'power2.out',onComplete:()=>{curPanel.style.display='none'}});
-gsap.to(nextPanel,{x:0,duration:0.25,ease:'power2.out',onComplete:()=>{
-finishSlide(newTab,nextPanel);if(prevPanel)prevPanel.style.display='none'}})
-}else if(dx>threshold&&prevPanel){
-// Complete: slide right to prev
-const newTab=DASH_TABS[DASH_TABS.indexOf(currentDashTab)-1];
-dashAnimating=true;
-gsap.to(curPanel,{x:sliderW,duration:0.25,ease:'power2.out',onComplete:()=>{curPanel.style.display='none'}});
-gsap.to(prevPanel,{x:0,duration:0.25,ease:'power2.out',onComplete:()=>{
-finishSlide(newTab,prevPanel);if(nextPanel)nextPanel.style.display='none'}})
-}else{
-// Snap back
-gsap.to(curPanel,{x:0,duration:0.25,ease:'power2.out'});
-if(nextPanel)gsap.to(nextPanel,{x:sliderW,duration:0.25,ease:'power2.out',onComplete:()=>{nextPanel.style.display='none'}});
-if(prevPanel)gsap.to(prevPanel,{x:-sliderW,duration:0.25,ease:'power2.out',onComplete:()=>{prevPanel.style.display='none'}});
-// Restore current panel
-setTimeout(()=>{curPanel.style.position='relative';gsap.set(curPanel,{x:0});slider.style.height='auto'},300)}
-},{passive:true});
+if(prevPanel){prevPanel.style.display='block';prevPanel.style.position='absolute';gsap.set(prevPanel,{x:-sliderW})}}
 
 function finishSlide(tab,panel){
 panel.style.position='relative';gsap.set(panel,{x:0});
 slider.style.height='auto';dashAnimating=false;
 currentDashTab=tab;
 document.querySelectorAll('#dashTabs .tl-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
-document.getElementById('dashMonthNav').style.display=tab==='agenda'?'none':'block';
 if(tab==='agenda')initCalendar();
 if(tab==='notas')renderNotas()}
 
-function resetPanels(){
-if(curPanel){curPanel.style.position='relative';gsap.set(curPanel,{x:0})}
-if(nextPanel){nextPanel.style.display='none'}
-if(prevPanel){prevPanel.style.display='none'}
-slider.style.height='auto'}
-})()
+function snapBack(){
+dashAnimating=true;
+gsap.to(curPanel,{x:0,duration:0.3,ease:'power3.out'});
+if(nextPanel)gsap.to(nextPanel,{x:sliderW,duration:0.3,ease:'power3.out',onComplete:()=>{nextPanel.style.display='none'}});
+if(prevPanel)gsap.to(prevPanel,{x:-sliderW,duration:0.3,ease:'power3.out',onComplete:()=>{prevPanel.style.display='none'}});
+setTimeout(()=>{curPanel.style.position='relative';gsap.set(curPanel,{x:0});slider.style.height='auto';dashAnimating=false},350)}
 
-// Calendar swipe (navigate months/weeks)
-;(function(){
-let sx=0,sy=0;
-document.addEventListener('touchstart',function(e){
-if(!e.target.closest('#fcCalendar'))return;
-sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
-document.addEventListener('touchend',function(e){
-if(!e.target.closest('#fcCalendar')||!fcCalendar)return;
-const dx=e.changedTouches[0].clientX-sx;
-const dy=e.changedTouches[0].clientY-sy;
-if(Math.abs(dx)<60||Math.abs(dy)>Math.abs(dx))return;
-if(dx<-60){fcCalendar.next();updateFcTitle()}
-else if(dx>60){fcCalendar.prev();updateFcTitle()}},{passive:true})
+// Main slider Observer
+Observer.create({
+target:slider,
+type:'touch,pointer',
+dragMinimum:5,
+lockAxis:true,
+ignore:'#fcCalendar',
+onDragStart:()=>{
+if(dashAnimating)return;
+preparePanels()},
+onDrag:(self)=>{
+if(dashAnimating||!curPanel)return;
+totalDx+=(self.deltaX||0);
+let dx=totalDx;
+// Elastic resistance at edges
+if(dx>0&&!prevPanel)dx=dx*0.15;
+if(dx<0&&!nextPanel)dx=dx*0.15;
+gsap.set(curPanel,{x:dx});
+if(dx<0&&nextPanel)gsap.set(nextPanel,{x:sliderW+dx});
+if(dx>0&&prevPanel)gsap.set(prevPanel,{x:-sliderW+dx})},
+onDragEnd:(self)=>{
+if(dashAnimating||!curPanel)return;
+const threshold=sliderW*0.2;
+const vel=Math.abs(self.velocityX);
+// Complete if past threshold OR fast enough velocity
+const shouldComplete=Math.abs(totalDx)>threshold||vel>800;
+if(shouldComplete&&totalDx<0&&nextPanel){
+const newTab=DASH_TABS[DASH_TABS.indexOf(currentDashTab)+1];
+dashAnimating=true;
+gsap.to(curPanel,{x:-sliderW,duration:0.3,ease:'power3.out',onComplete:()=>{curPanel.style.display='none'}});
+gsap.to(nextPanel,{x:0,duration:0.3,ease:'power3.out',onComplete:()=>{
+finishSlide(newTab,nextPanel);if(prevPanel)prevPanel.style.display='none'}})
+}else if(shouldComplete&&totalDx>0&&prevPanel){
+const newTab=DASH_TABS[DASH_TABS.indexOf(currentDashTab)-1];
+dashAnimating=true;
+gsap.to(curPanel,{x:sliderW,duration:0.3,ease:'power3.out',onComplete:()=>{curPanel.style.display='none'}});
+gsap.to(prevPanel,{x:0,duration:0.3,ease:'power3.out',onComplete:()=>{
+finishSlide(newTab,prevPanel);if(nextPanel)nextPanel.style.display='none'}})
+}else{snapBack()}}
+});
+
+// Calendar Observer (separate — navigate months/weeks)
+Observer.create({
+target:'#fcCalendar',
+type:'touch',
+tolerance:60,
+lockAxis:true,
+onLeft:()=>{if(fcCalendar){fcCalendar.next();updateFcTitle()}},
+onRight:()=>{if(fcCalendar){fcCalendar.prev();updateFcTitle()}}
+})
 })()
 
 // ===== EVENTOS (Agenda) =====
@@ -2334,6 +2318,22 @@ return `ESQUEMA:
 Tabelas principais: receitas(id,date,type,categoria,servico,descricao,amount,comissao,client,notes), despesas(id,date,categoria,subcategoria,descricao,amount,pagamento,notes)
 Tabelas pessoais: eventos(id,title,date_start,time_start,time_end,all_day,tipo,recurrence,recurrence_end,done,color,notes,created_at), notas(id,title,content,color,pinned,created_at,updated_at)
 
+REGRA CRÍTICA — IDs: Todas as tabelas usam IDs gerados (UIDs tipo 'lz4abc1x'). NUNCA tentes adivinhar um ID.
+Para EDITAR/APAGAR um registo, PRIMEIRO faz SELECT para descobrir o ID:
+  Passo 1: SELECT id, title FROM eventos WHERE title LIKE '%ginásio%' ORDER BY created_at DESC LIMIT 1
+  Passo 2: UPDATE eventos SET time_start='18:00' WHERE id='<id encontrado no passo 1>'
+
+Exemplos de manipulação de eventos:
+  Consultar: SELECT id, title, date_start, time_start FROM eventos WHERE date_start='2026-03-22' ORDER BY created_at DESC
+  Alterar hora: UPDATE eventos SET time_start='14:00', time_end='15:00' WHERE id='<id>'
+  Marcar feito: UPDATE eventos SET done=1 WHERE id='<id>'
+  Apagar: DELETE FROM eventos WHERE id='<id>'
+
+Exemplos de manipulação de notas:
+  Consultar: SELECT id, title FROM notas ORDER BY updated_at DESC
+  Editar: UPDATE notas SET content='novo texto', updated_at=datetime() WHERE id='<id>'
+  Pin: UPDATE notas SET pinned=1 WHERE id='<id>'
+
 Tabelas de configuração (árvore hierárquica):
 - categorias_servico(id,nome,ativa) → servicos(id,categoria_id→categorias_servico.id,nome,preco,duracao,ativo)
 - categorias_despesa(id,nome,ativa) → subcategorias_despesa(id,categoria_id→categorias_despesa.id,nome,ativa)
@@ -2551,10 +2551,14 @@ COMO DECIDIR (exemplos reais):
   "renda 400", "telemóvel 50€ multibanco", "comprei kerastase 67€",
   "gasolina 40 transferência", "formação 150€"
 
-→ "run_sql" — Alterar categorias/esquema:
+→ "run_sql" — Alterar categorias/esquema/eventos/notas:
   "adiciona categoria Corpo", "remove subcategoria X",
   "muda o nome da categoria Unhas para Nail Art",
-  "adiciona um serviço Lash Lift na categoria Pestanas"
+  "adiciona um serviço Lash Lift na categoria Pestanas",
+  "altera a hora do evento ginásio para as 19h",
+  "apaga o evento dentista", "marca o lembrete como feito",
+  "muda o título da nota Material para Encomendas"
+  IMPORTANTE: para editar eventos/notas, PRIMEIRO faz SELECT para encontrar o ID, DEPOIS UPDATE/DELETE com esse ID
 
 → "deploy_code" — Alterar visual/código da app:
   "muda a cor do título", "adiciona item Clientes ao menu",
@@ -2854,8 +2858,13 @@ DECIDE:
 \`\`\`json
 {"action":"query_sql","sql":"SELECT ...","description":"porquê"}
 \`\`\`
+- Precisas de ALTERAR dados (UPDATE/DELETE) → devolve:
+\`\`\`json
+{"action":"run_sql","sql":"UPDATE/DELETE ...","description":"porquê"}
+\`\`\`
 
-Tabelas: receitas(date,type[comissao|extra],categoria,servico,descricao,amount,client), despesas(date,categoria,subcategoria,descricao,amount,pagamento)
+Tabelas: receitas(id,date,type,categoria,servico,descricao,amount,client), despesas(id,date,categoria,subcategoria,descricao,amount,pagamento), eventos(id,title,date_start,time_start,time_end,tipo,done,notes,created_at), notas(id,title,content,color,pinned)
+IMPORTANTE: Para editar/apagar, PRIMEIRO encontra o ID com SELECT, depois usa UPDATE/DELETE WHERE id='<id encontrado>'.
 Passo ${step}/${MAX_QUERY_STEPS}.${step>=MAX_QUERY_STEPS?' ÚLTIMO — responde agora.':''}`;
 
 let reply='';
@@ -2875,7 +2884,19 @@ if(next.action==='query_sql'&&next.sql){
 const nextResults=execQuery(next.sql);
 addThinkStep(thinkContainer,step,next.description||'Consulta adicional',next.sql,nextResults);
 queryLog.push({sql:next.sql,description:next.description||'',results:nextResults});
-return queryThinkLoop(queryLog,thinkContainer,step+1)}}catch(e){}}
+return queryThinkLoop(queryLog,thinkContainer,step+1)}
+if(next.action==='run_sql'&&next.sql){
+// Execute write operation within think chain
+try{run(next.sql);
+const writeResult={count:1,text:'✅ Executado com sucesso.'};
+addThinkStep(thinkContainer,step,next.description||'Alteração',next.sql,writeResult);
+queryLog.push({sql:next.sql,description:next.description||'',results:writeResult});
+rA();
+return queryThinkLoop(queryLog,thinkContainer,step+1)}
+catch(e){const errResult={count:0,text:'❌ Erro: '+e.message};
+addThinkStep(thinkContainer,step,next.description||'Erro',next.sql,errResult);
+queryLog.push({sql:next.sql,description:next.description||'',results:errResult});
+return queryThinkLoop(queryLog,thinkContainer,step+1)}}}catch(e){}}
 
 return reply.replace(/```json[\s\S]*?```/g,'').trim()||formatFinalAnswer(queryLog)}
 

@@ -15,6 +15,7 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
@@ -25,6 +26,21 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--gD);border-radius:3px}
 
 .nb{background:var(--s1)!important;border-bottom:1px solid var(--bd);padding:10px 0;position:sticky;top:0;z-index:1030;box-shadow:0 1px 20px rgba(0,0,0,.4)}
+
+/* Bell notifications */
+#bellBtn.has-notif{color:var(--g);animation:bellShake 2s ease-in-out infinite}
+#bellBtn.has-notif .bi-bell::before{content:'\F5D4'}
+@keyframes bellShake{0%,100%{transform:rotate(0)}5%{transform:rotate(12deg)}10%{transform:rotate(-10deg)}15%{transform:rotate(6deg)}20%{transform:rotate(0)}}
+.notif-group{font-size:.6rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;padding:8px 12px 4px}
+.notif-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:10px;margin:2px 0;transition:background .2s;cursor:default}
+.notif-item:hover{background:var(--s2)}
+.notif-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+.notif-text{flex:1;min-width:0}
+.notif-title{font-size:.76rem;font-weight:600;color:var(--t1);line-height:1.3}
+.notif-sub{font-size:.65rem;color:var(--t3);margin-top:1px}
+.notif-action{flex-shrink:0}
+.notif-action button{background:rgba(78,234,160,.1);border:1px solid rgba(78,234,160,.15);color:var(--mint);border-radius:6px;padding:3px 8px;font-size:.65rem;font-weight:600;cursor:pointer;transition:.2s}
+.notif-action button:hover{background:rgba(78,234,160,.2)}
 .nb .navbar-brand{font-family:'Manrope',sans-serif;font-size:1.3rem;color:var(--g)!important;text-decoration:none}
 .np .nav-link{color:var(--t2);font-size:.8rem;font-weight:500;padding:8px 16px;border-radius:10px;transition:.25s;border:1px solid transparent}
 .np .nav-link:hover{color:var(--t1);background:var(--s2)}
@@ -42,6 +58,27 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 
 .sc{background:linear-gradient(145deg,var(--s1),var(--bg));border:1px solid var(--bd);border-radius:var(--r);padding:22px;position:relative;overflow:hidden;transition:transform .3s,border-color .3s,box-shadow .3s;height:100%;backdrop-filter:blur(8px)}
 .sc:hover{transform:translateY(-3px);border-color:rgba(212,175,106,.3);box-shadow:0 8px 32px var(--glow-g)}
+
+/* Dashboard Hero */
+.ds-hero{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(212,175,106,.06),rgba(16,16,21,.9));border:1px solid rgba(212,175,106,.15);border-radius:16px;padding:18px 20px;margin-bottom:12px;box-shadow:0 0 24px rgba(212,175,106,.04)}
+.ds-hero-main{flex:1}
+.ds-hero-label{font-size:.62rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:2px;margin-bottom:2px}
+.ds-hero-val{font-family:'JetBrains Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--t1);line-height:1.2;text-shadow:0 0 30px rgba(240,235,224,.05)}
+.ds-hero-sub{display:flex;gap:8px;margin-top:6px}
+.ds-tag{font-size:.65rem;font-weight:600;padding:3px 10px;border-radius:6px}
+.ds-tag.g{background:rgba(212,175,106,.08);color:var(--g);border:1px solid rgba(212,175,106,.12)}
+.ds-tag.m{background:rgba(78,234,160,.08);color:var(--mint);border:1px solid rgba(78,234,160,.12)}
+.ds-hero-right{text-align:right;padding-left:16px;border-left:1px solid var(--bd)}
+.ds-hero-saldo{display:flex;flex-direction:column;gap:2px}
+.ds-hero-val2{font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--mint)}
+
+/* Compact metrics */
+.ds-metrics{display:flex;align-items:center;background:linear-gradient(145deg,var(--s1),var(--bg));border:1px solid var(--bd);border-radius:12px;padding:12px 8px;margin-bottom:16px;overflow-x:auto;gap:0}
+.ds-metric{display:flex;align-items:center;gap:8px;flex:1;min-width:0;padding:0 12px}
+.ds-metric i{font-size:1rem;flex-shrink:0}
+.ds-metric-val{font-family:'JetBrains Mono',monospace;font-size:.88rem;font-weight:700;color:var(--t1);white-space:nowrap}
+.ds-metric-label{font-size:.58rem;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+.ds-metric-sep{width:1px;height:28px;background:var(--bd);flex-shrink:0}
 .sc .al{position:absolute;top:0;left:0;width:100%;height:2px;filter:blur(1px)}
 .sc .si{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:12px}
 .sc .sl{font-family:'Manrope',sans-serif;font-size:.65rem;color:var(--t3);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;font-weight:700}
@@ -124,6 +161,39 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 .tl-row .tl-card{width:calc(100% - 36px);margin-left:36px!important;margin-right:0!important}
 .tl-row .tl-conn{display:none}
 }
+
+/* FullCalendar dark theme */
+
+/* Notas post-its */
+.nota-card{border-radius:12px;padding:14px;cursor:pointer;position:relative;transition:transform .2s,box-shadow .2s;min-height:100px;display:flex;flex-direction:column}
+.nota-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.nota-card .nota-pin{position:absolute;top:8px;right:8px;font-size:.7rem;cursor:pointer;opacity:.5;transition:.2s}
+.nota-card .nota-pin:hover,.nota-card .nota-pin.pinned{opacity:1}
+.nota-card .nota-title{font-size:.78rem;font-weight:700;margin-bottom:6px;color:rgba(0,0,0,.8)}
+.nota-card .nota-body{font-size:.68rem;color:rgba(0,0,0,.55);flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;line-height:1.5}
+.nota-card .nota-date{font-size:.58rem;color:rgba(0,0,0,.35);margin-top:8px}
+.nota-card .nota-acts{position:absolute;bottom:8px;right:8px;display:flex;gap:2px;opacity:0;transition:.2s}
+.nota-card:hover .nota-acts{opacity:1}
+.nota-card .nota-acts button{background:rgba(0,0,0,.15);border:none;color:rgba(0,0,0,.6);border-radius:6px;padding:3px 6px;font-size:.65rem;cursor:pointer}
+
+/* Nota edit modal */
+.nota-colors{display:flex;gap:6px;margin:10px 0}
+.nota-colors span{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.2s}
+.nota-colors span:hover,.nota-colors span.sel{border-color:var(--t1);transform:scale(1.15)}
+
+#fcCalendar{--fc-border-color:var(--bd);--fc-page-bg-color:transparent;--fc-neutral-bg-color:var(--s1);--fc-list-event-hover-bg-color:var(--s2);--fc-today-bg-color:rgba(212,175,106,.04);--fc-highlight-color:rgba(212,175,106,.08);--fc-non-business-color:rgba(0,0,0,.15)}
+#fcCalendar .fc{font-family:'Manrope',sans-serif;font-size:.78rem}
+#fcCalendar .fc-toolbar-title{font-size:1rem!important;font-weight:700;color:var(--g)}
+#fcCalendar .fc-button{background:var(--s2)!important;border:1px solid var(--bd)!important;color:var(--t2)!important;font-size:.72rem!important;font-weight:600;padding:4px 10px!important;border-radius:8px!important}
+#fcCalendar .fc-button:hover,#fcCalendar .fc-button-active{background:rgba(212,175,106,.1)!important;color:var(--g)!important;border-color:rgba(212,175,106,.25)!important}
+#fcCalendar .fc-col-header-cell{background:var(--s1);color:var(--t3);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:8px 0}
+#fcCalendar .fc-daygrid-day-number{color:var(--t2);font-size:.75rem;padding:4px 8px}
+#fcCalendar .fc-day-today .fc-daygrid-day-number{color:var(--g);font-weight:700}
+#fcCalendar .fc-event{border:none!important;border-radius:6px!important;padding:2px 6px!important;font-size:.68rem!important;font-weight:600;cursor:pointer}
+#fcCalendar .fc-timegrid-slot{height:32px!important}
+#fcCalendar .fc-timegrid-slot-label{font-size:.62rem;color:var(--t3)}
+#fcCalendar .fc-scrollgrid{border:none!important}
+#fcCalendar .fc-theme-standard td,#fcCalendar .fc-theme-standard th{border-color:var(--bd)}
 
 .mnv{display:inline-flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:4px}
 .mnv button{background:transparent;border:none;color:var(--t3);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s}
@@ -232,11 +302,30 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 <li class="nav-item"><a class="nav-link active" href="#" data-page="dashboard"><i class="bi bi-grid-1x2 me-1"></i> Dashboard</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="receitas"><i class="bi bi-cash-coin me-1"></i> Receitas</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="despesas"><i class="bi bi-receipt me-1"></i> Despesas</a></li>
+<li class="nav-item"><a class="nav-link" href="#" data-page="dashboard" onclick="setTimeout(()=>switchDashTab('agenda'),100)"><i class="bi bi-calendar3 me-1"></i> Agenda</a></li>
+<li class="nav-item"><a class="nav-link" href="#" data-page="dashboard" onclick="setTimeout(()=>switchDashTab('notas'),100)"><i class="bi bi-sticky me-1"></i> Notas</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="relatorios"><i class="bi bi-bar-chart-line me-1"></i> Relatórios</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="importar"><i class="bi bi-file-earmark-arrow-up me-1"></i> Importar</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="config"><i class="bi bi-gear me-1"></i> Config</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="ajuda"><i class="bi bi-question-circle me-1"></i> Ajuda</a></li>
 </ul></div>
+<!-- Bell notifications -->
+<div class="ms-auto" style="position:relative">
+<button id="bellBtn" onclick="toggleBell()" style="background:none;border:none;color:var(--t3);font-size:1.2rem;padding:6px 10px;cursor:pointer;position:relative;transition:.2s">
+<i class="bi bi-bell"></i>
+<span id="bellBadge" style="display:none;position:absolute;top:2px;right:4px;background:#FF4050;color:#fff;font-size:.55rem;font-weight:700;min-width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center;line-height:1">0</span>
+</button>
+<div id="bellDrop" style="display:none;position:absolute;right:0;top:100%;margin-top:8px;width:320px;max-height:420px;overflow-y:auto;background:var(--s1);border:1px solid var(--bd);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.5);z-index:1060">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--bd)">
+<span style="font-size:.82rem;font-weight:700;color:var(--t1)"><i class="bi bi-bell me-1" style="color:var(--g)"></i>Notificações</span>
+<button onclick="toggleBell()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:.9rem"><i class="bi bi-x-lg"></i></button>
+</div>
+<div id="bellList" style="padding:8px"></div>
+<div style="padding:8px 16px;border-top:1px solid var(--bd);text-align:center">
+<button onclick="clearNotifications()" style="background:none;border:none;color:var(--t3);font-size:.7rem;cursor:pointer">Limpar tudo</button>
+</div>
+</div>
+</div>
 </div></nav>
 
 <!-- OFFCANVAS -->
@@ -246,6 +335,10 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 <a class="nav-link active" href="#" data-page="dashboard"><i class="bi bi-grid-1x2 me-2"></i> Dashboard</a>
 <a class="nav-link" href="#" data-page="receitas"><i class="bi bi-cash-coin me-2"></i> Receitas</a>
 <a class="nav-link" href="#" data-page="despesas"><i class="bi bi-receipt me-2"></i> Despesas</a>
+<hr style="border-color:var(--bd);margin:8px 0">
+<a class="nav-link" href="#" data-page="dashboard" data-tab="agenda" onclick="setTimeout(()=>switchDashTab('agenda'),100)"><i class="bi bi-calendar3 me-2"></i> Agenda</a>
+<a class="nav-link" href="#" data-page="dashboard" data-tab="notas" onclick="setTimeout(()=>switchDashTab('notas'),100)"><i class="bi bi-sticky me-2"></i> Notas</a>
+<hr style="border-color:var(--bd);margin:8px 0">
 <a class="nav-link" href="#" data-page="relatorios"><i class="bi bi-bar-chart-line me-2"></i> Relatórios</a>
 <a class="nav-link" href="#" data-page="importar"><i class="bi bi-file-earmark-arrow-up me-2"></i> Importar</a>
 <a class="nav-link" href="#" data-page="config"><i class="bi bi-gear me-2"></i> Configurações</a>
@@ -262,17 +355,75 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 
 <!-- DASHBOARD -->
 <section class="sp active" id="pg-dashboard">
-<div class="ph"><h2>Dashboard</h2></div>
-<div style="display:flex;justify-content:center;margin-bottom:20px"><div class="mnv"><button onclick="chM(-1)"><i class="bi bi-chevron-left"></i></button><span id="mL"></span><button onclick="chM(1)"><i class="bi bi-chevron-right"></i></button></div></div>
-<div class="row g-3 mb-4">
-<div class="col-6 col-lg"><div class="sc"><div class="al ag"></div><div class="si ig"><i class="bi bi-currency-euro"></i></div><div class="sl">Minha Receita</div><div class="sv" id="sB">€0</div><div class="ss">total este mês</div></div></div>
-<div class="col-6 col-lg"><div class="sc"><div class="al am"></div><div class="si im"><i class="bi bi-wallet2"></i></div><div class="sl">Salão / Extra</div><div class="sv" id="sL">€0<br>€0</div><div class="ss">50% / 100%</div></div></div>
-<div class="col-6 col-lg"><div class="sc"><div class="al ar"></div><div class="si ir"><i class="bi bi-arrow-down-circle"></i></div><div class="sl">Despesas</div><div class="sv" id="sD">€0</div><div class="ss">este mês</div></div></div>
-<div class="col-6 col-lg"><div class="sc"><div class="al al2"></div><div class="si il"><i class="bi bi-piggy-bank"></i></div><div class="sl">Saldo</div><div class="sv" id="sS">€0</div><div class="ss" id="sSs">receita − despesas</div></div></div>
-<div class="col-6 col-lg"><div class="sc"><div class="al ac"></div><div class="si ic"><i class="bi bi-scissors"></i></div><div class="sl">Serviços</div><div class="sv" id="sN">0</div><div class="ss">realizados</div></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+<h2 style="font-size:1.5rem;margin:0;color:var(--g)">Dashboard</h2>
+<div class="mnv"><button onclick="chM(-1)"><i class="bi bi-chevron-left"></i></button><span id="mL"></span><button onclick="chM(1)"><i class="bi bi-chevron-right"></i></button></div>
+</div>
+
+<!-- Dashboard tabs -->
+<div style="display:flex;gap:6px;margin-bottom:16px" id="dashTabs">
+<button class="tl-btn active" data-tab="resumo" onclick="switchDashTab('resumo')"><i class="bi bi-bar-chart-line me-1"></i>Resumo</button>
+<button class="tl-btn" data-tab="agenda" onclick="switchDashTab('agenda')"><i class="bi bi-calendar3 me-1"></i>Agenda</button>
+<button class="tl-btn" data-tab="notas" onclick="switchDashTab('notas')"><i class="bi bi-sticky me-1"></i>Notas</button>
+</div>
+
+<!-- TAB: Resumo -->
+<div id="dashResumo">
+
+<!-- Hero stat -->
+<div class="ds-hero" id="dsHero">
+<div class="ds-hero-main">
+<div class="ds-hero-label">Minha Receita</div>
+<div class="ds-hero-val" id="sB">€0</div>
+<div class="ds-hero-sub"><span class="ds-tag g" id="sLsal">€0 salão</span><span class="ds-tag m" id="sLext">€0 extra</span></div>
+</div>
+<div class="ds-hero-right">
+<div class="ds-hero-saldo"><span class="ds-hero-label">Saldo</span><span class="ds-hero-val2" id="sS">€0</span></div>
+</div>
+</div>
+
+<!-- Compact metrics row -->
+<div class="ds-metrics">
+<div class="ds-metric">
+<i class="bi bi-arrow-down-circle" style="color:var(--coral)"></i>
+<div><div class="ds-metric-val" id="sD">€0</div><div class="ds-metric-label">Despesas</div></div>
+</div>
+<div class="ds-metric-sep"></div>
+<div class="ds-metric">
+<i class="bi bi-building" style="color:var(--g)"></i>
+<div><div class="ds-metric-val" id="sBruto">€0</div><div class="ds-metric-label">Bruto Salão</div></div>
+</div>
+<div class="ds-metric-sep"></div>
+<div class="ds-metric">
+<i class="bi bi-graph-up-arrow" style="color:var(--mint)"></i>
+<div><div class="ds-metric-val" id="sAvg">€0</div><div class="ds-metric-label">Média/dia</div></div>
+</div>
+<div class="ds-metric-sep"></div>
+<div class="ds-metric">
+<i class="bi bi-calendar-check" style="color:var(--lav)"></i>
+<div><div class="ds-metric-val" id="sDays">0</div><div class="ds-metric-label">Dias activos</div></div>
+</div>
 </div>
 <div class="row g-3 mb-4"><div class="col-lg-8"><div class="cc"><h5>Evolução Mensal</h5><canvas id="cL" height="100"></canvas></div></div>
 <div class="col-lg-4"><div class="cc"><h5>Despesas por Categoria</h5><canvas id="cD" height="200"></canvas></div></div></div>
+<!-- Quick previews: Events + Notes -->
+<div id="dashQuickPreviews" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+<div id="qpEvents" style="display:none;flex:1;min-width:200px;background:linear-gradient(145deg,var(--s1),var(--bg));border:1px solid var(--bd);border-radius:12px;padding:12px 14px;cursor:pointer" onclick="switchDashTab('agenda')">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+<span style="font-size:.65rem;font-weight:700;color:var(--lav);text-transform:uppercase;letter-spacing:1.5px"><i class="bi bi-calendar3 me-1"></i>Próximos</span>
+<span style="font-size:.6rem;color:var(--t3)">ver agenda →</span>
+</div>
+<div id="qpEvtList" style="display:flex;flex-direction:column;gap:4px"></div>
+</div>
+<div id="qpNotes" style="display:none;flex:1;min-width:200px;background:linear-gradient(145deg,var(--s1),var(--bg));border:1px solid var(--bd);border-radius:12px;padding:12px 14px;cursor:pointer" onclick="switchDashTab('notas')">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+<span style="font-size:.65rem;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:1.5px"><i class="bi bi-pin-angle me-1"></i>Fixadas</span>
+<span style="font-size:.6rem;color:var(--t3)">ver notas →</span>
+</div>
+<div id="qpNoteList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+</div>
+</div>
+
 <div class="dc" style="border:none;background:transparent;box-shadow:none">
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
 <h5 style="margin:0;font-size:.88rem;font-weight:700"><i class="bi bi-clock-history me-2" style="color:var(--g)"></i>Timeline</h5>
@@ -284,6 +435,29 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 <div id="timeline"></div>
 </div>
 <div class="es" id="eD" style="display:none"><i class="bi bi-inbox" style="font-size:2.5rem;opacity:.3"></i><p class="mt-2">Sem transações este mês</p></div></div>
+</div><!-- /dashResumo -->
+
+<!-- TAB: Agenda -->
+<div id="dashAgenda" style="display:none">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+<span style="font-size:.78rem;color:var(--t3)"><span id="evtCount">0</span> eventos</span>
+<button class="tl-btn" onclick="openEvento()"><i class="bi bi-plus-lg me-1"></i>Novo Evento</button>
+</div>
+<div id="fcCalendar" style="border-radius:12px;overflow:hidden;margin-bottom:16px"></div>
+<!-- Upcoming events list -->
+<div id="evtList"></div>
+</div>
+
+<!-- TAB: Notas -->
+<div id="dashNotas" style="display:none">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+<span style="font-size:.78rem;color:var(--t3)"><span id="notasCount">0</span> notas</span>
+<button class="tl-btn" onclick="criarNota()"><i class="bi bi-plus-lg me-1"></i>Nova Nota</button>
+</div>
+<div id="notasGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px"></div>
+<div class="es" id="eNotas" style="display:none"><i class="bi bi-sticky" style="font-size:2.5rem;opacity:.3"></i><p class="mt-2">Sem notas</p></div>
+</div>
+
 </section>
 
 <!-- RECEITAS -->
@@ -642,12 +816,49 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 <div class="modal-footer"><button class="btn bo" data-bs-dismiss="modal">Cancelar</button><button class="btn bg2" onclick="sDsp()"><i class="bi bi-check-lg me-1"></i> Guardar</button></div>
 </div></div></div>
 
+<!-- MODAL EVENTO -->
+<div class="modal fade" id="mEv" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+<div class="modal-header"><h5 class="modal-title" id="mEvTitle">Novo Evento</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+<div class="modal-body"><div class="row g-3">
+<div class="col-12"><label class="fl">Título</label><input type="text" class="form-control" id="fEvTitle" placeholder="Ex: Ginásio, Dentista, Beber água..."></div>
+<div class="col-6"><label class="fl">Data</label><input type="date" class="form-control" id="fEvDate"></div>
+<div class="col-6"><label class="fl">Tipo</label><select class="form-select" id="fEvTipo"><option value="pessoal">Pessoal</option><option value="lembrete">Lembrete</option><option value="habito">Hábito</option><option value="bloqueio">Bloqueio</option></select></div>
+<div class="col-6"><label class="fl">Hora início</label><input type="time" class="form-control" id="fEvTimeS"></div>
+<div class="col-6"><label class="fl">Hora fim</label><input type="time" class="form-control" id="fEvTimeE"></div>
+<div class="col-6"><label class="fl">Recorrência</label><select class="form-select" id="fEvRec"><option value="">Sem repetição</option><option value="daily">Diário</option><option value="weekly">Semanal</option><option value="monthly">Mensal</option><option value="yearly">Anual</option></select></div>
+<div class="col-6"><label class="fl">Dia inteiro</label><select class="form-select" id="fEvAllDay"><option value="0">Não</option><option value="1">Sim</option></select></div>
+<div class="col-12"><label class="fl">Notas</label><input type="text" class="form-control" id="fEvNotes" placeholder="Opcional"></div>
+</div></div>
+<div class="modal-footer"><button class="btn" id="btnEvDel" style="color:var(--rose);font-size:.78rem;display:none;margin-right:auto" onclick="deleteEvento(editEvId);mEv.hide()"><i class="bi bi-trash3 me-1"></i>Apagar</button><button class="btn bo" data-bs-dismiss="modal">Cancelar</button><button class="btn bg2" onclick="saveEvento()"><i class="bi bi-check-lg me-1"></i> Guardar</button></div>
+</div></div></div>
+
+<!-- MODAL NOTA -->
+<div class="modal fade" id="mNt" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+<div class="modal-header"><h5 class="modal-title" id="mNtTitle">Nova Nota</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+<div class="modal-body">
+<input type="text" class="form-control mb-3" id="fNtTitle" placeholder="Título da nota..." style="font-weight:700">
+<textarea class="form-control" id="fNtContent" rows="6" placeholder="Escreve aqui..." style="font-size:.84rem;resize:vertical"></textarea>
+<div class="nota-colors" id="fNtColors">
+<span style="background:#B8A8F0" data-c="#B8A8F0" onclick="selNotaColor(this)"></span>
+<span style="background:#4EEAA0" data-c="#4EEAA0" onclick="selNotaColor(this)"></span>
+<span style="background:#5CB8FF" data-c="#5CB8FF" onclick="selNotaColor(this)"></span>
+<span style="background:#FFD050" data-c="#FFD050" onclick="selNotaColor(this)"></span>
+<span style="background:#FF70B8" data-c="#FF70B8" onclick="selNotaColor(this)"></span>
+<span style="background:#FF8855" data-c="#FF8855" onclick="selNotaColor(this)"></span>
+<span style="background:#70D0D0" data-c="#70D0D0" onclick="selNotaColor(this)"></span>
+</div>
+</div>
+<div class="modal-footer"><button class="btn" id="btnNtDel" style="color:var(--rose);font-size:.78rem;display:none;margin-right:auto" onclick="deleteNota(editNtId);mNt.hide()"><i class="bi bi-trash3 me-1"></i>Apagar</button><button class="btn bo" data-bs-dismiss="modal">Cancelar</button><button class="btn bg2" onclick="saveNota()"><i class="bi bi-check-lg me-1"></i> Guardar</button></div>
+</div></div></div>
+
 <!-- AI CHAT FAB -->
 <!-- FAB MENU -->
 <div id="fabMenu">
 <div class="fab-item" onclick="fabAction('ai')"><span class="fab-label">Shay AI</span><button class="fab-btn" style="background:rgba(16,16,21,.85);border:1.5px solid rgba(212,175,106,.35);color:var(--g);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 0 20px rgba(212,175,106,.12)"><i class="bi bi-stars"></i></button></div>
 <div class="fab-item" onclick="fabAction('receita')"><span class="fab-label">Receita</span><button class="fab-btn" style="background:rgba(16,16,21,.85);border:1.5px solid rgba(78,234,160,.3);color:var(--mint);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 0 16px rgba(78,234,160,.1)"><i class="bi bi-plus-lg"></i></button></div>
 <div class="fab-item" onclick="fabAction('despesa')"><span class="fab-label">Despesa</span><button class="fab-btn" style="background:rgba(16,16,21,.85);border:1.5px solid rgba(255,136,85,.3);color:var(--coral);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 0 16px rgba(255,136,85,.1)"><i class="bi bi-plus-lg"></i></button></div>
+<div class="fab-item" onclick="fabAction('evento')"><span class="fab-label">Evento</span><button class="fab-btn" style="background:rgba(16,16,21,.85);border:1.5px solid rgba(184,168,240,.3);color:var(--lav);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 0 16px rgba(184,168,240,.1)"><i class="bi bi-calendar-plus"></i></button></div>
+<div class="fab-item" onclick="fabAction('nota')"><span class="fab-label">Nota</span><button class="fab-btn" style="background:rgba(16,16,21,.85);border:1.5px solid rgba(255,208,80,.3);color:var(--warn);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 0 16px rgba(255,208,80,.1)"><i class="bi bi-sticky"></i></button></div>
 </div>
 <div id="fabBackdrop" onclick="toggleFab()" style="display:none;position:fixed;inset:0;z-index:1049;background:rgba(4,4,8,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)"></div>
 <button id="aiFab" onclick="toggleFab()" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:rgba(16,16,21,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid rgba(212,175,106,.35);color:var(--g);font-size:1.3rem;z-index:1050;box-shadow:0 4px 20px rgba(0,0,0,.4),0 0 24px rgba(212,175,106,.12);transition:all .3s;display:flex;align-items:center;justify-content:center"><i class="bi bi-plus-lg" id="fabIcon"></i></button>
@@ -763,7 +974,7 @@ return db
 }catch(e){console.error('InitDB failed:',e);toast('Erro a iniciar base de dados: '+e.message,'w');return null}}
 
 function ensureSchema(){
-const tables=['config','categorias_servico','servicos','categorias_despesa','subcategorias_despesa','receitas','despesas','chats','chat_messages','ai_providers'];
+const tables=['config','categorias_servico','servicos','categorias_despesa','subcategorias_despesa','receitas','despesas','chats','chat_messages','ai_providers','eventos','notas'];
 const existing=q1(`SELECT name FROM sqlite_master WHERE type='table'`).map(t=>t.name);
 if(!tables.every(t=>existing.includes(t))){createSchema();return}
 
@@ -839,6 +1050,13 @@ db.run(`CREATE TABLE IF NOT EXISTS receitas (id TEXT PRIMARY KEY, date TEXT, typ
 db.run(`CREATE TABLE IF NOT EXISTS despesas (id TEXT PRIMARY KEY, date TEXT, categoria TEXT, subcategoria TEXT, descricao TEXT, amount REAL, pagamento TEXT, notes TEXT)`);
 db.run(`CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, title TEXT, created_at TEXT, updated_at TEXT)`);
 db.run(`CREATE TABLE IF NOT EXISTS chat_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id TEXT, role TEXT, content TEXT, created_at TEXT)`);
+
+// Eventos (agenda pessoal)
+db.run(`CREATE TABLE IF NOT EXISTS eventos (id TEXT PRIMARY KEY, title TEXT NOT NULL, date_start TEXT NOT NULL, time_start TEXT, time_end TEXT, all_day INTEGER DEFAULT 0, tipo TEXT DEFAULT 'pessoal', recurrence TEXT, recurrence_end TEXT, done INTEGER DEFAULT 0, color TEXT, notes TEXT, created_at TEXT)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_eventos_date ON eventos(date_start)`);
+
+// Notas (bloco de notas)
+db.run(`CREATE TABLE IF NOT EXISTS notas (id TEXT PRIMARY KEY, title TEXT NOT NULL, content TEXT, color TEXT DEFAULT '#B8A8F0', pinned INTEGER DEFAULT 0, created_at TEXT, updated_at TEXT)`);
 
 // Config seed
 const cfgSeed=[['comissao_pct','50'],['nome','Shay'],['moeda','EUR'],['system_prompt_full',''],['image_prompt',''],['custom_prompt',''],['ai_confirm_threshold','0'],['ai_language','pt-PT'],['ai_active_provider',''],['ai_deploy_provider',''],['schema_version','2']];
@@ -1057,7 +1275,229 @@ function dR(id){if(!confirm('Apagar esta receita?'))return;run(`DELETE FROM rece
 function dD(id){if(!confirm('Apagar esta despesa?'))return;run(`DELETE FROM despesas WHERE id=?`,id);rA();toast('Removida.')}
 
 // ===== RENDER =====
-function rA(){rDash();rRec();rDsp();rRpt()}
+function rA(){rDash();rRec();rDsp();rRpt();
+if(document.querySelector('#dashTabs .tl-btn.active')?.dataset.tab==='agenda')initCalendar()}
+
+// Dashboard tab switching
+let fcCalendar=null;
+const mEv=new bootstrap.Modal(document.getElementById('mEv'));
+const mNt=new bootstrap.Modal(document.getElementById('mNt'));
+let editEvId=null,editNtId=null,selNtColor='#B8A8F0';
+
+function switchDashTab(tab){
+document.querySelectorAll('#dashTabs .tl-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+document.getElementById('dashResumo').style.display=tab==='resumo'?'block':'none';
+document.getElementById('dashAgenda').style.display=tab==='agenda'?'block':'none';
+document.getElementById('dashNotas').style.display=tab==='notas'?'block':'none';
+if(tab==='agenda')initCalendar();
+if(tab==='notas')renderNotas()}
+
+// ===== EVENTOS (Agenda) =====
+const EVT_COLORS={pessoal:'#B8A8F0',lembrete:'#4EEAA0',habito:'#5CB8FF',bloqueio:'#605848'};
+
+function openEvento(dateStr){
+editEvId=null;
+document.getElementById('mEvTitle').textContent='Novo Evento';
+document.getElementById('btnEvDel').style.display='none';
+document.getElementById('fEvTitle').value='';
+document.getElementById('fEvDate').value=dateStr||new Date().toISOString().slice(0,10);
+document.getElementById('fEvTipo').value='pessoal';
+document.getElementById('fEvTimeS').value='';document.getElementById('fEvTimeE').value='';
+document.getElementById('fEvRec').value='';document.getElementById('fEvAllDay').value='0';
+document.getElementById('fEvNotes').value='';
+mEv.show()}
+
+function editEvento(id){
+const ev=q0(`SELECT * FROM eventos WHERE id=?`,[id]);if(!ev)return;
+editEvId=id;
+document.getElementById('mEvTitle').textContent='Editar Evento';
+document.getElementById('btnEvDel').style.display='inline-block';
+document.getElementById('fEvTitle').value=ev.title;
+document.getElementById('fEvDate').value=ev.date_start;
+document.getElementById('fEvTipo').value=ev.tipo||'pessoal';
+document.getElementById('fEvTimeS').value=ev.time_start||'';
+document.getElementById('fEvTimeE').value=ev.time_end||'';
+document.getElementById('fEvRec').value=ev.recurrence||'';
+document.getElementById('fEvAllDay').value=String(ev.all_day||0);
+document.getElementById('fEvNotes').value=ev.notes||'';
+mEv.show()}
+
+function saveEvento(){
+const title=document.getElementById('fEvTitle').value.trim();
+const date=document.getElementById('fEvDate').value;
+if(!title||!date){toast('Preenche título e data.','w');return}
+const tipo=document.getElementById('fEvTipo').value;
+const ts=document.getElementById('fEvTimeS').value||null;
+const te=document.getElementById('fEvTimeE').value||null;
+const rec=document.getElementById('fEvRec').value||null;
+const allDay=parseInt(document.getElementById('fEvAllDay').value)||0;
+const notes=document.getElementById('fEvNotes').value||null;
+const now=new Date().toISOString();
+if(editEvId){
+run(`UPDATE eventos SET title=?,date_start=?,time_start=?,time_end=?,all_day=?,tipo=?,recurrence=?,notes=?,created_at=? WHERE id=?`,
+[title,date,ts,te,allDay,tipo,rec,notes,now,editEvId]);editEvId=null;toast('Evento actualizado!')}
+else{run(`INSERT INTO eventos(id,title,date_start,time_start,time_end,all_day,tipo,recurrence,notes,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)`,
+[uid(),title,date,ts,te,allDay,tipo,rec,notes,now]);toast('Evento criado!')}
+mEv.hide();initCalendar()}
+
+function deleteEvento(id){if(!confirm('Apagar evento?'))return;run(`DELETE FROM eventos WHERE id=?`,[id]);initCalendar();toast('Evento apagado.')}
+
+function toggleEventoDone(id){
+const ev=q0(`SELECT done FROM eventos WHERE id=?`,[id]);
+run(`UPDATE eventos SET done=? WHERE id=?`,[ev.done?0:1,id]);initCalendar()}
+
+// ===== NOTAS =====
+function selNotaColor(el){
+document.querySelectorAll('#fNtColors span').forEach(s=>s.classList.remove('sel'));
+el.classList.add('sel');selNtColor=el.dataset.c}
+
+function criarNota(){
+editNtId=null;selNtColor='#B8A8F0';
+document.getElementById('mNtTitle').textContent='Nova Nota';
+document.getElementById('btnNtDel').style.display='none';
+document.getElementById('fNtTitle').value='';
+document.getElementById('fNtContent').value='';
+document.querySelectorAll('#fNtColors span').forEach((s,i)=>s.classList.toggle('sel',i===0));
+mNt.show()}
+
+function editNota(id){
+const n=q0(`SELECT * FROM notas WHERE id=?`,[id]);if(!n)return;
+editNtId=id;selNtColor=n.color||'#B8A8F0';
+document.getElementById('mNtTitle').textContent='Editar Nota';
+document.getElementById('btnNtDel').style.display='inline-block';
+document.getElementById('fNtTitle').value=n.title;
+document.getElementById('fNtContent').value=n.content||'';
+document.querySelectorAll('#fNtColors span').forEach(s=>s.classList.toggle('sel',s.dataset.c===selNtColor));
+mNt.show()}
+
+function saveNota(){
+const title=document.getElementById('fNtTitle').value.trim();
+if(!title){toast('Dá um título à nota.','w');return}
+const content=document.getElementById('fNtContent').value;
+const now=new Date().toISOString();
+if(editNtId){
+run(`UPDATE notas SET title=?,content=?,color=?,updated_at=? WHERE id=?`,[title,content,selNtColor,now,editNtId]);
+editNtId=null;toast('Nota actualizada!')}
+else{run(`INSERT INTO notas(id,title,content,color,pinned,created_at,updated_at) VALUES(?,?,?,?,0,?,?)`,
+[uid(),title,content,selNtColor,now,now]);toast('Nota criada!')}
+mNt.hide();renderNotas()}
+
+function deleteNota(id){if(!confirm('Apagar nota?'))return;run(`DELETE FROM notas WHERE id=?`,[id]);renderNotas();toast('Nota apagada.')}
+
+function togglePin(id){
+const n=q0(`SELECT pinned FROM notas WHERE id=?`,[id]);
+run(`UPDATE notas SET pinned=? WHERE id=?`,[n.pinned?0:1,id]);renderNotas()}
+
+function renderNotas(){
+const notas=q1(`SELECT * FROM notas ORDER BY pinned DESC, updated_at DESC`);
+const grid=document.getElementById('notasGrid');
+const em=document.getElementById('eNotas');
+document.getElementById('notasCount').textContent=notas.length;
+if(!notas.length){grid.innerHTML='';em.style.display='block';return}
+em.style.display='none';
+grid.innerHTML=notas.map(n=>`<div class="nota-card" style="background:${n.color||'#B8A8F0'}" onclick="editNota('${n.id}')">
+<span class="nota-pin ${n.pinned?'pinned':''}" onclick="event.stopPropagation();togglePin('${n.id}')">${n.pinned?'📌':'📌'}</span>
+<div class="nota-title">${escHtml(n.title)}</div>
+<div class="nota-body">${escHtml(n.content||'')}</div>
+<div class="nota-date">${new Date(n.updated_at||n.created_at).toLocaleDateString('pt-PT')}</div>
+<div class="nota-acts"><button onclick="event.stopPropagation();deleteNota('${n.id}')"><i class="bi bi-trash3"></i></button></div>
+</div>`).join('')}
+
+function initCalendar(){
+const el=document.getElementById('fcCalendar');
+if(!el)return;
+
+// Build events from receitas + despesas + eventos
+const rec=q1(`SELECT * FROM receitas ORDER BY date`);
+const desp=q1(`SELECT * FROM despesas ORDER BY date`);
+const evts=q1(`SELECT * FROM eventos ORDER BY date_start`);
+
+const events=[];
+rec.forEach(r=>{events.push({
+id:'r_'+r.id,title:(r.type==='comissao'?'💰 ':'💎 ')+f$(r.amount)+(r.servico&&r.servico!=='Serviços do dia'?' · '+r.servico:''),
+start:r.date,allDay:true,color:r.type==='comissao'?'#D4AF6A':'#4EEAA0',textColor:'#0C0C10',
+extendedProps:{src:'receita',recId:r.id}})});
+
+desp.forEach(d=>{events.push({
+id:'d_'+d.id,title:'📤 '+d.descricao+' −'+f$(d.amount),
+start:d.date,allDay:true,color:catColor(d.categoria),textColor:'#0C0C10',
+extendedProps:{src:'despesa',dspId:d.id}})});
+
+// Expand recurring eventos
+evts.forEach(ev=>{
+const col=ev.color||EVT_COLORS[ev.tipo]||'#B8A8F0';
+const baseStart=ev.time_start?ev.date_start+'T'+ev.time_start:ev.date_start;
+const baseEnd=ev.time_end?ev.date_start+'T'+ev.time_end:null;
+const isDone=ev.done===1;
+const opacity=isDone?0.4:1;
+
+if(!ev.recurrence){
+events.push({id:'ev_'+ev.id,title:(isDone?'✅ ':'')+ ev.title,start:baseStart,end:baseEnd,
+allDay:!!ev.all_day,color:col,textColor:'#0C0C10',
+extendedProps:{src:'evento',evId:ev.id,done:isDone},
+className:isDone?'fc-event-done':''});return}
+
+// Generate recurrence instances (up to 52 weeks / 12 months)
+const d=new Date(ev.date_start);const endDate=ev.recurrence_end?new Date(ev.recurrence_end):new Date(d.getTime()+365*24*60*60*1000);
+const maxInstances=100;let count=0;
+while(d<=endDate&&count<maxInstances){
+const ds=d.toISOString().slice(0,10);
+const st=ev.time_start?ds+'T'+ev.time_start:ds;
+const en=ev.time_end?ds+'T'+ev.time_end:null;
+events.push({id:'ev_'+ev.id+'_'+ds,title:ev.title,start:st,end:en,
+allDay:!!ev.all_day,color:col,textColor:'#0C0C10',
+extendedProps:{src:'evento',evId:ev.id}});
+count++;
+if(ev.recurrence==='daily')d.setDate(d.getDate()+1);
+else if(ev.recurrence==='weekly')d.setDate(d.getDate()+7);
+else if(ev.recurrence==='biweekly')d.setDate(d.getDate()+14);
+else if(ev.recurrence==='monthly')d.setMonth(d.getMonth()+1);
+else if(ev.recurrence==='yearly')d.setFullYear(d.getFullYear()+1);
+else break}});
+
+if(fcCalendar){fcCalendar.destroy()}
+fcCalendar=new FullCalendar.Calendar(el,{
+initialView:'dayGridMonth',
+initialDate:`${cY}-${String(cM+1).padStart(2,'0')}-01`,
+locale:'pt',firstDay:1,height:'auto',
+headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,timeGridWeek,listWeek'},
+buttonText:{today:'Hoje',month:'Mês',week:'Semana',list:'Lista'},
+events:events,
+eventClick:function(info){
+const p=info.event.extendedProps;
+if(p.src==='receita')eR(p.recId);
+else if(p.src==='despesa')eD(p.dspId);
+else if(p.src==='evento')editEvento(p.evId)},
+dateClick:function(info){openEvento(info.dateStr)},
+eventDidMount:function(info){
+info.el.style.borderRadius='6px';info.el.style.fontSize='.68rem';
+info.el.style.fontWeight='600';info.el.style.boxShadow='0 2px 8px rgba(0,0,0,.2)';
+if(info.event.extendedProps.done){info.el.style.opacity='0.45';info.el.style.textDecoration='line-through'}}
+});
+fcCalendar.render();
+
+// Render upcoming events list
+const evtList=document.getElementById('evtList');
+const evtCountEl=document.getElementById('evtCount');
+const allEvts=q1(`SELECT * FROM eventos ORDER BY date_start,time_start`);
+evtCountEl.textContent=allEvts.length;
+const upcoming=q1(`SELECT * FROM eventos WHERE date_start>=? AND done=0 ORDER BY date_start,time_start LIMIT 10`,[new Date().toISOString().slice(0,10)]);
+if(upcoming.length){
+evtList.innerHTML='<div style="font-size:.72rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Próximos eventos</div>'+
+upcoming.map(ev=>{
+const col=ev.color||EVT_COLORS[ev.tipo]||'#B8A8F0';
+const d=new Date(ev.date_start);const dayStr=d.toLocaleDateString('pt-PT',{weekday:'short',day:'2-digit',month:'short'});
+return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;border:1px solid var(--bd);margin-bottom:4px;background:var(--s1);cursor:pointer" onclick="editEvento('${ev.id}')">
+<div style="width:6px;height:28px;border-radius:3px;background:${col};flex-shrink:0"></div>
+<div style="flex:1;min-width:0">
+<div style="font-size:.76rem;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev.title}</div>
+<div style="font-size:.62rem;color:var(--t3)">${dayStr}${ev.time_start?' · '+ev.time_start:''}${ev.recurrence?' · 🔁 '+ev.recurrence:''}</div>
+</div>
+<div style="display:flex;gap:2px">
+${ev.tipo==='lembrete'||ev.tipo==='habito'?`<button class="bd2" onclick="event.stopPropagation();toggleEventoDone('${ev.id}')" title="Feito" style="color:var(--mint);font-size:.72rem"><i class="bi bi-check-circle"></i></button>`:''}
+<button class="bd2" onclick="event.stopPropagation();deleteEvento('${ev.id}')" title="Apagar" style="font-size:.72rem"><i class="bi bi-trash3"></i></button>
+</div></div>`}).join('')}
+else{evtList.innerHTML=''}}
 
 function rDash(){
 const ym=`${cY}-${String(cM+1).padStart(2,'0')}`;
@@ -1065,14 +1505,46 @@ const minhaRec=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(dat
 const salM=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=? AND type='comissao'`,ym);
 const extM=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=? AND type='extra'`,ym);
 const td=qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,7)=?`,ym);
-const nServ=qv(`SELECT COUNT(*) FROM receitas WHERE substr(date,1,7)=?`,ym);
+const nDays=qv(`SELECT COUNT(DISTINCT date) FROM receitas WHERE substr(date,1,7)=?`,ym);
+const comPctD=parseInt(qv(`SELECT value FROM config WHERE key='comissao_pct'`))||50;
+const brutoSalao=comPctD>0?salM*(100/comPctD):0;
 const sa=minhaRec-td;
 
 document.getElementById('sB').textContent=f$(minhaRec);
-document.getElementById('sL').innerHTML=`<span style="color:var(--g)">${f$(salM)}</span><br><span style="color:var(--mint);font-size:.85em">${f$(extM)}</span>`;
+document.getElementById('sLsal').textContent=f$(salM)+' salão';
+document.getElementById('sLext').textContent=f$(extM)+' extra';
 document.getElementById('sD').textContent=f$(td);
-document.getElementById('sS').textContent=f$(sa);document.getElementById('sSs').className='ss '+(sa>=0?'up':'dn');
-document.getElementById('sN').textContent=nServ;
+document.getElementById('sBruto').textContent=f$(brutoSalao);
+document.getElementById('sS').textContent=f$(sa);
+document.getElementById('sS').style.color=sa>=0?'var(--mint)':'var(--coral)';
+document.getElementById('sAvg').textContent=nDays>0?f$(minhaRec/nDays):'—';
+document.getElementById('sDays').textContent=nDays;
+
+// Quick previews
+const today=new Date().toISOString().slice(0,10);
+const weekEnd=new Date(Date.now()+7*24*60*60*1000).toISOString().slice(0,10);
+
+// Upcoming events preview
+try{
+const upEvts=q1(`SELECT * FROM eventos WHERE date_start>=? AND done=0 ORDER BY date_start,time_start LIMIT 3`,[today]);
+const qpEvDiv=document.getElementById('qpEvents');
+const qpEvList=document.getElementById('qpEvtList');
+if(upEvts.length){qpEvDiv.style.display='block';
+qpEvList.innerHTML=upEvts.map(ev=>{
+const col=ev.color||EVT_COLORS[ev.tipo]||'#B8A8F0';
+const d=new Date(ev.date_start);const isToday=ev.date_start===today;
+const dayStr=isToday?'Hoje':d.toLocaleDateString('pt-PT',{weekday:'short',day:'2-digit'});
+return `<div style="display:flex;align-items:center;gap:8px"><div style="width:4px;height:16px;border-radius:2px;background:${col}"></div><span style="font-size:.72rem;font-weight:600;color:var(--t1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev.title}</span><span style="font-size:.6rem;color:var(--t3);white-space:nowrap">${dayStr}${ev.time_start?' '+ev.time_start:''}</span></div>`}).join('')}
+else{qpEvDiv.style.display='none'}}catch(e){}
+
+// Pinned notes preview
+try{
+const pinned=q1(`SELECT * FROM notas WHERE pinned=1 ORDER BY updated_at DESC LIMIT 3`);
+const qpNtDiv=document.getElementById('qpNotes');
+const qpNtList=document.getElementById('qpNoteList');
+if(pinned.length){qpNtDiv.style.display='block';
+qpNtList.innerHTML=pinned.map(n=>`<div style="background:${n.color||'#B8A8F0'};color:rgba(0,0,0,.7);padding:4px 10px;border-radius:8px;font-size:.65rem;font-weight:600;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(n.title)}</div>`).join('')}
+else{qpNtDiv.style.display='none'}}catch(e){}
 
 // Timeline
 const tlFilter=document.querySelector('#tlFilters .tl-btn.active')?.dataset.tl||'all';
@@ -1654,6 +2126,7 @@ const cats=getCatServicos();const dcats=getCatDespesas();
 const cfg=q1(`SELECT * FROM config WHERE key NOT IN ('system_prompt_full','image_prompt','custom_prompt','ai_active_provider','ai_deploy_provider')`);
 return `ESQUEMA:
 Tabelas principais: receitas(id,date,type,categoria,servico,descricao,amount,comissao,client,notes), despesas(id,date,categoria,subcategoria,descricao,amount,pagamento,notes)
+Tabelas pessoais: eventos(id,title,date_start,time_start,time_end,all_day,tipo,recurrence,recurrence_end,done,color,notes,created_at), notas(id,title,content,color,pinned,created_at,updated_at)
 
 Tabelas de configuração (árvore hierárquica):
 - categorias_servico(id,nome,ativa) → servicos(id,categoria_id→categorias_servico.id,nome,preco,duracao,ativo)
@@ -1776,7 +2249,9 @@ function fabAction(type){
 toggleFab();
 if(type==='ai')toggleChat();
 else if(type==='receita')oM('receita');
-else if(type==='despesa')oM('despesa')}
+else if(type==='despesa')oM('despesa');
+else if(type==='evento')openEvento();
+else if(type==='nota')criarNota()}
 
 function toggleChat(){const c=document.getElementById('aiChat');const bd=document.getElementById('aiBackdrop');const fab=document.getElementById('aiFab');const fabMenu=document.getElementById('fabMenu');
 c.classList.toggle('open');bd.classList.toggle('open');
@@ -1879,6 +2354,17 @@ COMO DECIDIR (exemplos reais):
   "muda a cor do título", "adiciona item Clientes ao menu",
   "torna os botões maiores", "altera o layout dos cards"
 
+→ "add_evento" — Criar evento na agenda pessoal:
+  "marca ginásio segunda às 18h", "dentista dia 28 às 11h",
+  "lembrete beber água todos os dias às 10h", "férias 1 a 15 agosto",
+  "aniversário mãe 15 abril", "formação segundas de manhã",
+  "lembrar de pagar renda dia 1"
+
+→ "add_nota" — Criar nota no bloco de notas:
+  "anota: encomendar pigmentos", "nota: ideias para instagram",
+  "aponta isto: ligar Teresa sobre sábado",
+  "lista de material: pigmentos, cola, luvas"
+
 → "chat" — Conversa, saudação, ajuda:
   "olá", "obrigada", "como funciona", "ajuda", "o que consegues fazer"
 
@@ -1891,6 +2377,12 @@ FORMATOS (usa exactamente estes):
 \`\`\`
 \`\`\`json
 {"action":"add_despesa","data":{"date":"YYYY-MM-DD","categoria":"...","subcategoria":"...","descricao":"...","amount":0,"pagamento":"...","notes":""}}
+\`\`\`
+\`\`\`json
+{"action":"add_evento","data":{"title":"...","date_start":"YYYY-MM-DD","time_start":"HH:MM","time_end":"HH:MM","all_day":0,"tipo":"pessoal","recurrence":null,"notes":""}}
+\`\`\`
+\`\`\`json
+{"action":"add_nota","data":{"title":"...","content":"..."}}
 \`\`\`
 \`\`\`json
 {"action":"run_sql","sql":"INSERT/UPDATE/DELETE ...","description":"..."}
@@ -1975,6 +2467,24 @@ hideTyping();
 addAiMsg('bot',decision.response||textBefore||'Como posso ajudar?');return}
 
 // deploy_code: Fetch real HTML, then ask AI to generate changes
+if(decision.action==='add_evento'){
+hideTyping();
+const d=decision.data||decision;
+const now=new Date().toISOString();
+run(`INSERT INTO eventos(id,title,date_start,time_start,time_end,all_day,tipo,recurrence,notes,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)`,
+[uid(),d.title||'Evento',d.date_start||new Date().toISOString().slice(0,10),d.time_start||null,d.time_end||null,d.all_day||0,d.tipo||'pessoal',d.recurrence||null,d.notes||null,now]);
+const msg=`📅 Evento criado: ${d.title}${d.date_start?' · '+d.date_start:''}${d.time_start?' às '+d.time_start:''}${d.recurrence?' ('+d.recurrence+')':''}`;
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);rA();return}
+
+if(decision.action==='add_nota'){
+hideTyping();
+const d=decision.data||decision;
+const now=new Date().toISOString();
+run(`INSERT INTO notas(id,title,content,color,pinned,created_at,updated_at) VALUES(?,?,?,?,0,?,?)`,
+[uid(),d.title||'Nota',d.content||'',d.color||'#B8A8F0',now,now]);
+const msg=`📝 Nota criada: ${d.title}`;
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);rA();return}
+
 if(decision.action==='deploy_code'){
 await handleAppModification(decision.description||msg);
 return}
@@ -2542,6 +3052,99 @@ run(`INSERT OR REPLACE INTO config VALUES('ai_confirm_threshold',?)`,[ac]);
 run(`INSERT OR REPLACE INTO config VALUES('ai_language',?)`,[lang]);
 toast('Parâmetros guardados!')}
 
+// ===== NOTIFICATIONS =====
+let bellOpen=false;
+let lastNotifCount=0;
+
+function toggleBell(){
+bellOpen=!bellOpen;
+document.getElementById('bellDrop').style.display=bellOpen?'block':'none';
+if(bellOpen)checkNotifications()}
+
+function checkNotifications(){
+if(!db)return;
+const today=new Date().toISOString().slice(0,10);
+const now=new Date();
+const nowH=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+const weekEnd=new Date(now.getTime()+7*24*60*60*1000).toISOString().slice(0,10);
+const ym=`${cY}-${String(cM+1).padStart(2,'0')}`;
+
+const notifs=[];
+
+// TYPE 1: Today's events (not done)
+const todayEvts=q1(`SELECT * FROM eventos WHERE date_start=? AND done=0 ORDER BY time_start`,today);
+todayEvts.forEach(ev=>{
+notifs.push({group:'HOJE',icon:'bi-calendar-event',iconBg:'rgba(184,168,240,.1)',iconColor:'#B8A8F0',
+title:ev.title+(ev.time_start?' às '+ev.time_start:''),sub:ev.notes||ev.tipo,
+action:ev.tipo==='lembrete'||ev.tipo==='habito'?`<button onclick="event.stopPropagation();toggleEventoDone('${ev.id}');checkNotifications()">✓ Feito</button>`:null})});
+
+// TYPE 2: Upcoming events (next 7 days, not today)
+const upcoming=q1(`SELECT * FROM eventos WHERE date_start>? AND date_start<=? AND done=0 ORDER BY date_start,time_start`,[today,weekEnd]);
+upcoming.slice(0,5).forEach(ev=>{
+const d=new Date(ev.date_start);const dayStr=d.toLocaleDateString('pt-PT',{weekday:'short',day:'2-digit',month:'short'});
+const daysUntil=Math.ceil((d-now)/(24*60*60*1000));
+const quando=daysUntil===1?'amanhã':'em '+daysUntil+' dias';
+notifs.push({group:'ESTA SEMANA',icon:'bi-clock',iconBg:'rgba(92,184,255,.1)',iconColor:'#5CB8FF',
+title:ev.title,sub:dayStr+(ev.time_start?' às '+ev.time_start:'')+' · '+quando})});
+
+// TYPE 3: Financial insights
+try{
+const prevYm=cM===0?`${cY-1}-12`:`${cY}-${String(cM).padStart(2,'0')}`;
+const despMes=qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,7)=?`,ym);
+const despPrev=qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,7)=?`,prevYm);
+const recMes=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=?`,ym);
+if(despPrev>0&&despMes>despPrev*1.2){
+const pct=Math.round((despMes/despPrev-1)*100);
+notifs.push({group:'ALERTAS',icon:'bi-exclamation-triangle',iconBg:'rgba(255,136,85,.1)',iconColor:'#FF8855',
+title:`Despesas ${pct}% acima do mês passado`,sub:f$(despMes)+' vs '+f$(despPrev)})}
+if(recMes>0&&despMes>recMes){
+notifs.push({group:'ALERTAS',icon:'bi-graph-down-arrow',iconBg:'rgba(255,96,144,.1)',iconColor:'#FF6090',
+title:'Saldo negativo este mês',sub:'Despesas ('+f$(despMes)+') > Receitas ('+f$(recMes)+')'})}
+}catch(e){}
+
+// TYPE 4: Pinned notes
+const pinnedCount=qv(`SELECT COUNT(*) FROM notas WHERE pinned=1`);
+if(pinnedCount>0){
+notifs.push({group:'NOTAS',icon:'bi-pin-angle',iconBg:'rgba(255,208,80,.1)',iconColor:'#FFD050',
+title:pinnedCount+' nota'+(pinnedCount>1?'s':'')+' fixada'+(pinnedCount>1?'s':''),sub:'Toca para ver',
+onClick:'switchDashTab("notas")'})}
+
+// Render
+const list=document.getElementById('bellList');
+const badge=document.getElementById('bellBadge');
+const btn=document.getElementById('bellBtn');
+
+if(!notifs.length){
+list.innerHTML='<div style="text-align:center;padding:30px 16px;color:var(--t3);font-size:.78rem"><i class="bi bi-check-circle" style="font-size:1.5rem;opacity:.3;display:block;margin-bottom:8px"></i>Tudo em dia! 🎉</div>';
+badge.style.display='none';btn.classList.remove('has-notif');return}
+
+badge.style.display='flex';badge.textContent=notifs.length;
+btn.classList.add('has-notif');
+
+let html='';let lastGroup='';
+notifs.forEach(n=>{
+if(n.group!==lastGroup){html+=`<div class="notif-group">${n.group}</div>`;lastGroup=n.group}
+html+=`<div class="notif-item" ${n.onClick?'onclick="'+n.onClick+';toggleBell()"':''}>
+<div class="notif-icon" style="background:${n.iconBg};color:${n.iconColor}"><i class="bi ${n.icon}"></i></div>
+<div class="notif-text"><div class="notif-title">${n.title}</div><div class="notif-sub">${n.sub||''}</div></div>
+${n.action?'<div class="notif-action">'+n.action+'</div>':''}
+</div>`});
+list.innerHTML=html;
+
+// Browser notification for urgent items (today's events)
+if(todayEvts.length>0&&notifs.length>lastNotifCount&&'Notification' in window&&Notification.permission==='granted'){
+new Notification('S · Finance',{body:todayEvts[0].title+(todayEvts[0].time_start?' às '+todayEvts[0].time_start:''),icon:'icon-192.png'})}
+lastNotifCount=notifs.length}
+
+function clearNotifications(){
+// Mark all today's lembretes/habitos as done
+const today=new Date().toISOString().slice(0,10);
+run(`UPDATE eventos SET done=1 WHERE date_start=? AND done=0 AND (tipo='lembrete' OR tipo='habito')`,today);
+checkNotifications();toggleBell()}
+
+// Close bell when clicking outside
+document.addEventListener('click',function(e){if(bellOpen&&!e.target.closest('#bellBtn')&&!e.target.closest('#bellDrop')){bellOpen=false;document.getElementById('bellDrop').style.display='none'}});
+
 // ===== INIT =====
 async function boot(){
 // Always show month and enable basic UI first
@@ -2549,7 +3152,13 @@ uM();
 try{
 document.getElementById('sB').textContent='A carregar...';
 const dbResult=await initDB();
-if(dbResult){goToLastMonth();uM();rA();initAiChat()}
+if(dbResult){goToLastMonth();uM();rA();initAiChat();
+// Notifications
+checkNotifications();
+setInterval(checkNotifications,5*60*1000);
+// Request browser notification permission
+if('Notification' in window&&Notification.permission==='default'){
+setTimeout(()=>Notification.requestPermission(),3000)}}
 else{document.getElementById('sB').textContent='€0';toast('Base de dados indisponível. Verifica a ligação.','w')}
 gsap.from('.nb',{y:-20,opacity:0,duration:.5,delay:.1});gsap.from('.sc',{opacity:0,y:25,duration:.4,stagger:.08,delay:.3,ease:'power2.out'});
 gsap.from('.cc',{opacity:0,y:15,duration:.4,stagger:.12,delay:.7});gsap.from('.dc',{opacity:0,y:15,duration:.4,delay:.9});

@@ -25,8 +25,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--gD);border-radius:3px}
 
 .nb{background:var(--s1)!important;border-bottom:1px solid var(--bd);padding:10px 0;position:sticky;top:0;z-index:1030;box-shadow:0 1px 20px rgba(0,0,0,.4)}
-.nb .navbar-brand{font-family:'Manrope',sans-serif;font-size:1.3rem;font-weight:300;letter-spacing:2px;color:var(--g)!important}
-.nb .navbar-brand small{font-family:'Manrope',sans-serif;font-size:.48rem;color:var(--t3);text-transform:uppercase;letter-spacing:5px;display:block;margin-top:1px;font-weight:500}
+.nb .navbar-brand{font-family:'Manrope',sans-serif;font-size:1.3rem;color:var(--g)!important;text-decoration:none}
 .np .nav-link{color:var(--t2);font-size:.8rem;font-weight:500;padding:8px 16px;border-radius:10px;transition:.25s;border:1px solid transparent}
 .np .nav-link:hover{color:var(--t1);background:var(--s2)}
 .np .nav-link.active{background:rgba(212,175,106,.1)!important;color:var(--g)!important;border-color:rgba(212,175,106,.15)}
@@ -112,7 +111,15 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
   .sc{padding:18px}
 }
 /* AI CHAT */
+#aiFab{transition:all .3s}
 #aiFab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(212,175,106,.4)}
+#fabMenu{position:fixed;bottom:92px;right:24px;z-index:1050;display:none;flex-direction:column;gap:10px;align-items:flex-end}
+#fabMenu.open{display:flex}
+.fab-item{display:flex;align-items:center;gap:10px;cursor:pointer;opacity:0;transform:translateY(10px) scale(.8);transition:all .25s}
+.fab-item.show{opacity:1;transform:translateY(0) scale(1)}
+.fab-label{background:var(--s1);color:var(--t1);font-size:.78rem;font-weight:600;padding:8px 14px;border-radius:10px;border:1px solid var(--bd);white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.fab-btn{width:46px;height:46px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;transition:.2s;flex-shrink:0;box-shadow:0 3px 16px rgba(0,0,0,.3)}
+.fab-btn:hover{transform:scale(1.1)}
 #aiChat{display:none}#aiChat.open{display:flex!important}
 #aiBackdrop{display:none;position:fixed;inset:0;background:rgba(4,4,8,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:1049;transition:opacity .3s}
 #aiBackdrop.open{display:block}
@@ -172,7 +179,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 <nav class="navbar nb navbar-expand-lg">
 <div class="container-fluid px-3 px-lg-4">
 <button class="btn d-lg-none p-1 me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" style="color:var(--g);font-size:1.3rem"><i class="bi bi-list"></i></button>
-<a class="navbar-brand me-4" href="#"><svg viewBox="0 0 32 32" width="28" height="28" style="vertical-align:middle;margin-right:8px;margin-top:-3px"><rect width="32" height="32" rx="7" fill="#1a1a20"/><rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="#D4AF6A" stroke-width=".5" opacity=".4"/><text x="16" y="22" text-anchor="middle" font-family="Manrope,sans-serif" font-size="16" font-weight="300" fill="#D4AF6A">S</text></svg>S <span style="color:var(--t3);font-weight:200;margin:0 2px">·</span> Finance<small>Gestão Financeira</small></a>
+<a class="navbar-brand me-4" href="#" style="display:flex;align-items:center;gap:10px"><svg viewBox="0 0 32 32" width="30" height="30"><rect width="32" height="32" rx="7" fill="#1a1a20"/><rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="#D4AF6A" stroke-width=".5" opacity=".4"/><text x="16" y="22" text-anchor="middle" font-family="Manrope,sans-serif" font-size="16" font-weight="300" fill="#D4AF6A">S</text></svg><div><span style="font-weight:300;letter-spacing:3px">S</span><span style="color:var(--t3);font-weight:200;margin:0 3px">·</span><span style="font-weight:300;letter-spacing:1px">Finance</span></div></a>
 <div class="d-none d-lg-flex"><ul class="nav np" id="mainNav">
 <li class="nav-item"><a class="nav-link active" href="#" data-page="dashboard"><i class="bi bi-grid-1x2 me-1"></i> Dashboard</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="receitas"><i class="bi bi-cash-coin me-1"></i> Receitas</a></li>
@@ -182,12 +189,11 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 <li class="nav-item"><a class="nav-link" href="#" data-page="config"><i class="bi bi-gear me-1"></i> Config</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="ajuda"><i class="bi bi-question-circle me-1"></i> Ajuda</a></li>
 </ul></div>
-<div class="ms-auto"></div>
 </div></nav>
 
 <!-- OFFCANVAS -->
 <div class="offcanvas offcanvas-start" tabindex="-1" id="sideMenu">
-<div class="offcanvas-header"><h5 class="serif" style="color:var(--g);font-size:1.3rem"><svg viewBox="0 0 32 32" width="24" height="24" style="vertical-align:middle;margin-right:6px;margin-top:-2px"><rect width="32" height="32" rx="7" fill="#1a1a20"/><rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="#D4AF6A" stroke-width=".5" opacity=".4"/><text x="16" y="22" text-anchor="middle" font-family="Manrope,sans-serif" font-size="16" font-weight="300" fill="#D4AF6A">S</text></svg>S <span style="color:var(--t3);font-weight:200;margin:0 2px">·</span> Finance</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div>
+<div class="offcanvas-header"><h5 style="color:var(--g);font-size:1.2rem;font-weight:300;letter-spacing:2px;margin:0"><svg viewBox="0 0 32 32" width="24" height="24" style="vertical-align:middle;margin-right:8px"><rect width="32" height="32" rx="7" fill="#1a1a20"/><rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="#D4AF6A" stroke-width=".5" opacity=".4"/><text x="16" y="22" text-anchor="middle" font-family="Manrope,sans-serif" font-size="16" font-weight="300" fill="#D4AF6A">S</text></svg>S <span style="color:var(--t3);font-weight:200">·</span> Finance</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button></div>
 <div class="offcanvas-body p-3"><nav class="nav flex-column oc-nav" id="mobNav">
 <a class="nav-link active" href="#" data-page="dashboard"><i class="bi bi-grid-1x2 me-2"></i> Dashboard</a>
 <a class="nav-link" href="#" data-page="receitas"><i class="bi bi-cash-coin me-2"></i> Receitas</a>
@@ -196,10 +202,9 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 <a class="nav-link" href="#" data-page="importar"><i class="bi bi-file-earmark-arrow-up me-2"></i> Importar</a>
 <a class="nav-link" href="#" data-page="config"><i class="bi bi-gear me-2"></i> Configurações</a>
 <a class="nav-link" href="#" data-page="ajuda"><i class="bi bi-question-circle me-2"></i> Ajuda</a>
-</nav><hr style="border-color:var(--bd)"><div class="mt-2">
-<button class="btn bg2 w-100 mb-2" onclick="oM('receita')"><i class="bi bi-plus-lg me-1"></i> Nova Receita</button>
-<button class="btn bo w-100" onclick="oM('despesa')"><i class="bi bi-plus-lg me-1"></i> Nova Despesa</button>
-</div></div></div>
+</nav><hr style="border-color:var(--bd)">
+<div class="mt-2" style="text-align:center;padding:8px 16px;font-size:.72rem;color:var(--t3)"><i class="bi bi-stars me-1" style="color:var(--g)"></i>Usa o botão ✨ para registar receitas e despesas</div>
+</div></div>
 
 <!-- TOAST -->
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1090" id="tA"></div>
@@ -209,10 +214,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 
 <!-- DASHBOARD -->
 <section class="sp active" id="pg-dashboard">
-<div class="ph"><h2>Dashboard</h2><div class="d-flex gap-2">
-<button class="btn bg2 btn-sm" onclick="oM('receita')"><i class="bi bi-plus-lg me-1"></i> Receita</button>
-<button class="btn bo btn-sm" onclick="oM('despesa')"><i class="bi bi-plus-lg me-1"></i> Despesa</button>
-</div></div>
+<div class="ph"><h2>Dashboard</h2></div>
 <div style="display:flex;justify-content:center;margin-bottom:20px"><div class="mnv"><button onclick="chM(-1)"><i class="bi bi-chevron-left"></i></button><span id="mL"></span><button onclick="chM(1)"><i class="bi bi-chevron-right"></i></button></div></div>
 <div class="row g-3 mb-4">
 <div class="col-6 col-lg"><div class="sc"><div class="al ag"></div><div class="si ig"><i class="bi bi-currency-euro"></i></div><div class="sl">Minha Receita</div><div class="sv" id="sB">€0</div><div class="ss">total este mês</div></div></div>
@@ -556,7 +558,14 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 </div></div></div>
 
 <!-- AI CHAT FAB -->
-<button id="aiFab" onclick="toggleChat()" style="position:fixed;bottom:24px;right:24px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--g),var(--gD));border:none;color:#0C0C10;font-size:1.4rem;z-index:1050;box-shadow:0 4px 24px rgba(212,175,106,.3),0 0 40px rgba(212,175,106,.1);transition:all .3s;display:flex;align-items:center;justify-content:center"><i class="bi bi-stars"></i></button>
+<!-- FAB MENU -->
+<div id="fabMenu">
+<div class="fab-item" onclick="fabAction('ai')"><span class="fab-label">Shay AI</span><button class="fab-btn" style="background:linear-gradient(135deg,var(--g),var(--gD));color:#0C0C10"><i class="bi bi-stars"></i></button></div>
+<div class="fab-item" onclick="fabAction('receita')"><span class="fab-label">Receita</span><button class="fab-btn" style="background:var(--mint);color:#0C0C10"><i class="bi bi-plus-lg"></i></button></div>
+<div class="fab-item" onclick="fabAction('despesa')"><span class="fab-label">Despesa</span><button class="fab-btn" style="background:var(--coral);color:#0C0C10"><i class="bi bi-plus-lg"></i></button></div>
+</div>
+<div id="fabBackdrop" onclick="toggleFab()" style="display:none;position:fixed;inset:0;z-index:1049;background:rgba(4,4,8,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)"></div>
+<button id="aiFab" onclick="toggleFab()" style="position:fixed;bottom:24px;right:24px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--g),var(--gD));border:none;color:#0C0C10;font-size:1.4rem;z-index:1050;box-shadow:0 4px 24px rgba(212,175,106,.3),0 0 40px rgba(212,175,106,.1);transition:all .3s;display:flex;align-items:center;justify-content:center"><i class="bi bi-plus-lg" id="fabIcon"></i></button>
 
 <!-- AI CHAT PANEL -->
 <div id="aiBackdrop" onclick="toggleChat()"></div>
@@ -1371,9 +1380,33 @@ Exemplos de cadeia:
 - Se não encontras numa tabela, tenta noutra ou com LIKE diferente
 ${customPrompt?'\n# INSTRUÇÕES PERSONALIZADAS\n'+customPrompt:''}`}
 
-function toggleChat(){const c=document.getElementById('aiChat');const bd=document.getElementById('aiBackdrop');const fab=document.getElementById('aiFab');
+// FAB MENU
+let fabOpen=false;
+function toggleFab(){
+const menu=document.getElementById('fabMenu');
+const bd=document.getElementById('fabBackdrop');
+const icon=document.getElementById('fabIcon');
+fabOpen=!fabOpen;
+menu.classList.toggle('open',fabOpen);
+bd.style.display=fabOpen?'block':'none';
+icon.className=fabOpen?'bi bi-x-lg':'bi bi-plus-lg';
+document.getElementById('aiFab').style.transform=fabOpen?'rotate(45deg)':'';
+// Stagger animate items
+if(fabOpen){const items=menu.querySelectorAll('.fab-item');
+items.forEach((it,i)=>setTimeout(()=>it.classList.add('show'),i*60))}
+else{menu.querySelectorAll('.fab-item').forEach(it=>it.classList.remove('show'))}}
+
+function fabAction(type){
+toggleFab();
+if(type==='ai')toggleChat();
+else if(type==='receita')oM('receita');
+else if(type==='despesa')oM('despesa')}
+
+function toggleChat(){const c=document.getElementById('aiChat');const bd=document.getElementById('aiBackdrop');const fab=document.getElementById('aiFab');const fabMenu=document.getElementById('fabMenu');
 c.classList.toggle('open');bd.classList.toggle('open');
-fab.style.display=c.classList.contains('open')?'none':'flex';
+const isOpen=c.classList.contains('open');
+fab.style.display=isOpen?'none':'flex';
+fabMenu.classList.remove('open');fabOpen=false;
 const provider=getActiveProvider();
 if(c.classList.contains('open')&&provider)document.getElementById('aiInput').focus();
 if(c.classList.contains('open')&&!provider){document.getElementById('aiKeySetup').style.display='flex';document.getElementById('aiMessages').style.display='none';document.getElementById('aiInputArea').style.display='none';initAiChat()}}

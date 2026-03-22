@@ -200,6 +200,9 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 #fcCalendar .fc-timegrid-slot-label{font-size:.62rem;color:var(--t3)}
 #fcCalendar .fc-scrollgrid{border:none!important}
 #fcCalendar .fc-theme-standard td,#fcCalendar .fc-theme-standard th{border-color:var(--bd)}
+#fcCalendar .fc-col-header-cell a,#fcCalendar .fc-daygrid-day-number,#fcCalendar .fc-timegrid-axis-cushion{color:var(--t2)!important;text-decoration:none!important}
+#fcCalendar .fc-day-today .fc-daygrid-day-number,#fcCalendar .fc-day-today .fc-col-header-cell a{color:var(--g)!important;font-weight:700}
+#fcCalendar .fc-timegrid-allday .fc-timegrid-axis-cushion{font-size:.6rem;color:var(--t3)!important}
 
 .mnv{display:inline-flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:4px}
 .mnv button{background:transparent;border:none;color:var(--t3);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s}
@@ -442,9 +445,8 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 
 <!-- TAB: Agenda -->
 <div id="dashAgenda" style="display:none">
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
-<span style="font-size:.78rem;color:var(--t3)"><span id="evtCount">0</span> eventos</span>
-<button class="tl-btn" onclick="openEvento()"><i class="bi bi-plus-lg me-1"></i>Novo Evento</button>
+<div style="margin-bottom:4px">
+<span style="font-size:.72rem;color:var(--t3)"><span id="evtCount">0</span> eventos</span>
 </div>
 <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="agendaFilters">
 <button class="tl-btn active" data-af="eventos" onclick="toggleAgendaFilter(this)"><i class="bi bi-calendar-event me-1"></i>Eventos</button>
@@ -1303,14 +1305,20 @@ if(tab==='notas')renderNotas()}
 // Swipe between dashboard tabs
 (function(){
 const el=document.getElementById('pg-dashboard');
-let startX=0,startY=0,swiping=false;
+let startX=0,startY=0,swiping=false,onCalendar=false;
 el.addEventListener('touchstart',function(e){
-startX=e.touches[0].clientX;startY=e.touches[0].clientY;swiping=true},{passive:true});
+startX=e.touches[0].clientX;startY=e.touches[0].clientY;swiping=true;
+onCalendar=!!e.target.closest('#fcCalendar')},{passive:true});
 el.addEventListener('touchend',function(e){
 if(!swiping)return;swiping=false;
 const dx=e.changedTouches[0].clientX-startX;
 const dy=e.changedTouches[0].clientY-startY;
 if(Math.abs(dx)<60||Math.abs(dy)>Math.abs(dx))return;
+// If swipe is on calendar, navigate FC instead of switching tabs
+if(onCalendar&&fcCalendar){
+if(dx<-60)fcCalendar.next();
+else if(dx>60)fcCalendar.prev();
+return}
 const cur=document.querySelector('#dashTabs .tl-btn.active')?.dataset.tab||'resumo';
 const idx=DASH_TABS.indexOf(cur);
 if(dx<-60&&idx<DASH_TABS.length-1)switchDashTab(DASH_TABS[idx+1]);
@@ -1503,7 +1511,7 @@ initialDate:`${cY}-${String(cM+1).padStart(2,'0')}-01`,
 locale:'pt',firstDay:1,height:'auto',
 headerToolbar:{left:'prev',center:'title',right:'next'},
 footerToolbar:{left:'today',center:'',right:'dayGridMonth,timeGridWeek,listWeek'},
-buttonText:{today:'Hoje',month:'Mês',week:'Semana',list:'Lista'},
+buttonText:{today:'Hoje',month:'Mês',week:'Semana',list:'Lista',allDay:'Todo dia'},
 events:events,
 eventClick:function(info){
 const p=info.event.extendedProps;

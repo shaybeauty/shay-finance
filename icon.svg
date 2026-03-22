@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#141418"/>
+      <stop offset="100%" style="stop-color:#0C0C10"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F0D89A"/>
+      <stop offset="50%" style="stop-color:#D4AF6A"/>
+      <stop offset="100%" style="stop-color:#9B7B3C"/>
+    </linearGradient>
+    <linearGradient id="goldLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F0D89A;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#D4AF6A;stop-opacity:0.05"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <rect x="8" y="8" width="496" height="496" rx="100" fill="none" stroke="url(#gold)" stroke-width="2" opacity="0.3"/>
+  <!-- Diamond shape -->
+  <path d="M256 100 L340 200 L256 380 L172 200 Z" fill="none" stroke="url(#gold)" stroke-width="4" opacity="0.15"/>
+  <path d="M172 200 L340 200" fill="none" stroke="url(#gold)" stroke-width="3" opacity="0.15"/>
+  <!-- S letter stylized -->
+  <text x="256" y="310" text-anchor="middle" font-family="Georgia,serif" font-size="220" font-weight="400" fill="url(#gold)">S</text>
+  <!-- Subtle line under -->
+  <line x1="176" y1="360" x2="336" y2="360" stroke="url(#gold)" stroke-width="2" opacity="0.4"/>
+  <!-- F small -->
+  <text x="256" y="410" text-anchor="middle" font-family="Arial,sans-serif" font-size="36" font-weight="300" fill="#D4AF6A" opacity="0.6" letter-spacing="8">FINANCE</text>
+</svg>

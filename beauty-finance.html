@@ -152,6 +152,17 @@ h1,h2,h3,h4,h5,.serif{font-family:'Libre Caslon Display',serif;font-weight:400}
 .ai-card.desp .ai-card-val.amount{color:var(--coral)}
 .ai-card-sql{background:var(--bg);border-radius:8px;padding:10px 12px;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--lav);line-height:1.6;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
 .ai-card-footer{display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--bd)}
+/* Thinking chain */
+.ai-think{margin-top:8px;border-left:2px solid var(--lav);padding-left:12px;font-size:.75rem}
+.ai-think-step{padding:6px 0;color:var(--t2);animation:aimsg .3s ease}
+.ai-think-step .step-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(176,160,224,.12);color:var(--lav);font-size:.6rem;font-weight:700;margin-right:6px}
+.ai-think-step .step-sql{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--t3);display:block;margin:3px 0;padding:4px 8px;background:var(--bg);border-radius:6px;overflow-x:auto;white-space:nowrap}
+.ai-think-step .step-result{color:var(--mint);font-size:.7rem;font-weight:500}
+.ai-think-step .step-desc{color:var(--t2)}
+.ai-think-step.pending{opacity:.6}
+.ai-think-step.pending .step-desc{color:var(--t3)}
+@keyframes aipulse{0%,100%{opacity:.4}50%{opacity:1}}
+.ai-think-pulse{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--lav);animation:aipulse .8s infinite;margin-left:6px}
 </style>
 </head>
 <body>
@@ -1024,338 +1035,15 @@ document.getElementById('aiStatus').textContent=msgCount>0?`${msgCount} msgs`:'A
 function showChatList(){const list=document.getElementById('aiChatList');const msgs=document.getElementById('aiMessages');const input=document.getElementById('aiInputArea');
 if(list.style.display==='none'){list.style.display='block';msgs.style.display='none';input.style.display='none';
 const chats=getChats();
-list.innerHTML=chats.length?chats.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;margin-bottom:4px;cursor:pointer;transition:.2s;background:${c.id===currentChatId?'rgba(212,175,106,.08)':'transparent'};border:1px solid ${c.id===currentChatId?'rgba(212,175,106,.12)':'transparent'}" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='${c.id===currentChatId?'rgba(212,175,106,.08)':'transparent'}'">
-<div style="flex:1;min-width:0" onclick="loadChat('${c.id}')"><div style="font-size:.82rem;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.title}</div>
+list.innerHTML=chats.length?chats.map(c=>{const safeTitle=escHtml(c.title);return `<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;margin-bottom:4px;cursor:pointer;transition:.2s;background:${c.id===currentChatId?'rgba(212,175,106,.08)':'transparent'};border:1px solid ${c.id===currentChatId?'rgba(212,175,106,.12)':'transparent'}" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='${c.id===currentChatId?'rgba(212,175,106,.08)':'transparent'}'">
+<div style="flex:1;min-width:0" onclick="loadChat('${c.id}')"><div style="font-size:.82rem;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${safeTitle}</div>
 <div style="font-size:.65rem;color:var(--t3)">${new Date(c.updated_at).toLocaleDateString('pt-PT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>
-<button onclick="event.stopPropagation();if(confirm('Apagar esta conversa?'))deleteChat('${c.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:4px;font-size:.8rem"><i class="bi bi-trash3"></i></button></div>`).join(''):'<div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:.84rem">Sem conversas anteriores</div>';
+<button onclick="event.stopPropagation();if(confirm('Apagar esta conversa?'))deleteChat('${c.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:4px;font-size:.8rem"><i class="bi bi-trash3"></i></button></div>`}).join(''):'<div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:.84rem">Sem conversas anteriores</div>';
 }else{list.style.display='none';msgs.style.display='flex';input.style.display='block'}}
 
-function getSchemaForAI(){
-const cats=getCatServicos();const dcats=getCatDespesas();
-// Only send relevant config — exclude prompts (they're already in systemInstruction)
-const cfg=q1(`SELECT * FROM config WHERE key NOT IN ('system_prompt_full','image_prompt','custom_prompt')`);
-return `ESQUEMA:
-Tabelas: receitas(id,date,type,categoria,servico,descricao,amount,comissao,client,notes), despesas(id,date,categoria,subcategoria,descricao,amount,pagamento,notes)
-Serviços: ${[...new Set(cats.map(c=>c.cat))].map(cat=>`${cat}(${cats.filter(c=>c.cat===cat).map(c=>c.srv).join(',')})`).join('; ')}
-Despesas: ${[...new Set(dcats.map(c=>c.cat))].map(cat=>`${cat}(${dcats.filter(c=>c.cat===cat).map(c=>c.sub).join(',')})`).join('; ')}
-Config: ${cfg.map(c=>`${c.key}=${c.value}`).join(', ')}`}
 
-function getAiSystem(){
-const sp=q0(`SELECT value FROM config WHERE key='system_prompt_full'`);
-const cp=q0(`SELECT value FROM config WHERE key='custom_prompt'`);
-const threshold=qv(`SELECT value FROM config WHERE key='ai_confirm_threshold'`)||0;
-const basePrompt=sp?.value||DEFAULT_SYSTEM_PROMPT;
-const customPrompt=cp?.value||'';
-return `${basePrompt}
+const MAX_QUERY_STEPS=5;
 
-# ACÇÕES DISPONÍVEIS
-Quando quiseres executar uma acção, devolve JSON entre \`\`\`json e \`\`\`.
-NUNCA inventes campos — usa exactamente estes schemas:
-
-## Registar Receita
-\`\`\`json
-{"action":"add_receita","data":{"date":"YYYY-MM-DD","type":"comissao","categoria":"Sobrancelhas","servico":"Microblading","descricao":"retoque","amount":45,"client":"Ana","notes":""}}
-\`\`\`
-- type: "comissao" (salão 50%) ou "extra" (gabinete 100%)
-- amount: SEMPRE a parte da utilizadora
-
-## Registar Despesa
-\`\`\`json
-{"action":"add_despesa","data":{"date":"YYYY-MM-DD","categoria":"Marketing","subcategoria":"Redes Sociais","descricao":"Instagram Ads","amount":30,"pagamento":"MB Way","notes":""}}
-\`\`\`
-- categorias: Pessoal, Actividade, Marketing, Produtos
-- pagamento: Multibanco, MB Way, Transferência, Dinheiro, Crédito, Outro
-
-## Executar SQL (alterar esquema/categorias)
-\`\`\`json
-{"action":"run_sql","sql":"INSERT INTO categorias_servico(nome) VALUES('Corpo')","description":"Adiciona categoria Corpo"}
-\`\`\`
-⚠️ PROIBIDO: DROP TABLE, DELETE FROM sem WHERE, TRUNCATE
-
-## Deploy (alterar a app via GitHub)
-\`\`\`json
-{"action":"deploy_code","description":"Muda cor do título","changes":[{"search":"texto exacto actual","replace":"texto novo"}]}
-\`\`\`
-
-# REGRAS
-- ${threshold>0?`Auto-confirma valores abaixo de €${threshold}`:'SEMPRE pede confirmação antes de executar'}
-- Data de hoje: ${new Date().toISOString().slice(0,10)}
-- Só devolve UM bloco JSON por mensagem
-- Se a utilizadora pedir algo ambíguo, pergunta em vez de adivinhar
-- Para consultas (quanto ganhei, etc.), responde em texto — sem JSON
-${customPrompt?'\n# INSTRUÇÕES PERSONALIZADAS\n'+customPrompt:''}`}
-
-function toggleChat(){const c=document.getElementById('aiChat');c.classList.toggle('open');
-if(c.classList.contains('open')&&aiKey)document.getElementById('aiInput').focus();
-if(c.classList.contains('open')&&!aiKey){document.getElementById('aiKeySetup').style.display='flex';document.getElementById('aiMessages').style.display='none';document.getElementById('aiInputArea').style.display='none'}}
-
-function saveApiKey(){const k=document.getElementById('aiKeyInput').value.trim();
-const gt=document.getElementById('ghTokenInput').value.trim();const gr=document.getElementById('ghRepoInput').value.trim();
-if(!k||!k.startsWith('AIza')){toast('API key inválida','w');return}
-aiKey=k;localStorage.setItem('shayAiKey',k);
-if(gt){ghToken=gt;localStorage.setItem('shayGhToken',gt)}
-if(gr){ghRepo=gr;localStorage.setItem('shayGhRepo',gr)}
-document.getElementById('aiKeySetup').style.display='none';document.getElementById('aiMessages').style.display='flex';document.getElementById('aiInputArea').style.display='block';
-addAiMsg('bot','Olá! Sou a Shay AI 💅\n\nPosso:\n• Registar receitas/despesas\n• Consultar dados\n• Alterar categorias/esquema\n'+(ghToken?'• Deploy automático 🚀':''));
-toast('Shay AI ativada!')}
-
-function initAiChat(){if(aiKey){document.getElementById('aiKeySetup').style.display='none';document.getElementById('aiMessages').style.display='flex';document.getElementById('aiInputArea').style.display='block';
-// Load last chat or create new
-const chats=getChats();if(chats.length){loadChat(chats[0].id)}else{newChat()}}}
-
-function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function addAiMsg(who,text,html){const c=document.getElementById('aiMessages');const d=document.createElement('div');d.className='ai-msg '+who;
-const safe=who==='user'&&!html?escHtml(text).replace(/\n/g,'<br>'):html||text.replace(/\n/g,'<br>');
-d.innerHTML=`<div class="ai-avatar">${who==='bot'?'<i class="bi bi-stars"></i>':'<i class="bi bi-person"></i>'}</div><div class="ai-bubble">${safe}</div>`;
-c.appendChild(d);c.scrollTop=c.scrollHeight}
-function showTyping(){const c=document.getElementById('aiMessages');const d=document.createElement('div');d.className='ai-msg bot';d.id='aiTyping';
-d.innerHTML='<div class="ai-avatar"><i class="bi bi-stars"></i></div><div class="ai-typing"><span></span><span></span><span></span></div>';c.appendChild(d);c.scrollTop=c.scrollHeight}
-function hideTyping(){const t=document.getElementById('aiTyping');if(t)t.remove()}
-
-function getDataContext(){const ym=`${cY}-${String(cM+1).padStart(2,'0')}`;const yr=String(cY);
-const mRec=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=?`,ym);
-const mSal=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=? AND type='comissao'`,ym);
-const mExt=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=? AND type='extra'`,ym);
-const mDesp=qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,7)=?`,ym);
-const mNserv=qv(`SELECT COUNT(*) FROM receitas WHERE substr(date,1,7)=?`,ym);
-const yRec=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,4)=?`,yr);
-const yDesp=qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,4)=?`,yr);
-// Top services this month
-const topServ=q1(`SELECT servico, COUNT(*) as n, SUM(amount) as total FROM receitas WHERE substr(date,1,7)=? GROUP BY servico ORDER BY total DESC LIMIT 3`,[ym]);
-// Despesas by category this month
-const despCat=q1(`SELECT categoria, SUM(amount) as total FROM despesas WHERE substr(date,1,7)=? GROUP BY categoria ORDER BY total DESC`,[ym]);
-// Last 3 transactions
-const last3=q1(`SELECT 'R' as t, date, servico as desc, amount FROM receitas UNION ALL SELECT 'D', date, descricao, amount FROM despesas ORDER BY date DESC LIMIT 3`);
-
-return `DADOS ACTUAIS (a utilizadora está a ver ${MN[cM]} ${cY}):
-Mês: ${MN[cM]} ${cY}
-  Receita total: €${mRec.toFixed(2)} (Salão: €${mSal.toFixed(2)} | Extra: €${mExt.toFixed(2)})
-  Despesas: €${mDesp.toFixed(2)}
-  Saldo: €${(mRec-mDesp).toFixed(2)}
-  Serviços realizados: ${mNserv}
-${topServ.length?'  Top serviços: '+topServ.map(s=>`${s.servico}(${s.n}x, €${s.total.toFixed(2)})`).join(', '):''}
-${despCat.length?'  Despesas por cat: '+despCat.map(d=>`${d.categoria}: €${d.total.toFixed(2)}`).join(', '):''}
-Ano ${cY}: Receita €${yRec.toFixed(2)} | Despesas €${yDesp.toFixed(2)} | Lucro €${(yRec-yDesp).toFixed(2)}
-${last3.length?'Últimas: '+last3.map(l=>`${l.t==='R'?'+':'-'}€${l.amount.toFixed(2)} ${l.desc} (${l.date})`).join(' | '):''}`}
-
-let aiSending=false;
-async function sendAiMsg(){if(aiSending)return;
-const input=document.getElementById('aiInput');const msg=input.value.trim();
-const hasImage=!!aiImageData;
-if(!msg&&!hasImage)return;
-
-// If there's a pending card, warn user
-if(aiPending){addAiMsg('bot','⚠️ Tens uma acção pendente por confirmar ou cancelar acima.');return}
-
-aiSending=true;input.value='';input.disabled=true;
-if(!currentChatId)currentChatId=createChat();
-
-// Show user message with image thumbnail if present
-if(hasImage){
-addAiMsg('user','','<div style="margin-bottom:6px"><img src="data:image/jpeg;base64,'+aiImageData+'" style="max-height:80px;border-radius:8px"></div>'+(msg||'<span style="color:var(--t3);font-size:.78rem">📷 Foto enviada</span>'));
-}else{addAiMsg('user',msg)}
-saveChatMsg(currentChatId,'user',msg||(hasImage?'[Foto enviada]':''));
-
-showTyping();document.getElementById('aiStatus').textContent=hasImage?'A analisar foto...':'A pensar...';
-try{const ctx=getDataContext()+'\n'+getSchemaForAI();
-
-// Build history from DB — clean old context, keep only user intent and AI response
-const dbMsgs=getChatMessages(currentChatId);
-const recentMsgs=dbMsgs.slice(-12);
-
-// Strip context/metadata from historical messages to save tokens
-const messages=[];
-recentMsgs.slice(0,-1).forEach(m=>{
-const role=m.role==='user'?'user':'model';
-// Skip consecutive same-role (Gemini requires alternation)
-if(messages.length>0&&messages[messages.length-1].role===role)return;
-// Clean old context injections from user messages
-let text=m.content;
-if(role==='user'){
-text=text.replace(/DADOS ACTUAIS[\s\S]*?UTILIZADOR:\s*/,'').replace(/^ESQUEMA:[\s\S]*?Config:.*\n/,'');
-// Skip system messages (confirmations)
-if(text==='✅ Confirmado'||text==='❌ Cancelado')return;
-text=text.trim();if(!text)return}
-// Skip bot status messages
-if(role==='model'&&(text.startsWith('Receita registada!')||text.startsWith('Despesa registada!')||text==='OK, cancelado. Diz-me se queres alterar algo.'))return;
-messages.push({role,parts:[{text}]})});
-// Ensure last is model so we can add user
-if(messages.length>0&&messages[messages.length-1].role==='user')messages.pop();
-
-// Estimate token usage (~4 chars per token)
-const historyChars=messages.reduce((s,m)=>s+m.parts[0].text.length,0);
-const ctxChars=ctx.length;
-const totalEstTokens=Math.round((historyChars+ctxChars)/4);
-
-// Warn if context is getting large (>6000 tokens estimated)
-if(totalEstTokens>6000&&dbMsgs.length>20){
-const warn='💡 Conversa longa (~'+totalEstTokens+' tokens). Cria novo chat com + para melhor desempenho.';
-addAiMsg('bot',warn);saveChatMsg(currentChatId,'bot',warn)}
-
-// Ensure messages starts with user role (Gemini requirement)
-if(messages.length>0&&messages[0].role==='model')messages.shift();
-
-// Build current message parts
-const userParts=[];
-if(hasImage){
-const imgPromptCfg=q0(`SELECT value FROM config WHERE key='image_prompt'`);
-const imgPrompt=imgPromptCfg?.value||DEFAULT_IMAGE_PROMPT;
-userParts.push({inlineData:{mimeType:'image/jpeg',data:aiImageData}});
-userParts.push({text:`${ctx}\n\n${imgPrompt}\n${msg?'Mensagem do utilizador: '+msg:''}`});
-}else{
-userParts.push({text:`${ctx}\n\nUTILIZADOR: ${msg}`})}
-messages.push({role:'user',parts:userParts});
-
-const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${aiKey}`,{
-method:'POST',headers:{'Content-Type':'application/json'},
-body:JSON.stringify({contents:messages,systemInstruction:{parts:[{text:getAiSystem()}]},generationConfig:{temperature:0.7,maxOutputTokens:2000}})});
-if(!resp.ok){const err=await resp.json();
-const errMsg=err.error?.message||'Erro API';
-if(resp.status===429)throw new Error('Limite de pedidos atingido. Espera uns segundos e tenta novamente.');
-if(resp.status===403)throw new Error('API key inválida ou sem permissões. Verifica em Configurações.');
-throw new Error(errMsg)}
-const data=await resp.json();const reply=data.candidates?.[0]?.content?.parts?.[0]?.text||'Sem resposta';
-saveChatMsg(currentChatId,'bot',reply);
-// Clear image after sending
-clearAiImage();
-hideTyping();processAiReply(reply);
-const chat=q0(`SELECT title FROM chats WHERE id=?`,[currentChatId]);
-if(chat)document.getElementById('aiChatTitle').textContent=chat.title;
-}catch(e){hideTyping();const errMsg='Erro: '+e.message;addAiMsg('bot',errMsg);if(currentChatId)saveChatMsg(currentChatId,'bot',errMsg);clearAiImage()}
-aiSending=false;document.getElementById('aiInput').disabled=false;document.getElementById('aiInput').focus();
-const msgCount=currentChatId?getChatMessages(currentChatId).length:0;
-document.getElementById('aiStatus').textContent=msgCount>0?`${msgCount} msgs`:'Assistente'}
-
-// ===== PREVIEW CARD RENDERER =====
-function renderCard(a,readonly){
-const footer=readonly?'':
-`<div class="ai-card-footer"><button class="ai-yes" onclick="confirmAiAction()"><i class="bi bi-check-lg me-1"></i>${a.action==='deploy_code'?'Deploy':a.action==='run_sql'?'Executar':'Confirmar'}</button><button class="ai-no" onclick="cancelAiAction()"><i class="bi bi-x-lg me-1"></i>Cancelar</button></div>`;
-
-if(a.action==='add_receita'){const d=a.data;return `<div class="ai-card rec"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(212,175,106,.1);color:var(--g)"><i class="bi bi-cash-coin"></i></div><div><div class="ai-card-type" style="color:var(--g)">Receita</div></div><span class="bb b-${d.type||'comissao'}" style="margin-left:auto">${CL[d.type]||'Salão 50%'}</span></div><div class="ai-card-rows"><div class="ai-card-row"><span class="ai-card-label">Serviço</span><span class="ai-card-val">${d.servico||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Valor</span><span class="ai-card-val amount">${f$(d.amount||0)}</span></div><div class="ai-card-row"><span class="ai-card-label">Categoria</span><span class="ai-card-val">${d.categoria||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Data</span><span class="ai-card-val">${d.date||'—'}</span></div>${d.client?`<div class="ai-card-row"><span class="ai-card-label">Cliente</span><span class="ai-card-val">${d.client}</span></div>`:''}</div>${footer}</div>`}
-if(a.action==='add_despesa'){const d=a.data;return `<div class="ai-card desp"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(232,132,92,.1);color:var(--coral)"><i class="bi bi-receipt"></i></div><div><div class="ai-card-type" style="color:var(--coral)">Despesa</div></div><span class="bb b-${(d.categoria||'pessoal').toLowerCase()}" style="margin-left:auto">${d.categoria||'Pessoal'}</span></div><div class="ai-card-rows"><div class="ai-card-row"><span class="ai-card-label">Descrição</span><span class="ai-card-val">${d.descricao||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Valor</span><span class="ai-card-val amount">${f$(d.amount||0)}</span></div><div class="ai-card-row"><span class="ai-card-label">Subcategoria</span><span class="ai-card-val">${d.subcategoria||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Data</span><span class="ai-card-val">${d.date||'—'}</span></div></div>${footer}</div>`}
-if(a.action==='run_sql'){return `<div class="ai-card sql"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(176,160,224,.1);color:var(--lav)"><i class="bi bi-database-gear"></i></div><div><div class="ai-card-type" style="color:var(--lav)">SQL</div><div style="font-size:.78rem;color:var(--t2)">${a.description||''}</div></div></div><div class="ai-card-sql">${(a.sql||'').replace(/</g,'&lt;')}</div>${footer}</div>`}
-if(a.action==='deploy_code'){return `<div class="ai-card deploy"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(232,112,144,.1);color:var(--rose)"><i class="bi bi-rocket-takeoff"></i></div><div><div class="ai-card-type" style="color:var(--rose)">Deploy</div><div style="font-size:.78rem;color:var(--t2)">${a.description||''}</div></div></div><div style="font-size:.75rem;color:var(--t3);margin-top:6px"><i class="bi bi-github me-1"></i>${a.changes?a.changes.length:0} alteração(ões)</div>${footer}</div>`}
-return ''}
-
-// Render a bot message — detect JSON cards and render them (readonly in history)
-function renderBotMsg(content,readonly){
-if(!content)return '';
-const jm=content.match(/```json\s*([\s\S]*?)\s*```/);
-if(jm){try{const a=JSON.parse(jm[1]);
-const clean=content.replace(/```json[\s\S]*?```/g,'').trim();
-const card=renderCard(a,readonly);
-return (clean?clean.replace(/\n/g,'<br>')+'<br>':'')+card}catch(e){
-// Malformed JSON — render as text, strip the code block formatting
-return content.replace(/```json/g,'<div class="ai-card-sql">').replace(/```/g,'</div>').replace(/\n/g,'<br>')}}
-return content.replace(/\n/g,'<br>')}
-
-function processAiReply(reply){const jm=reply.match(/```json\s*([\s\S]*?)\s*```/);let clean=reply.replace(/```json[\s\S]*?```/g,'').trim();
-if(jm){try{const a=JSON.parse(jm[1]);aiPending=a;
-addAiMsg('bot','',renderBotMsg(reply,false));return}catch(e){}}
-addAiMsg('bot',clean)}
-
-function confirmAiAction(){if(!aiPending)return;const a=aiPending;aiPending=null;
-// Record the confirmation in chat
-addAiMsg('user','✅ Confirmado');
-if(currentChatId)saveChatMsg(currentChatId,'user','✅ Confirmado');
-
-if(a.action==='add_receita'){const d=a.data;run(`INSERT INTO receitas VALUES(?,?,?,?,?,?,?,?,?,?)`,uid(),d.date||new Date().toISOString().slice(0,10),d.type||'comissao',d.categoria||'',d.servico||'',d.descricao||'',d.amount||0,d.type==='comissao'?d.amount:0,d.client||'',d.notes||'');
-const msg=`Receita registada! ${d.servico||''} · ${f$(d.amount||0)} · ${CL[d.type]||''}`;
-addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);saveDB()}
-else if(a.action==='add_despesa'){const d=a.data;run(`INSERT INTO despesas VALUES(?,?,?,?,?,?,?,?)`,uid(),d.date||new Date().toISOString().slice(0,10),d.categoria||'Pessoal',d.subcategoria||'Outro',d.descricao||'',d.amount||0,d.pagamento||'Outro',d.notes||'');
-const msg=`Despesa registada! ${d.descricao||''} · ${f$(d.amount||0)} · ${d.categoria||''}`;
-addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);saveDB()}
-else if(a.action==='run_sql'){
-const forbidden=['DROP TABLE','DROP DATABASE','DROP INDEX','TRUNCATE','DELETE FROM receitas;','DELETE FROM despesas;','DELETE FROM config;','DELETE FROM chats;','DELETE FROM chat_messages;','ALTER TABLE receitas DROP','ALTER TABLE despesas DROP'];
-const sqlUp=(a.sql||'').toUpperCase().replace(/\s+/g,' ');
-if(forbidden.some(f=>sqlUp.includes(f.toUpperCase()))){const msg='⚠️ SQL bloqueado por segurança — operação destrutiva não permitida.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
-// Block multiple statements
-if((a.sql.match(/;/g)||[]).length>1){const msg='⚠️ SQL bloqueado — apenas uma instrução por vez.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
-try{const r=db.exec(a.sql);saveDB();let msg='SQL executado: '+(a.description||a.sql.slice(0,50));
-if(r.length){msg+=` (${r[0].values.length} resultados)`}
-addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}
-catch(e){const msg='Erro SQL: '+e.message;addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}}
-else if(a.action==='deploy_code'){
-if(currentChatId)saveChatMsg(currentChatId,'bot','Deploy iniciado...');
-deployToGitHub(a);return}
-rA()}
-
-function cancelAiAction(){aiPending=null;
-addAiMsg('user','❌ Cancelado');
-if(currentChatId)saveChatMsg(currentChatId,'user','❌ Cancelado');
-const msg='OK, cancelado. Diz-me se queres alterar algo.';
-addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}
-
-async function deployToGitHub(action){if(!ghToken||!ghRepo){
-const msg='GitHub não configurado. Vai a Config para adicionar o token.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
-addAiMsg('bot','Deploy em curso...');
-try{const fileUrl=`https://api.github.com/repos/${ghRepo}/contents/index.html`;
-const getResp=await fetch(fileUrl,{headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github.v3+json'}});
-if(!getResp.ok)throw new Error('Erro acesso repo');const fileData=await getResp.json();
-let content=atob(fileData.content.replace(/\n/g,''));let applied=0;
-if(action.changes){for(const ch of action.changes){if(content.includes(ch.search)){content=content.replace(ch.search,ch.replace);applied++}}}
-if(!applied){const msg='Nenhuma alteração aplicada — o código pode já ter sido alterado.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
-await fetch(fileUrl,{method:'PUT',headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
-body:JSON.stringify({message:`Shay AI: ${action.description||'update'}`,content:btoa(unescape(encodeURIComponent(content))),sha:fileData.sha})});
-try{const bfUrl=`https://api.github.com/repos/${ghRepo}/contents/beauty-finance.html`;const bf=await fetch(bfUrl,{headers:{'Authorization':`Bearer ${ghToken}`}});
-if(bf.ok){const bfd=await bf.json();await fetch(bfUrl,{method:'PUT',headers:{'Authorization':`Bearer ${ghToken}`,'Content-Type':'application/json'},
-body:JSON.stringify({message:'sync',content:btoa(unescape(encodeURIComponent(content))),sha:bfd.sha})})}}catch(e){}
-const msg=`Deploy feito! ${applied} alteração(ões) aplicada(s). Recarrega a página em ~30s.`;
-addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);rA()
-}catch(e){const msg='Erro no deploy: '+e.message;addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}}
-
-// ===== CAMERA / IMAGE =====
-let aiImageData=null;
-
-function handleAiImage(input){if(!input.files||!input.files[0])return;
-const file=input.files[0];const reader=new FileReader();
-reader.onload=function(e){const img=new Image();img.onload=function(){
-// Resize to max 800px for API efficiency
-const max=800;let w=img.width,h=img.height;
-if(w>max||h>max){if(w>h){h=Math.round(h*max/w);w=max}else{w=Math.round(w*max/h);h=max}}
-const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
-canvas.getContext('2d').drawImage(img,0,0,w,h);
-aiImageData=canvas.toDataURL('image/jpeg',0.8).split(',')[1];
-document.getElementById('aiImgThumb').src=canvas.toDataURL('image/jpeg',0.3);
-document.getElementById('aiImgPreview').style.display='block';
-// Auto-focus input for adding context
-document.getElementById('aiInput').placeholder='Descreve o que é a foto... (opcional)';
-document.getElementById('aiInput').focus()};
-img.src=e.target.result};reader.readAsDataURL(file);input.value=''}
-
-function clearAiImage(){aiImageData=null;
-document.getElementById('aiImgPreview').style.display='none';
-document.getElementById('aiInput').placeholder='Mensagem ou foto...'}
-
-function aiVoiceInput(){if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){toast('Sem voz','w');return}
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const rec=new SR();rec.lang='pt-PT';rec.continuous=false;rec.interimResults=false;
-document.getElementById('aiMicBtn').classList.add('recording');document.getElementById('aiStatus').textContent='A ouvir...';
-rec.onresult=function(e){document.getElementById('aiInput').value=e.results[0][0].transcript;sendAiMsg()};
-rec.onend=function(){document.getElementById('aiMicBtn').classList.remove('recording');document.getElementById('aiStatus').textContent='Assistente financeiro'};
-rec.onerror=rec.onend;rec.start()}
-
-// ===== BACKUP =====
-function exportBackup(){if(!db){toast('Base de dados não carregada','w');return}
-const data=db.export();const blob=new Blob([new Uint8Array(data)],{type:'application/x-sqlite3'});
-const url=URL.createObjectURL(blob);const a=document.createElement('a');
-const date=new Date().toISOString().slice(0,10);
-a.href=url;a.download=`shay-finance-backup-${date}.db`;a.click();URL.revokeObjectURL(url);
-toast('Backup descarregado!')}
-
-async function importBackup(file){if(!file){return}
-if(!confirm('Restaurar backup? Isto substitui TODOS os dados actuais.')){return}
-const reader=new FileReader();reader.onload=async function(e){
-try{const SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`});
-const data=new Uint8Array(e.target.result);db=new SQL.Database(data);
-// Verify it's a valid DB
-const tables=q1(`SELECT name FROM sqlite_master WHERE type='table'`);
-if(!tables.length)throw new Error('Ficheiro inválido');
-await saveDB();goToLastMonth();uM();rA();
-toast(`Backup restaurado! ${tables.length} tabelas carregadas.`)}
-catch(err){toast('Erro: ficheiro inválido — '+err.message,'w')}};
-reader.readAsArrayBuffer(file)}
-
-// ===== CONFIG PAGE =====
 const DEFAULT_SYSTEM_PROMPT=`Tu és a Shay AI, a assistente financeira da aplicação Shay Finance.
 
 # IDENTIDADE
@@ -1465,6 +1153,467 @@ const DEFAULT_IMAGE_PROMPT=`A utilizadora enviou uma FOTO. Analisa com muita ate
 - Mostra sempre o que leste para a utilizadora validar antes de registar
 - Se tens dúvida num valor, pergunta em vez de adivinhar`;
 
+
+function getSchemaForAI(){
+const cats=getCatServicos();const dcats=getCatDespesas();
+// Only send relevant config — exclude prompts (they're already in systemInstruction)
+const cfg=q1(`SELECT * FROM config WHERE key NOT IN ('system_prompt_full','image_prompt','custom_prompt')`);
+return `ESQUEMA:
+Tabelas: receitas(id,date,type,categoria,servico,descricao,amount,comissao,client,notes), despesas(id,date,categoria,subcategoria,descricao,amount,pagamento,notes)
+Serviços: ${[...new Set(cats.map(c=>c.cat))].map(cat=>`${cat}(${cats.filter(c=>c.cat===cat).map(c=>c.srv).join(',')})`).join('; ')}
+Despesas: ${[...new Set(dcats.map(c=>c.cat))].map(cat=>`${cat}(${dcats.filter(c=>c.cat===cat).map(c=>c.sub).join(',')})`).join('; ')}
+Config: ${cfg.map(c=>`${c.key}=${c.value}`).join(', ')}`}
+
+function getAiSystem(){
+const sp=q0(`SELECT value FROM config WHERE key='system_prompt_full'`);
+const cp=q0(`SELECT value FROM config WHERE key='custom_prompt'`);
+const threshold=qv(`SELECT value FROM config WHERE key='ai_confirm_threshold'`)||0;
+const basePrompt=sp?.value||DEFAULT_SYSTEM_PROMPT;
+const customPrompt=cp?.value||'';
+return `${basePrompt}
+
+# ACÇÕES DISPONÍVEIS
+Quando quiseres executar uma acção, devolve JSON entre \`\`\`json e \`\`\`.
+NUNCA inventes campos — usa exactamente estes schemas:
+
+## Registar Receita
+\`\`\`json
+{"action":"add_receita","data":{"date":"YYYY-MM-DD","type":"comissao","categoria":"Sobrancelhas","servico":"Microblading","descricao":"retoque","amount":45,"client":"Ana","notes":""}}
+\`\`\`
+- type: "comissao" (salão 50%) ou "extra" (gabinete 100%)
+- amount: SEMPRE a parte da utilizadora
+
+## Registar Despesa
+\`\`\`json
+{"action":"add_despesa","data":{"date":"YYYY-MM-DD","categoria":"Marketing","subcategoria":"Redes Sociais","descricao":"Instagram Ads","amount":30,"pagamento":"MB Way","notes":""}}
+\`\`\`
+- categorias: Pessoal, Actividade, Marketing, Produtos
+- pagamento: Multibanco, MB Way, Transferência, Dinheiro, Crédito, Outro
+
+## Consultar dados (SELECT — só leitura)
+\`\`\`json
+{"action":"query_sql","sql":"SELECT descricao, amount FROM despesas WHERE descricao LIKE '%telemóvel%'","description":"Procurar despesas com telemóvel"}
+\`\`\`
+USA ESTA ACÇÃO para responder a QUALQUER pergunta sobre dados:
+- "Quanto gastei em X?" → query_sql com SELECT SUM(amount) ... WHERE ...
+- "Quais foram as receitas de Janeiro?" → query_sql com SELECT ... WHERE substr(date,1,7)='2026-01'
+- "Qual o meu melhor mês?" → query_sql com GROUP BY + ORDER BY
+- A app executa a query, devolve os resultados, e tu interpretas para o utilizador
+- Podes fazer queries complexas: JOINs, GROUP BY, SUM, COUNT, AVG, etc.
+- NÃO precisas de confirmação para SELECT — é só leitura
+
+## Alterar esquema/categorias (INSERT/UPDATE/DELETE)
+\`\`\`json
+{"action":"run_sql","sql":"INSERT INTO categorias_servico(nome) VALUES('Corpo')","description":"Adiciona categoria Corpo"}
+\`\`\`
+⚠️ PROIBIDO: DROP TABLE, DELETE FROM sem WHERE, TRUNCATE. SEMPRE pede confirmação.
+
+## Deploy (alterar a app via GitHub)
+\`\`\`json
+{"action":"deploy_code","description":"Muda cor do título","changes":[{"search":"texto exacto actual","replace":"texto novo"}]}
+\`\`\`
+
+# REGRAS
+- ${threshold>0?`Auto-confirma valores abaixo de €${threshold}`:'SEMPRE pede confirmação antes de registar receitas/despesas'}
+- Data de hoje: ${new Date().toISOString().slice(0,10)}
+- Só devolve UM bloco JSON por mensagem
+- Se a utilizadora pedir algo ambíguo, pergunta em vez de adivinhar
+- Para consultas (quanto ganhei, etc.), USA SEMPRE action "query_sql" — NÃO tentes responder de memória
+- Para registar dados, usa add_receita ou add_despesa (com confirmação)
+- Para alterar esquema, usa run_sql (com confirmação)
+
+# ESTRATÉGIA DE CONSULTA (query_sql)
+Quando a utilizadora faz uma pergunta sobre dados:
+1. Formula um SELECT SQL e devolve como query_sql
+2. A app executa e devolve os resultados
+3. Se os resultados respondem → interpreta e responde em texto
+4. Se precisas de mais dados → pede outra query_sql (máximo ${MAX_QUERY_STEPS} passos)
+
+Exemplos de cadeia:
+- "Qual o meu melhor mês?" → 1) SUM receitas por mês → 2) SUM despesas por mês → calcular lucro
+- "Gastei mais em marketing ou produtos?" → 1) SUM despesas GROUP BY categoria
+- "Quanto gastei com telemóvel?" → 1) SELECT FROM despesas WHERE descricao LIKE '%telemóvel%'
+- Se não encontras numa tabela, tenta noutra ou com LIKE diferente
+${customPrompt?'\n# INSTRUÇÕES PERSONALIZADAS\n'+customPrompt:''}`}
+
+function toggleChat(){const c=document.getElementById('aiChat');c.classList.toggle('open');
+if(c.classList.contains('open')&&aiKey)document.getElementById('aiInput').focus();
+if(c.classList.contains('open')&&!aiKey){document.getElementById('aiKeySetup').style.display='flex';document.getElementById('aiMessages').style.display='none';document.getElementById('aiInputArea').style.display='none'}}
+
+function saveApiKey(){const k=document.getElementById('aiKeyInput').value.trim();
+const gt=document.getElementById('ghTokenInput').value.trim();const gr=document.getElementById('ghRepoInput').value.trim();
+if(!k||!k.startsWith('AIza')){toast('API key inválida','w');return}
+aiKey=k;localStorage.setItem('shayAiKey',k);
+if(gt){ghToken=gt;localStorage.setItem('shayGhToken',gt)}
+if(gr){ghRepo=gr;localStorage.setItem('shayGhRepo',gr)}
+document.getElementById('aiKeySetup').style.display='none';document.getElementById('aiMessages').style.display='flex';document.getElementById('aiInputArea').style.display='block';
+addAiMsg('bot','Olá! Sou a Shay AI 💅\n\nPosso:\n• Registar receitas/despesas\n• Consultar dados\n• Alterar categorias/esquema\n'+(ghToken?'• Deploy automático 🚀':''));
+toast('Shay AI ativada!')}
+
+function initAiChat(){if(aiKey){document.getElementById('aiKeySetup').style.display='none';document.getElementById('aiMessages').style.display='flex';document.getElementById('aiInputArea').style.display='block';
+// Load last chat or create new
+const chats=getChats();if(chats.length){loadChat(chats[0].id)}else{newChat()}}}
+
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function addAiMsg(who,text,html){const c=document.getElementById('aiMessages');const d=document.createElement('div');d.className='ai-msg '+who;
+const safe=who==='user'&&!html?escHtml(text).replace(/\n/g,'<br>'):html||text.replace(/\n/g,'<br>');
+d.innerHTML=`<div class="ai-avatar">${who==='bot'?'<i class="bi bi-stars"></i>':'<i class="bi bi-person"></i>'}</div><div class="ai-bubble">${safe}</div>`;
+c.appendChild(d);c.scrollTop=c.scrollHeight}
+function showTyping(){const c=document.getElementById('aiMessages');const d=document.createElement('div');d.className='ai-msg bot';d.id='aiTyping';
+d.innerHTML='<div class="ai-avatar"><i class="bi bi-stars"></i></div><div class="ai-typing"><span></span><span></span><span></span></div>';c.appendChild(d);c.scrollTop=c.scrollHeight}
+function hideTyping(){const t=document.getElementById('aiTyping');if(t)t.remove()}
+
+function getDataContext(){const ym=`${cY}-${String(cM+1).padStart(2,'0')}`;const yr=String(cY);
+const mRec=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=?`,ym);
+const mSal=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=? AND type='comissao'`,ym);
+const mExt=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=? AND type='extra'`,ym);
+const mDesp=qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,7)=?`,ym);
+const mNserv=qv(`SELECT COUNT(*) FROM receitas WHERE substr(date,1,7)=?`,ym);
+const nDesp=qv(`SELECT COUNT(*) FROM despesas WHERE substr(date,1,7)=?`,ym);
+const yRec=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,4)=?`,yr);
+const yDesp=qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,4)=?`,yr);
+return `MÊS ACTUAL: ${MN[cM]} ${cY} (${ym})
+Receita: €${mRec.toFixed(2)} (Salão: €${mSal.toFixed(2)} | Extra: €${mExt.toFixed(2)}) | ${mNserv} serviços
+Despesas: €${mDesp.toFixed(2)} (${nDesp} registos) | Saldo: €${(mRec-mDesp).toFixed(2)}
+Ano ${cY}: Receita €${yRec.toFixed(2)} | Despesas €${yDesp.toFixed(2)} | Lucro €${(yRec-yDesp).toFixed(2)}
+NOTA: Para detalhes, usa action "query_sql" com SELECT. Podes consultar qualquer tabela.`}
+
+let aiSending=false;
+async function sendAiMsg(){if(aiSending)return;
+const input=document.getElementById('aiInput');const msg=input.value.trim();
+const hasImage=!!aiImageData;
+if(!msg&&!hasImage)return;
+
+// If there's a pending card, warn user
+if(aiPending){addAiMsg('bot','⚠️ Tens uma acção pendente por confirmar ou cancelar acima.');return}
+
+aiSending=true;input.value='';input.disabled=true;
+if(!currentChatId)currentChatId=createChat();
+
+// Show user message with image thumbnail if present
+if(hasImage){
+addAiMsg('user','','<div style="margin-bottom:6px"><img src="data:image/jpeg;base64,'+aiImageData+'" style="max-height:80px;border-radius:8px"></div>'+(msg||'<span style="color:var(--t3);font-size:.78rem">📷 Foto enviada</span>'));
+}else{addAiMsg('user',msg)}
+saveChatMsg(currentChatId,'user',msg||(hasImage?'[Foto enviada]':''));
+
+showTyping();document.getElementById('aiStatus').textContent=hasImage?'A analisar foto...':'A pensar...';
+try{const ctx=getDataContext();
+
+// Build history from DB — clean old context, keep only user intent and AI response
+const dbMsgs=getChatMessages(currentChatId);
+const recentMsgs=dbMsgs.slice(-12);
+
+// Strip context/metadata from historical messages to save tokens
+const messages=[];
+recentMsgs.slice(0,-1).forEach(m=>{
+const role=m.role==='user'?'user':'model';
+// Skip consecutive same-role (Gemini requires alternation)
+if(messages.length>0&&messages[messages.length-1].role===role)return;
+// Clean old context injections from user messages
+let text=m.content;
+if(role==='user'){
+text=text.replace(/DADOS ACTUAIS[\s\S]*?UTILIZADOR:\s*/,'').replace(/^ESQUEMA:[\s\S]*?Config:.*\n/,'');
+// Skip system messages (confirmations)
+if(text==='✅ Confirmado'||text==='❌ Cancelado')return;
+text=text.trim();if(!text)return}
+// Skip bot status messages
+if(role==='model'&&(text.startsWith('Receita registada!')||text.startsWith('Despesa registada!')||text==='OK, cancelado. Diz-me se queres alterar algo.'))return;
+messages.push({role,parts:[{text}]})});
+// Ensure last is model so we can add user
+if(messages.length>0&&messages[messages.length-1].role==='user')messages.pop();
+
+// Estimate token usage (~4 chars per token)
+const historyChars=messages.reduce((s,m)=>s+m.parts[0].text.length,0);
+const ctxChars=ctx.length;
+const totalEstTokens=Math.round((historyChars+ctxChars)/4);
+
+// Warn if context is getting large (>6000 tokens estimated)
+if(totalEstTokens>6000&&dbMsgs.length>20){
+const warn='💡 Conversa longa (~'+totalEstTokens+' tokens). Cria novo chat com + para melhor desempenho.';
+addAiMsg('bot',warn);saveChatMsg(currentChatId,'bot',warn)}
+
+// Ensure messages starts with user role (Gemini requirement)
+if(messages.length>0&&messages[0].role==='model')messages.shift();
+
+// Build current message parts
+const userParts=[];
+if(hasImage){
+const imgPromptCfg=q0(`SELECT value FROM config WHERE key='image_prompt'`);
+const imgPrompt=imgPromptCfg?.value||DEFAULT_IMAGE_PROMPT;
+userParts.push({inlineData:{mimeType:'image/jpeg',data:aiImageData}});
+userParts.push({text:`${ctx}\n\n${imgPrompt}\n${msg?'Mensagem do utilizador: '+msg:''}`});
+}else{
+userParts.push({text:`${ctx}\n\nUTILIZADOR: ${msg}`})}
+messages.push({role:'user',parts:userParts});
+
+const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${aiKey}`,{
+method:'POST',headers:{'Content-Type':'application/json'},
+body:JSON.stringify({contents:messages,systemInstruction:{parts:[{text:getAiSystem()}]},generationConfig:{temperature:0.7,maxOutputTokens:2000}})});
+if(!resp.ok){const err=await resp.json();
+const errMsg=err.error?.message||'Erro API';
+if(resp.status===429)throw new Error('Limite de pedidos atingido. Espera uns segundos e tenta novamente.');
+if(resp.status===403)throw new Error('API key inválida ou sem permissões. Verifica em Configurações.');
+throw new Error(errMsg)}
+const data=await resp.json();const reply=data.candidates?.[0]?.content?.parts?.[0]?.text||'Sem resposta';
+saveChatMsg(currentChatId,'bot',reply);
+// Clear image after sending
+clearAiImage();
+hideTyping();
+// Check if reply triggers a query chain (async)
+const isQuery=/query_sql/.test(reply);
+processAiReply(reply);
+if(!isQuery){
+const chat=q0(`SELECT title FROM chats WHERE id=?`,[currentChatId]);
+if(chat)document.getElementById('aiChatTitle').textContent=chat.title;
+aiSending=false;document.getElementById('aiInput').disabled=false;document.getElementById('aiInput').focus()}
+}catch(e){hideTyping();const errMsg='Erro: '+e.message;addAiMsg('bot',errMsg);if(currentChatId)saveChatMsg(currentChatId,'bot',errMsg);clearAiImage();
+aiSending=false;document.getElementById('aiInput').disabled=false}
+const msgCount=currentChatId?getChatMessages(currentChatId).length:0;
+document.getElementById('aiStatus').textContent=msgCount>0?`${msgCount} msgs`:'Assistente'}
+
+// ===== PREVIEW CARD RENDERER =====
+function renderCard(a,readonly){
+const footer=readonly?'':
+`<div class="ai-card-footer"><button class="ai-yes" onclick="confirmAiAction()"><i class="bi bi-check-lg me-1"></i>${a.action==='deploy_code'?'Deploy':a.action==='run_sql'?'Executar':'Confirmar'}</button><button class="ai-no" onclick="cancelAiAction()"><i class="bi bi-x-lg me-1"></i>Cancelar</button></div>`;
+
+if(a.action==='add_receita'){const d=a.data;return `<div class="ai-card rec"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(212,175,106,.1);color:var(--g)"><i class="bi bi-cash-coin"></i></div><div><div class="ai-card-type" style="color:var(--g)">Receita</div></div><span class="bb b-${d.type||'comissao'}" style="margin-left:auto">${CL[d.type]||'Salão 50%'}</span></div><div class="ai-card-rows"><div class="ai-card-row"><span class="ai-card-label">Serviço</span><span class="ai-card-val">${d.servico||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Valor</span><span class="ai-card-val amount">${f$(d.amount||0)}</span></div><div class="ai-card-row"><span class="ai-card-label">Categoria</span><span class="ai-card-val">${d.categoria||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Data</span><span class="ai-card-val">${d.date||'—'}</span></div>${d.client?`<div class="ai-card-row"><span class="ai-card-label">Cliente</span><span class="ai-card-val">${d.client}</span></div>`:''}</div>${footer}</div>`}
+if(a.action==='add_despesa'){const d=a.data;return `<div class="ai-card desp"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(232,132,92,.1);color:var(--coral)"><i class="bi bi-receipt"></i></div><div><div class="ai-card-type" style="color:var(--coral)">Despesa</div></div><span class="bb b-${(d.categoria||'pessoal').toLowerCase()}" style="margin-left:auto">${d.categoria||'Pessoal'}</span></div><div class="ai-card-rows"><div class="ai-card-row"><span class="ai-card-label">Descrição</span><span class="ai-card-val">${d.descricao||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Valor</span><span class="ai-card-val amount">${f$(d.amount||0)}</span></div><div class="ai-card-row"><span class="ai-card-label">Subcategoria</span><span class="ai-card-val">${d.subcategoria||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Data</span><span class="ai-card-val">${d.date||'—'}</span></div></div>${footer}</div>`}
+if(a.action==='run_sql'){return `<div class="ai-card sql"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(176,160,224,.1);color:var(--lav)"><i class="bi bi-database-gear"></i></div><div><div class="ai-card-type" style="color:var(--lav)">SQL</div><div style="font-size:.78rem;color:var(--t2)">${a.description||''}</div></div></div><div class="ai-card-sql">${(a.sql||'').replace(/</g,'&lt;')}</div>${footer}</div>`}
+if(a.action==='deploy_code'){return `<div class="ai-card deploy"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(232,112,144,.1);color:var(--rose)"><i class="bi bi-rocket-takeoff"></i></div><div><div class="ai-card-type" style="color:var(--rose)">Deploy</div><div style="font-size:.78rem;color:var(--t2)">${a.description||''}</div></div></div><div style="font-size:.75rem;color:var(--t3);margin-top:6px"><i class="bi bi-github me-1"></i>${a.changes?a.changes.length:0} alteração(ões)</div>${footer}</div>`}
+return ''}
+
+// Render a bot message — detect JSON cards and render them (readonly in history)
+function renderBotMsg(content,readonly){
+if(!content)return '';
+const jm=content.match(/```json\s*([\s\S]*?)\s*```/);
+if(jm){try{const a=JSON.parse(jm[1]);
+if(a.action==='query_sql'){const clean=content.replace(/```json[\s\S]*?```/g,'').trim();return clean?clean.replace(/\n/g,'<br>'):'Consulta executada'}
+const clean=content.replace(/```json[\s\S]*?```/g,'').trim();
+return (clean?clean.replace(/\n/g,'<br>')+'<br>':'')+renderCard(a,readonly)}catch(e){
+return content.replace(/```json/g,'<div class="ai-card-sql">').replace(/```/g,'</div>').replace(/\n/g,'<br>')}}
+return content.replace(/\n/g,'<br>')}
+
+function processAiReply(reply){const jm=reply.match(/```json\s*([\s\S]*?)\s*```/);let clean=reply.replace(/```json[\s\S]*?```/g,'').trim();
+if(jm){try{const a=JSON.parse(jm[1]);
+// query_sql executes immediately without confirmation and feeds results back
+if(a.action==='query_sql'){
+if(clean)addAiMsg('bot',clean);
+executeQueryAndRespond(a);return}
+aiPending=a;
+addAiMsg('bot','',renderBotMsg(reply,false));return}catch(e){}}
+addAiMsg('bot',clean)}
+
+// ===== AGENTIC SQL QUERY SYSTEM =====
+
+async function executeQueryAndRespond(action){
+document.getElementById('aiStatus').textContent='A consultar...';
+
+// Create thinking chain container in chat
+const thinkId='think_'+Date.now();
+const thinkMsg=document.createElement('div');thinkMsg.className='ai-msg bot';
+thinkMsg.innerHTML=`<div class="ai-avatar"><i class="bi bi-stars"></i></div><div class="ai-bubble"><div style="font-size:.78rem;color:var(--lav);font-weight:600;margin-bottom:6px"><i class="bi bi-diagram-3 me-1"></i>A analisar a tua pergunta...</div><div id="${thinkId}" class="ai-think"></div><div id="${thinkId}_answer" style="display:none;margin-top:10px"></div></div>`;
+document.getElementById('aiMessages').appendChild(thinkMsg);
+const thinkContainer=document.getElementById(thinkId);
+const answerContainer=document.getElementById(thinkId+'_answer');
+
+try{
+// Step 1: Execute initial query
+const r1=execQuery(action.sql);
+addThinkStep(thinkContainer,1,action.description||'Consulta inicial',action.sql,r1);
+let queryLog=[{sql:action.sql,description:action.description||'',results:r1}];
+
+// Step 2+: Let AI decide if it needs more
+let finalAnswer=await queryThinkLoop(queryLog,thinkContainer,2);
+
+// Show final answer
+answerContainer.style.display='block';
+answerContainer.innerHTML=finalAnswer.replace(/\n/g,'<br>');
+if(currentChatId)saveChatMsg(currentChatId,'bot',finalAnswer);
+
+// Scroll
+document.getElementById('aiMessages').scrollTop=document.getElementById('aiMessages').scrollHeight;
+}catch(e){
+answerContainer.style.display='block';
+answerContainer.innerHTML='Erro: '+e.message;
+if(currentChatId)saveChatMsg(currentChatId,'bot','Erro: '+e.message)}
+aiSending=false;document.getElementById('aiInput').disabled=false;document.getElementById('aiInput').focus();
+document.getElementById('aiStatus').textContent='Assistente'}
+
+function execQuery(sql){
+try{const r=db.exec(sql);
+if(!r.length)return{columns:[],rows:[],count:0,text:'Sem resultados.'};
+return{columns:r[0].columns,rows:r[0].values.slice(0,30),count:r[0].values.length,
+text:r[0].columns.join(' | ')+'\n'+r[0].values.slice(0,20).map(row=>row.map(v=>v===null?'—':v).join(' | ')).join('\n')}
+}catch(e){return{columns:[],rows:[],count:0,text:'Erro SQL: '+e.message}}}
+
+function addThinkStep(container,num,desc,sql,results){
+const step=document.createElement('div');step.className='ai-think-step';
+const shortSql=sql.length>60?sql.slice(0,57)+'...':sql;
+const resultSummary=results.count>0?`${results.count} resultado(s)`:'Sem resultados';
+step.innerHTML=`<span class="step-num">${num}</span><span class="step-desc">${desc}</span><span class="step-sql">${shortSql}</span><span class="step-result">${resultSummary}</span>`;
+container.appendChild(step);
+// Scroll
+document.getElementById('aiMessages').scrollTop=document.getElementById('aiMessages').scrollHeight}
+
+function addThinkPending(container,num){
+const step=document.createElement('div');step.className='ai-think-step pending';step.id='pending_step';
+step.innerHTML=`<span class="step-num">${num}</span><span class="step-desc">A pensar<span class="ai-think-pulse"></span></span>`;
+container.appendChild(step);
+document.getElementById('aiMessages').scrollTop=document.getElementById('aiMessages').scrollHeight}
+
+async function queryThinkLoop(queryLog,thinkContainer,step){
+if(step>MAX_QUERY_STEPS)return formatFinalAnswer(queryLog);
+
+addThinkPending(thinkContainer,step);
+document.getElementById('aiStatus').textContent=`A analisar (${step}/${MAX_QUERY_STEPS})...`;
+
+const logText=queryLog.map((q,i)=>`Passo ${i+1}: ${q.description}\nSQL: ${q.sql}\nResultados (${q.results.count} linhas):\n${q.results.text}`).join('\n\n');
+
+const prompt=`Executei ${queryLog.length} consulta(s):
+
+${logText}
+
+DECIDE:
+- Resultados SUFICIENTES → responde em texto português, com valores em €. NÃO devolvas JSON.
+- Precisas de MAIS DADOS → devolve:
+\`\`\`json
+{"action":"query_sql","sql":"SELECT ...","description":"porquê"}
+\`\`\`
+
+Tabelas: receitas(date,type[comissao|extra],categoria,servico,descricao,amount,client), despesas(date,categoria,subcategoria,descricao,amount,pagamento)
+Passo ${step}/${MAX_QUERY_STEPS}.${step>=MAX_QUERY_STEPS?' ÚLTIMO — responde agora.':''}`;
+
+const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${aiKey}`,{
+method:'POST',headers:{'Content-Type':'application/json'},
+body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],
+systemInstruction:{parts:[{text:'Responde em português de Portugal. Sê directa e prática. Usa € nos valores.'}]},
+generationConfig:{temperature:0.3,maxOutputTokens:800}})});
+
+// Remove pending indicator
+const pending=document.getElementById('pending_step');if(pending)pending.remove();
+
+if(!resp.ok)return formatFinalAnswer(queryLog);
+const data=await resp.json();const reply=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+
+// Check if AI wants another query
+const jm=reply.match(/```json\s*([\s\S]*?)\s*```/);
+if(jm){
+try{const next=JSON.parse(jm[1]);
+if(next.action==='query_sql'&&next.sql){
+const nextResults=execQuery(next.sql);
+addThinkStep(thinkContainer,step,next.description||'Consulta adicional',next.sql,nextResults);
+queryLog.push({sql:next.sql,description:next.description||'',results:nextResults});
+return queryThinkLoop(queryLog,thinkContainer,step+1)}}catch(e){}}
+
+return reply.replace(/```json[\s\S]*?```/g,'').trim()||formatFinalAnswer(queryLog)}
+
+function formatFinalAnswer(queryLog){
+const last=queryLog[queryLog.length-1];
+if(!last||!last.results.count)return 'Não encontrei dados para essa pergunta.';
+return `${last.description||'Resultado'}:\n${last.results.text}`}
+
+function confirmAiAction(){if(!aiPending)return;const a=aiPending;aiPending=null;
+// Record the confirmation in chat
+addAiMsg('user','✅ Confirmado');
+if(currentChatId)saveChatMsg(currentChatId,'user','✅ Confirmado');
+
+if(a.action==='add_receita'){const d=a.data;run(`INSERT INTO receitas VALUES(?,?,?,?,?,?,?,?,?,?)`,uid(),d.date||new Date().toISOString().slice(0,10),d.type||'comissao',d.categoria||'',d.servico||'',d.descricao||'',d.amount||0,d.type==='comissao'?d.amount:0,d.client||'',d.notes||'');
+const msg=`Receita registada! ${d.servico||''} · ${f$(d.amount||0)} · ${CL[d.type]||''}`;
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);saveDB()}
+else if(a.action==='add_despesa'){const d=a.data;run(`INSERT INTO despesas VALUES(?,?,?,?,?,?,?,?)`,uid(),d.date||new Date().toISOString().slice(0,10),d.categoria||'Pessoal',d.subcategoria||'Outro',d.descricao||'',d.amount||0,d.pagamento||'Outro',d.notes||'');
+const msg=`Despesa registada! ${d.descricao||''} · ${f$(d.amount||0)} · ${d.categoria||''}`;
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);saveDB()}
+else if(a.action==='run_sql'){
+const forbidden=['DROP TABLE','DROP DATABASE','DROP INDEX','TRUNCATE','DELETE FROM receitas;','DELETE FROM despesas;','DELETE FROM config;','DELETE FROM chats;','DELETE FROM chat_messages;','ALTER TABLE receitas DROP','ALTER TABLE despesas DROP'];
+const sqlUp=(a.sql||'').toUpperCase().replace(/\s+/g,' ');
+if(forbidden.some(f=>sqlUp.includes(f.toUpperCase()))){const msg='⚠️ SQL bloqueado por segurança — operação destrutiva não permitida.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
+// Block multiple statements
+if((a.sql.match(/;/g)||[]).length>1){const msg='⚠️ SQL bloqueado — apenas uma instrução por vez.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
+try{const r=db.exec(a.sql);saveDB();let msg='SQL executado: '+(a.description||a.sql.slice(0,50));
+if(r.length){msg+=` (${r[0].values.length} resultados)`}
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}
+catch(e){const msg='Erro SQL: '+e.message;addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}}
+else if(a.action==='deploy_code'){
+if(currentChatId)saveChatMsg(currentChatId,'bot','Deploy iniciado...');
+deployToGitHub(a);return}
+rA()}
+
+function cancelAiAction(){aiPending=null;
+addAiMsg('user','❌ Cancelado');
+if(currentChatId)saveChatMsg(currentChatId,'user','❌ Cancelado');
+const msg='OK, cancelado. Diz-me se queres alterar algo.';
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}
+
+async function deployToGitHub(action){if(!ghToken||!ghRepo){
+const msg='GitHub não configurado. Vai a Config para adicionar o token.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
+addAiMsg('bot','Deploy em curso...');
+try{const fileUrl=`https://api.github.com/repos/${ghRepo}/contents/index.html`;
+const getResp=await fetch(fileUrl,{headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github.v3+json'}});
+if(!getResp.ok)throw new Error('Erro acesso repo');const fileData=await getResp.json();
+let content=atob(fileData.content.replace(/\n/g,''));let applied=0;
+if(action.changes){for(const ch of action.changes){if(content.includes(ch.search)){content=content.replace(ch.search,ch.replace);applied++}}}
+if(!applied){const msg='Nenhuma alteração aplicada — o código pode já ter sido alterado.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
+await fetch(fileUrl,{method:'PUT',headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+body:JSON.stringify({message:`Shay AI: ${action.description||'update'}`,content:btoa(unescape(encodeURIComponent(content))),sha:fileData.sha})});
+try{const bfUrl=`https://api.github.com/repos/${ghRepo}/contents/beauty-finance.html`;const bf=await fetch(bfUrl,{headers:{'Authorization':`Bearer ${ghToken}`}});
+if(bf.ok){const bfd=await bf.json();await fetch(bfUrl,{method:'PUT',headers:{'Authorization':`Bearer ${ghToken}`,'Content-Type':'application/json'},
+body:JSON.stringify({message:'sync',content:btoa(unescape(encodeURIComponent(content))),sha:bfd.sha})})}}catch(e){}
+const msg=`Deploy feito! ${applied} alteração(ões) aplicada(s). Recarrega a página em ~30s.`;
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);rA()
+}catch(e){const msg='Erro no deploy: '+e.message;addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}}
+
+// ===== CAMERA / IMAGE =====
+let aiImageData=null;
+
+function handleAiImage(input){if(!input.files||!input.files[0])return;
+const file=input.files[0];const reader=new FileReader();
+reader.onload=function(e){const img=new Image();img.onload=function(){
+// Resize to max 800px for API efficiency
+const max=800;let w=img.width,h=img.height;
+if(w>max||h>max){if(w>h){h=Math.round(h*max/w);w=max}else{w=Math.round(w*max/h);h=max}}
+const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+canvas.getContext('2d').drawImage(img,0,0,w,h);
+aiImageData=canvas.toDataURL('image/jpeg',0.8).split(',')[1];
+document.getElementById('aiImgThumb').src=canvas.toDataURL('image/jpeg',0.3);
+document.getElementById('aiImgPreview').style.display='block';
+// Auto-focus input for adding context
+document.getElementById('aiInput').placeholder='Descreve o que é a foto... (opcional)';
+document.getElementById('aiInput').focus()};
+img.src=e.target.result};reader.readAsDataURL(file);input.value=''}
+
+function clearAiImage(){aiImageData=null;
+document.getElementById('aiImgPreview').style.display='none';
+document.getElementById('aiInput').placeholder='Mensagem ou foto...'}
+
+function aiVoiceInput(){if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){toast('Sem voz','w');return}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const rec=new SR();rec.lang='pt-PT';rec.continuous=false;rec.interimResults=false;
+document.getElementById('aiMicBtn').classList.add('recording');document.getElementById('aiStatus').textContent='A ouvir...';
+rec.onresult=function(e){document.getElementById('aiInput').value=e.results[0][0].transcript;sendAiMsg()};
+rec.onend=function(){document.getElementById('aiMicBtn').classList.remove('recording');document.getElementById('aiStatus').textContent='Assistente'};
+rec.onerror=rec.onend;rec.start()}
+
+// ===== BACKUP =====
+function exportBackup(){if(!db){toast('Base de dados não carregada','w');return}
+const data=db.export();const blob=new Blob([new Uint8Array(data)],{type:'application/x-sqlite3'});
+const url=URL.createObjectURL(blob);const a=document.createElement('a');
+const date=new Date().toISOString().slice(0,10);
+a.href=url;a.download=`shay-finance-backup-${date}.db`;a.click();URL.revokeObjectURL(url);
+toast('Backup descarregado!')}
+
+async function importBackup(file){if(!file){return}
+if(!confirm('Restaurar backup? Isto substitui TODOS os dados actuais.')){return}
+const reader=new FileReader();reader.onload=async function(e){
+try{const SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`});
+const data=new Uint8Array(e.target.result);db=new SQL.Database(data);
+// Verify it's a valid DB
+const tables=q1(`SELECT name FROM sqlite_master WHERE type='table'`);
+if(!tables.length)throw new Error('Ficheiro inválido');
+await saveDB();goToLastMonth();uM();rA();
+toast(`Backup restaurado! ${tables.length} tabelas carregadas.`)}
+catch(err){toast('Erro: ficheiro inválido — '+err.message,'w')}};
+reader.readAsArrayBuffer(file)}
+
+// ===== CONFIG PAGE =====
 function loadConfigPage(){
 // Load prompts from DB
 const sp=q0(`SELECT value FROM config WHERE key='system_prompt_full'`);

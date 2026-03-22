@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shay-finance-v10';
+const CACHE_NAME = 'shay-finance-v11';
 const ASSETS = [
   './',
   './index.html',
@@ -30,6 +30,12 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Don't cache API calls
+  if (e.request.url.includes('generativelanguage.googleapis.com') || 
+      e.request.url.includes('api.github.com') ||
+      e.request.method !== 'GET') {
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
       const clone = resp.clone();

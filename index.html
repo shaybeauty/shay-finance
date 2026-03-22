@@ -166,6 +166,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Libre Caslon Display',serif;font-weight:400}
 <li class="nav-item"><a class="nav-link" href="#" data-page="despesas"><i class="bi bi-receipt me-1"></i> Despesas</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="relatorios"><i class="bi bi-bar-chart-line me-1"></i> Relatórios</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="importar"><i class="bi bi-file-earmark-arrow-up me-1"></i> Importar</a></li>
+<li class="nav-item"><a class="nav-link" href="#" data-page="config"><i class="bi bi-gear me-1"></i> Config</a></li>
 <li class="nav-item"><a class="nav-link" href="#" data-page="ajuda"><i class="bi bi-question-circle me-1"></i> Ajuda</a></li>
 </ul></div>
 <div class="ms-auto"><div class="mnv"><button onclick="chM(-1)"><i class="bi bi-chevron-left"></i></button><span id="mL"></span><button onclick="chM(1)"><i class="bi bi-chevron-right"></i></button></div></div>
@@ -180,6 +181,7 @@ h1,h2,h3,h4,h5,.serif{font-family:'Libre Caslon Display',serif;font-weight:400}
 <a class="nav-link" href="#" data-page="despesas"><i class="bi bi-receipt me-2"></i> Despesas</a>
 <a class="nav-link" href="#" data-page="relatorios"><i class="bi bi-bar-chart-line me-2"></i> Relatórios</a>
 <a class="nav-link" href="#" data-page="importar"><i class="bi bi-file-earmark-arrow-up me-2"></i> Importar</a>
+<a class="nav-link" href="#" data-page="config"><i class="bi bi-gear me-2"></i> Configurações</a>
 <a class="nav-link" href="#" data-page="ajuda"><i class="bi bi-question-circle me-2"></i> Ajuda</a>
 </nav><hr style="border-color:var(--bd)"><div class="mt-2">
 <button class="btn bg2 w-100 mb-2" onclick="oM('receita')"><i class="bi bi-plus-lg me-1"></i> Nova Receita</button>
@@ -303,6 +305,105 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 <strong style="color:var(--t2)">Dica:</strong> Faz backup regularmente e guarda numa pasta segura (Google Drive, iCloud, etc.)</p>
 </div>
 </div>
+</section>
+
+<!-- CONFIGURAÇÕES -->
+<section class="sp" id="pg-config">
+<div class="ph"><h2>Configurações</h2></div>
+
+<!-- PROMPTS DA IA -->
+<div class="dc p-4 mb-3">
+<h5 class="serif" style="color:var(--g);font-size:1.1rem"><i class="bi bi-cpu me-2"></i>Prompts da IA</h5>
+<p style="font-size:.78rem;color:var(--t3);margin-bottom:16px">Estes são os textos que definem o comportamento da Shay AI. São enviados em cada mensagem.</p>
+
+<!-- System Prompt Principal -->
+<div class="mb-3">
+<div class="d-flex justify-content-between align-items-center mb-2">
+<label class="fl mb-0">System Prompt (identidade da IA)</label>
+<button class="btn btn-sm" style="font-size:.68rem;color:var(--t3);background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:3px 10px" onclick="resetPrompt('system')">Repor original</button>
+</div>
+<textarea id="cfgSystemPrompt" class="form-control" rows="8" style="font-size:.78rem!important;font-family:'JetBrains Mono',monospace!important;line-height:1.6!important;resize:vertical"></textarea>
+<div style="font-size:.68rem;color:var(--t3);margin-top:4px">Define quem é a IA, o que faz, como se comporta. É enviado em TODAS as mensagens.</div>
+</div>
+
+<!-- Image Prompt -->
+<div class="mb-3">
+<div class="d-flex justify-content-between align-items-center mb-2">
+<label class="fl mb-0">Prompt de Imagem (quando envia foto)</label>
+<button class="btn btn-sm" style="font-size:.68rem;color:var(--t3);background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:3px 10px" onclick="resetPrompt('image')">Repor original</button>
+</div>
+<textarea id="cfgImagePrompt" class="form-control" rows="5" style="font-size:.78rem!important;font-family:'JetBrains Mono',monospace!important;line-height:1.6!important;resize:vertical"></textarea>
+<div style="font-size:.68rem;color:var(--t3);margin-top:4px">Instruções adicionais quando o utilizador envia uma fotografia.</div>
+</div>
+
+<!-- Custom Instructions -->
+<div class="mb-3">
+<div class="d-flex justify-content-between align-items-center mb-2">
+<label class="fl mb-0">Instruções personalizadas (opcional)</label>
+<button class="btn btn-sm" style="font-size:.68rem;color:var(--t3);background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:3px 10px" onclick="resetPrompt('custom')">Limpar</button>
+</div>
+<textarea id="cfgCustomPrompt" class="form-control" rows="3" style="font-size:.78rem!important;font-family:'JetBrains Mono',monospace!important;line-height:1.6!important;resize:vertical" placeholder="Ex: Não peças confirmação para valores abaixo de 20€. Responde sempre de forma curta."></textarea>
+<div style="font-size:.68rem;color:var(--t3);margin-top:4px">Adicionado ao final do system prompt. Personaliza o comportamento sem alterar o prompt principal.</div>
+</div>
+
+<button class="btn bg2" onclick="savePrompts()"><i class="bi bi-check-lg me-1"></i> Guardar Prompts</button>
+</div>
+
+<!-- API KEYS -->
+<div class="dc p-4 mb-3">
+<h5 class="serif" style="color:var(--g);font-size:1.1rem"><i class="bi bi-key me-2"></i>Chaves API</h5>
+<div class="row g-3">
+<div class="col-12 col-md-4">
+<label class="fl">Gemini API Key</label>
+<div class="d-flex gap-2"><input type="password" id="cfgGeminiKey" class="form-control" style="font-size:.8rem!important" placeholder="AIza...">
+<button class="btn bo btn-sm" onclick="saveCfgKeys()" style="white-space:nowrap">Guardar</button></div>
+</div>
+<div class="col-12 col-md-4">
+<label class="fl">GitHub Token</label>
+<input type="password" id="cfgGhToken" class="form-control" style="font-size:.8rem!important" placeholder="github_pat_...">
+</div>
+<div class="col-12 col-md-4">
+<label class="fl">GitHub Repo</label>
+<input type="text" id="cfgGhRepo" class="form-control" style="font-size:.8rem!important" placeholder="user/repo">
+</div>
+</div>
+<div style="font-size:.68rem;color:var(--t3);margin-top:8px"><i class="bi bi-lock me-1" style="color:var(--mint)"></i> As chaves ficam apenas no teu browser. Nunca vão para o GitHub.</div>
+</div>
+
+<!-- ESQUEMA -->
+<div class="dc p-4 mb-3">
+<h5 class="serif" style="color:var(--g);font-size:1.1rem"><i class="bi bi-database me-2"></i>Esquema da Base de Dados</h5>
+<p style="font-size:.78rem;color:var(--t3);margin-bottom:12px">Este é o esquema que a IA vê em cada mensagem. Podes alterá-lo via chat ("adiciona categoria X").</p>
+<div id="cfgSchema" style="background:var(--bg);border-radius:10px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--lav);line-height:1.8;max-height:300px;overflow-y:auto"></div>
+<button class="btn bo btn-sm mt-2" onclick="loadConfigPage()"><i class="bi bi-arrow-clockwise me-1"></i> Atualizar</button>
+</div>
+
+<!-- COMISSÃO -->
+<div class="dc p-4">
+<h5 class="serif" style="color:var(--g);font-size:1.1rem"><i class="bi bi-sliders me-2"></i>Parâmetros</h5>
+<div class="row g-3">
+<div class="col-6 col-md-3">
+<label class="fl">Comissão Salão (%)</label>
+<input type="number" id="cfgComissao" class="form-control" style="font-size:.84rem!important" value="50" min="0" max="100">
+</div>
+<div class="col-6 col-md-3">
+<label class="fl">Nome</label>
+<input type="text" id="cfgNome" class="form-control" style="font-size:.84rem!important" placeholder="Shay">
+</div>
+<div class="col-6 col-md-3">
+<label class="fl">Auto-confirmar abaixo de (€)</label>
+<input type="number" id="cfgAutoConfirm" class="form-control" style="font-size:.84rem!important" value="0" min="0" placeholder="0 = sempre confirmar">
+</div>
+<div class="col-6 col-md-3">
+<label class="fl">Idioma IA</label>
+<select id="cfgLang" class="form-select" style="font-size:.84rem!important">
+<option value="pt-PT">Português</option><option value="en">English</option><option value="es">Español</option>
+</select>
+</div>
+</div>
+<button class="btn bg2 mt-3" onclick="saveParams()"><i class="bi bi-check-lg me-1"></i> Guardar Parâmetros</button>
+</div>
+</section>
 
 <!-- AJUDA -->
 <section class="sp" id="pg-ajuda">
@@ -338,6 +439,13 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 "Despesas de marketing este ano"<br>
 "Quanto gasto em média por mês?"<br>
 "Compara receitas salão vs extra"</div>
+
+<h6 style="font-size:.75rem;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px"><i class="bi bi-camera me-1"></i> Câmara / Fotos</h6>
+<div style="background:var(--s2);padding:10px 14px;border-radius:8px;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--t1);line-height:2.2">
+📷 Tira foto da folha do caderno → "Regista estes dados"<br>
+📷 Foto de recibo → "Adiciona como despesa"<br>
+📷 Foto de tabela de preços → "Atualiza os meus serviços"<br>
+📷 Foto + texto → "Quanto gastei nesta fatura?"</div>
 
 <h6 style="font-size:.75rem;font-weight:700;color:var(--g);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px"><i class="bi bi-database-gear me-1"></i> Alterar Esquema</h6>
 <div style="background:var(--s2);padding:10px 14px;border-radius:8px;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--t1);line-height:2.2">
@@ -431,11 +539,15 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 <!-- AI CHAT PANEL -->
 <div id="aiChat" style="display:none;position:fixed;bottom:92px;right:16px;width:calc(100% - 32px);max-width:400px;height:65vh;max-height:520px;background:var(--s1);border:1px solid var(--bd);border-radius:20px;z-index:1050;flex-direction:column;overflow:hidden;box-shadow:0 12px 48px rgba(0,0,0,.5)">
 <!-- Chat Header -->
-<div style="padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px;flex-shrink:0">
-<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--g),var(--gD));display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#0C0C10"><i class="bi bi-stars"></i></div>
-<div><div style="font-weight:700;font-size:.88rem;color:var(--t1)">Shay AI</div><div style="font-size:.65rem;color:var(--t3);text-transform:uppercase;letter-spacing:1px" id="aiStatus">Assistente financeiro</div></div>
-<button onclick="toggleChat()" style="margin-left:auto;background:none;border:none;color:var(--t3);font-size:1.1rem;cursor:pointer;padding:4px"><i class="bi bi-x-lg"></i></button>
+<div style="padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;flex-shrink:0">
+<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--g),var(--gD));display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#0C0C10"><i class="bi bi-stars"></i></div>
+<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.85rem;color:var(--t1)" id="aiChatTitle">Shay AI</div><div style="font-size:.6rem;color:var(--t3);text-transform:uppercase;letter-spacing:1px" id="aiStatus">Assistente</div></div>
+<button onclick="newChat()" title="Novo chat" style="background:rgba(212,175,106,.08);border:1px solid rgba(212,175,106,.12);color:var(--g);width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem"><i class="bi bi-plus-lg"></i></button>
+<button onclick="showChatList()" title="Conversas" style="background:rgba(212,175,106,.08);border:1px solid rgba(212,175,106,.12);color:var(--g);width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem"><i class="bi bi-clock-history"></i></button>
+<button onclick="toggleChat()" style="background:none;border:none;color:var(--t3);font-size:1rem;cursor:pointer;padding:4px"><i class="bi bi-x-lg"></i></button>
 </div>
+<!-- Chat list panel (hidden) -->
+<div id="aiChatList" style="display:none;flex:1;overflow-y:auto;padding:12px"></div>
 <!-- API Key setup (shown once) -->
 <div id="aiKeySetup" style="padding:20px;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;overflow-y:auto">
 <i class="bi bi-key" style="font-size:2rem;color:var(--g);margin-bottom:12px"></i>
@@ -457,10 +569,19 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 <!-- Chat Messages -->
 <div id="aiMessages" style="display:none;flex:1;overflow-y:auto;padding:16px;gap:12px;flex-direction:column"></div>
 <!-- Chat Input -->
-<div id="aiInputArea" style="display:none;padding:12px 16px;border-top:1px solid var(--bd);flex-shrink:0;display:none">
+<div id="aiInputArea" style="display:none;padding:12px 16px;border-top:1px solid var(--bd);flex-shrink:0">
+<!-- Image preview bar -->
+<div id="aiImgPreview" style="display:none;margin-bottom:8px;position:relative">
+<img id="aiImgThumb" style="max-height:80px;border-radius:10px;border:1px solid var(--bd)">
+<button onclick="clearAiImage()" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--rose);border:none;color:#fff;font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="bi bi-x"></i></button>
+</div>
 <div style="display:flex;gap:8px;align-items:center">
 <button id="aiMicBtn" onclick="aiVoiceInput()" style="background:rgba(212,175,106,.1);border:1px solid rgba(212,175,106,.15);color:var(--g);width:40px;height:40px;border-radius:12px;flex-shrink:0;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;font-size:1rem"><i class="bi bi-mic"></i></button>
-<input type="text" id="aiInput" class="form-control" placeholder="Fala com a Shay AI..." style="font-size:.84rem!important;padding:10px 14px!important" onkeydown="if(event.key==='Enter')sendAiMsg()">
+<div style="position:relative">
+<button id="aiCamBtn" style="background:rgba(212,175,106,.1);border:1px solid rgba(212,175,106,.15);color:var(--g);width:40px;height:40px;border-radius:12px;flex-shrink:0;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;font-size:1rem"><i class="bi bi-camera"></i></button>
+<input type="file" id="aiCamInput" accept="image/*" capture="environment" onchange="handleAiImage(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+</div>
+<input type="text" id="aiInput" class="form-control" placeholder="Mensagem ou foto..." style="font-size:.84rem!important;padding:10px 14px!important" onkeydown="if(event.key==='Enter')sendAiMsg()">
 <button onclick="sendAiMsg()" style="background:linear-gradient(135deg,var(--g),var(--gD));border:none;color:#0C0C10;width:40px;height:40px;border-radius:12px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem"><i class="bi bi-send"></i></button>
 </div>
 </div>
@@ -504,6 +625,8 @@ db.run(`CREATE TABLE IF NOT EXISTS categorias_despesa (id INTEGER PRIMARY KEY AU
 db.run(`CREATE TABLE IF NOT EXISTS subcategorias_despesa (id INTEGER PRIMARY KEY AUTOINCREMENT, categoria_id INTEGER, nome TEXT, ativa INTEGER DEFAULT 1, FOREIGN KEY(categoria_id) REFERENCES categorias_despesa(id))`);
 db.run(`CREATE TABLE IF NOT EXISTS receitas (id TEXT PRIMARY KEY, date TEXT, type TEXT, categoria TEXT, servico TEXT, descricao TEXT, amount REAL, comissao REAL, client TEXT, notes TEXT)`);
 db.run(`CREATE TABLE IF NOT EXISTS despesas (id TEXT PRIMARY KEY, date TEXT, categoria TEXT, subcategoria TEXT, descricao TEXT, amount REAL, pagamento TEXT, notes TEXT)`);
+db.run(`CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, title TEXT, created_at TEXT, updated_at TEXT)`);
+db.run(`CREATE TABLE IF NOT EXISTS chat_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id TEXT, role TEXT, content TEXT, created_at TEXT, FOREIGN KEY(chat_id) REFERENCES chats(id))`);
 
 // Seed default data
 db.run(`INSERT OR IGNORE INTO config VALUES('comissao_pct','50')`);
@@ -527,10 +650,10 @@ subs.forEach(s=>db.run(`INSERT OR IGNORE INTO subcategorias_despesa(categoria_id
 saveDB()}
 
 // ===== QUERY HELPERS =====
-function q1(sql,params=[]){const r=db.exec(sql,params);return r.length?r[0].values.map(row=>{const o={};r[0].columns.forEach((c,i)=>o[c]=row[i]);return o}):[]}
-function q0(sql,params=[]){const r=q1(sql,params);return r.length?r[0]:null}
-function qv(sql,params=[]){const r=db.exec(sql,params);return r.length?r[0].values[0][0]:0}
-function run(sql,params=[]){db.run(sql,params);saveDB()}
+function q1(sql,...args){const params=args.length===1&&Array.isArray(args[0])?args[0]:args.length?args:[];const r=db.exec(sql,params);return r.length?r[0].values.map(row=>{const o={};r[0].columns.forEach((c,i)=>o[c]=row[i]);return o}):[]}
+function q0(sql,...args){const r=q1(sql,...args);return r.length?r[0]:null}
+function qv(sql,...args){const params=args.length===1&&Array.isArray(args[0])?args[0]:args.length?args:[];const r=db.exec(sql,params);return r.length?r[0].values[0][0]:0}
+function run(sql,...args){try{const params=args.length===1&&Array.isArray(args[0])?args[0]:args;db.run(sql,params);saveDB()}catch(e){console.error('SQL Error:',e.message,sql);toast('Erro DB: '+e.message,'w')}}
 
 function getRecMes(){return q1(`SELECT * FROM receitas WHERE substr(date,1,7)=? ORDER BY date DESC`,[`${cY}-${String(cM+1).padStart(2,'0')}`])}
 function getDespMes(){return q1(`SELECT * FROM despesas WHERE substr(date,1,7)=? ORDER BY date DESC`,[`${cY}-${String(cM+1).padStart(2,'0')}`])}
@@ -549,7 +672,9 @@ a.appendChild(el);gsap.from(el,{x:50,opacity:0,duration:.3});setTimeout(()=>{gsa
 // NAV
 function nav(p){document.querySelectorAll('.sp').forEach(s=>s.classList.remove('active'));document.getElementById('pg-'+p).classList.add('active');
 document.querySelectorAll('#mainNav .nav-link,#mobNav .nav-link').forEach(a=>a.classList.toggle('active',a.dataset.page===p));
-const oc=bootstrap.Offcanvas.getInstance(document.getElementById('sideMenu'));if(oc)oc.hide();gsap.from('#pg-'+p,{opacity:0,y:15,duration:.35,ease:'power2.out'});rA()}
+const oc=bootstrap.Offcanvas.getInstance(document.getElementById('sideMenu'));if(oc)oc.hide();
+if(p==='config')loadConfigPage();
+gsap.from('#pg-'+p,{opacity:0,y:15,duration:.35,ease:'power2.out'});rA()}
 document.querySelectorAll('#mainNav .nav-link,#mobNav .nav-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();nav(a.dataset.page)}));
 document.querySelectorAll('.nt .nav-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();a.closest('.nt').querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));a.classList.add('active');rA()}));
 
@@ -595,8 +720,8 @@ if(!dt||am<=0||!ds){toast('Preencha os campos.','w');return}
 run(`INSERT INTO despesas VALUES(?,?,?,?,?,?,?,?)`,uid(),dt,cat,sub,ds,am,py,nt);
 mD.hide();rA();toast('Despesa registada!');['fDDs','fDA','fDN'].forEach(i=>document.getElementById(i).value='')}
 
-function dR(id){run(`DELETE FROM receitas WHERE id=?`,id);rA();toast('Removida.')}
-function dD(id){run(`DELETE FROM despesas WHERE id=?`,id);rA();toast('Removida.')}
+function dR(id){if(!confirm('Apagar esta receita?'))return;run(`DELETE FROM receitas WHERE id=?`,id);rA();toast('Removida.')}
+function dD(id){if(!confirm('Apagar esta despesa?'))return;run(`DELETE FROM despesas WHERE id=?`,id);rA();toast('Removida.')}
 
 // ===== RENDER =====
 function rA(){rDash();rRec();rDsp();rRpt()}
@@ -684,20 +809,87 @@ const fI=document.getElementById('fI'),iZ=document.getElementById('iZ');
 iZ.addEventListener('dragover',e=>{e.preventDefault();iZ.classList.add('dragover')});iZ.addEventListener('dragleave',()=>iZ.classList.remove('dragover'));
 iZ.addEventListener('drop',e=>{e.preventDefault();iZ.classList.remove('dragover');hF(e.dataTransfer.files[0])});fI.addEventListener('change',e=>{if(e.target.files[0])hF(e.target.files[0])});
 let iB=null;
-function hF(file){const r=new FileReader();r.onload=function(e){const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});const j=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});if(!j.length){toast('Vazio.','w');return}iB=j;sM(j)};r.readAsArrayBuffer(file)}
+function hF(file){const r=new FileReader();r.onload=function(e){
+const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
+// Auto-detect Receitas and Despesas sheets
+const recSheet=wb.SheetNames.find(s=>/receita/i.test(s));
+const despSheet=wb.SheetNames.find(s=>/despesa/i.test(s));
+if(recSheet&&despSheet){
+// Multi-sheet import
+const recData=XLSX.utils.sheet_to_json(wb.Sheets[recSheet],{defval:''});
+const despData=XLSX.utils.sheet_to_json(wb.Sheets[despSheet],{defval:''});
+if(!recData.length&&!despData.length){toast('Ficheiro vazio.','w');return}
+iB={receitas:recData,despesas:despData,multi:true};
+toast(`Detectadas ${recData.length} receitas e ${despData.length} despesas`);
+sM(recData.length?recData:despData);
+document.getElementById('iTp').value=recData.length?'receita':'despesa';
+// Add info about multi-sheet
+document.getElementById('iP').insertAdjacentHTML('afterbegin',
+`<div class="p-2 mb-3" style="background:rgba(95,212,160,.06);border:1px solid rgba(95,212,160,.15);border-radius:10px;font-size:.78rem;color:var(--mint)">
+<i class="bi bi-check-circle me-1"></i> Ficheiro com 2 folhas: <strong>${recData.length} receitas</strong> + <strong>${despData.length} despesas</strong>. Importação automática de ambas.
+</div>`);
+}else{
+// Single sheet
+const j=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+if(!j.length){toast('Vazio.','w');return}iB=j;sM(j)}};r.readAsArrayBuffer(file)}
 
-function sM(data){document.getElementById('iP').style.display='block';const cols=Object.keys(data[0]),fs=['(Ignorar)','data','descricao','montante','categoria','tipo','cliente','notas','pagamento','subcategoria'],
-fL={'(Ignorar)':'(Ignorar)',data:'Data',descricao:'Descrição',montante:'Montante',categoria:'Categoria',tipo:'Tipo',cliente:'Cliente',notas:'Notas',pagamento:'Pagamento',subcategoria:'Subcategoria'};
+function sM(data){document.getElementById('iP').style.display='block';const cols=Object.keys(data[0]),fs=['(Ignorar)','data','descricao','montante','categoria','tipo','servico','cliente','notas','pagamento','subcategoria'],
+fL={'(Ignorar)':'(Ignorar)',data:'Data',descricao:'Descrição',montante:'Valor (€)',categoria:'Categoria',tipo:'Tipo (Salão/Extra)',servico:'Serviço',cliente:'Cliente',notas:'Notas',pagamento:'Pagamento',subcategoria:'Subcategoria'};
 const pv=data.slice(0,2);let h='<thead><tr><th>Coluna</th><th>Campo</th><th>Amostra</th></tr></thead><tbody>';
 cols.forEach(c=>{const s=pv.map(r=>r[c]).filter(v=>v!=='').slice(0,2).join(', '),g=gF(c);
 h+=`<tr><td style="font-weight:600;color:var(--t1)">${c}</td><td><select class="form-select form-select-sm" data-col="${c}" style="max-width:180px">${fs.map(f=>`<option value="${f}"${f===g?' selected':''}>${fL[f]}</option>`).join('')}</select></td><td style="color:var(--t3);font-size:.8rem;font-style:italic">${s||'—'}</td></tr>`});
 document.getElementById('mT').innerHTML=h+'</tbody>';gsap.from('#iP',{opacity:0,y:15,duration:.3})}
 
-function gF(c){c=c.toLowerCase();if(c.includes('data')||c.includes('date'))return'data';if(c.includes('desc')||c.includes('serv'))return'descricao';
-if(c.includes('valor')||c.includes('montante')||c.includes('amount'))return'montante';if(c.includes('subcateg'))return'subcategoria';if(c.includes('categ'))return'categoria';
-if(c.includes('tipo'))return'tipo';if(c.includes('client'))return'cliente';if(c.includes('nota')||c.includes('obs'))return'notas';if(c.includes('pagamento'))return'pagamento';return'(Ignorar)'}
+function gF(c){c=c.toLowerCase();
+if(c==='data'||c==='date')return'data';
+if(c.includes('serviço')||c.includes('servico')||c==='serviço')return'servico';
+if(c.includes('descri'))return'descricao';
+if(c.includes('valor')||c.includes('montante')||c.includes('amount'))return'montante';
+if(c.includes('subcateg'))return'subcategoria';
+if(c.includes('categ'))return'categoria';
+if(c.includes('tipo'))return'tipo';
+if(c.includes('client'))return'cliente';
+if(c.includes('nota')||c.includes('obs'))return'notas';
+if(c.includes('pagamento'))return'pagamento';
+return'(Ignorar)'}
 
-function cImp(){if(!iB)return;const mp={};document.querySelectorAll('#mT select').forEach(s=>{if(s.value!=='(Ignorar)')mp[s.dataset.col]=s.value});
+function cImp(){if(!iB)return;
+
+// Multi-sheet import
+if(iB.multi){
+const mode=document.getElementById('iMode').value;
+if(mode==='clear_all'){if(!confirm('Apagar TODOS os dados?'))return;run(`DELETE FROM receitas`);run(`DELETE FROM despesas`)}
+let nR=0,nD=0;
+
+// Import receitas
+if(iB.receitas&&iB.receitas.length){
+const mpR={};document.querySelectorAll('#mT select').forEach(s=>{if(s.value!=='(Ignorar)')mpR[s.dataset.col]=s.value});
+// Collect periods for replace mode
+if(mode==='replace'){const periods=new Set();iB.receitas.forEach(row=>{const m={};Object.entries(mpR).forEach(([ec,f])=>m[f]=row[ec]);
+let dt=m.data||'';if(dt instanceof Date)dt=dt.toISOString().slice(0,10);if(dt.length>=7)periods.add(dt.slice(0,7))});
+periods.forEach(ym=>run(`DELETE FROM receitas WHERE substr(date,1,7)=?`,ym))}
+iB.receitas.forEach(row=>{const m={};Object.entries(mpR).forEach(([ec,f])=>m[f]=row[ec]);
+let dt=m.data||new Date().toISOString().slice(0,10);
+if(dt instanceof Date)dt=dt.toISOString().slice(0,10);else if(typeof dt==='string'&&dt.includes('/')){const p=dt.split('/');if(p.length===3)dt=`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`}
+const am=parseFloat(String(m.montante).replace(/[^0-9.,\-]/g,'').replace(',','.'))||0;if(am<=0)return;
+const tp=(m.tipo||'').toLowerCase().includes('extra')?'extra':'comissao';const cm=tp==='comissao'?am:0;
+const servico=m.servico||m.descricao||'Serviços do dia';
+run(`INSERT INTO receitas VALUES(?,?,?,?,?,?,?,?,?,?)`,uid(),dt,tp,m.categoria||'',servico,m.servico?m.descricao||'':'',am,cm,m.cliente||'',m.notas||'');nR++})}
+
+// Import despesas
+if(iB.despesas&&iB.despesas.length){
+const cols2=Object.keys(iB.despesas[0]);
+const mpD={};cols2.forEach(c=>{const g=gF(c);if(g!=='(Ignorar)')mpD[c]=g});
+iB.despesas.forEach(row=>{const m={};Object.entries(mpD).forEach(([ec,f])=>m[f]=row[ec]);
+let dt=m.data||new Date().toISOString().slice(0,10);
+if(dt instanceof Date)dt=dt.toISOString().slice(0,10);else if(typeof dt==='string'&&dt.includes('/')){const p=dt.split('/');if(p.length===3)dt=`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`}
+const am=parseFloat(String(m.montante).replace(/[^0-9.,\-]/g,'').replace(',','.'))||0;if(am<=0)return;
+run(`INSERT INTO despesas VALUES(?,?,?,?,?,?,?,?)`,uid(),dt,m.categoria||'Pessoal',m.subcategoria||'Outro',m.descricao||'Importado',am,m.pagamento||'Outro',m.notas||'');nD++})}
+
+goToLastMonth();rA();xImp();nav('dashboard');toast(`Importado: ${nR} receitas + ${nD} despesas!`);return}
+
+// Single sheet import (original logic)
+const mp={};document.querySelectorAll('#mT select').forEach(s=>{if(s.value!=='(Ignorar)')mp[s.dataset.col]=s.value});
 const it=document.getElementById('iTp').value;const mode=document.getElementById('iMode').value;
 const parsed=[];
 iB.forEach(row=>{const m={};Object.entries(mp).forEach(([ec,f])=>m[f]=row[ec]);let dt=m.data||new Date().toISOString().slice(0,10);
@@ -712,7 +904,10 @@ periods.forEach(ym=>{if(it==='receita')run(`DELETE FROM receitas WHERE substr(da
 let n=0;
 parsed.forEach(p=>{const{dt,am,m}=p;
 if(it==='receita'){const tp=(m.tipo||'').toLowerCase().includes('extra')?'extra':'comissao';const cm=tp==='comissao'?am:0;
-run(`INSERT INTO receitas VALUES(?,?,?,?,?,?,?,?,?,?)`,uid(),dt,tp,m.categoria||'',m.descricao||'Importado','',am,cm,m.cliente||'',m.notas||'')}
+const servico=m.servico||m.descricao||'Importado';
+const cat=m.categoria||'';
+const desc=m.servico?m.descricao||'':'';
+run(`INSERT INTO receitas VALUES(?,?,?,?,?,?,?,?,?,?)`,uid(),dt,tp,cat,servico,desc,am,cm,m.cliente||'',m.notas||'')}
 else{run(`INSERT INTO despesas VALUES(?,?,?,?,?,?,?,?)`,uid(),dt,m.categoria||'Pessoal',m.subcategoria||'Outro',m.descricao||'Importado',am,m.pagamento||'Outro',m.notas||'')}n++});
 
 goToLastMonth();rA();xImp();nav('dashboard');toast(`${n} registos importados (SQLite)!`)}
@@ -735,43 +930,143 @@ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(res),'Resumo');
 // Export schema
 const schema=q1(`SELECT sql FROM sqlite_master WHERE type='table'`);
 XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(schema),'Esquema SQL');
-XLSX.writeFile(wb,`ShayFinance_${cY}.xlsx`);toast('Exportado!')}
+XLSX.writeFile(wb,`ShayFinance_${cY}_${new Date().toISOString().slice(0,10)}.xlsx`);toast('Exportado!')}
 
 // ===== VOICE =====
 // ===== AI CHAT =====
 let aiKey=localStorage.getItem('shayAiKey')||'';
 let ghToken=localStorage.getItem('shayGhToken')||'';
 let ghRepo=localStorage.getItem('shayGhRepo')||'';
-let aiHistory=[],aiPending=null;
+let aiPending=null;
+let currentChatId=null;
+
+function getChats(){return q1(`SELECT * FROM chats ORDER BY updated_at DESC`)}
+function getChatMessages(chatId){return q1(`SELECT * FROM chat_messages WHERE chat_id=? ORDER BY created_at ASC`,[chatId])}
+
+function createChat(title){const id=uid();const now=new Date().toISOString();
+run(`INSERT INTO chats VALUES(?,?,?,?)`,[id,title||'Nova conversa',now,now]);return id}
+
+function saveChatMsg(chatId,role,content){const now=new Date().toISOString();
+run(`INSERT INTO chat_messages(chat_id,role,content,created_at) VALUES(?,?,?,?)`,[chatId,role,content,now]);
+run(`UPDATE chats SET updated_at=? WHERE id=?`,[now,chatId]);
+// Auto-title from first user message
+const msgs=getChatMessages(chatId);const userMsgs=msgs.filter(m=>m.role==='user');
+if(userMsgs.length===1){const title=userMsgs[0].content.slice(0,40)+(userMsgs[0].content.length>40?'...':'');
+run(`UPDATE chats SET title=? WHERE id=?`,[title,chatId])}}
+
+function deleteChat(id){run(`DELETE FROM chat_messages WHERE chat_id=?`,[id]);run(`DELETE FROM chats WHERE id=?`,[id]);
+if(currentChatId===id){currentChatId=null;const chats=getChats();if(chats.length)loadChat(chats[0].id);else newChat()}showChatList()}
+
+function newChat(){
+// Clean empty chats (no messages)
+try{run(`DELETE FROM chats WHERE id NOT IN (SELECT DISTINCT chat_id FROM chat_messages)`)}catch(e){}
+currentChatId=createChat();
+document.getElementById('aiChatList').style.display='none';
+document.getElementById('aiMessages').style.display='flex';
+document.getElementById('aiInputArea').style.display='block';
+document.getElementById('aiMessages').innerHTML='';
+document.getElementById('aiChatTitle').textContent='Nova conversa';
+aiPending=null;
+addAiMsg('bot','Olá! Como posso ajudar? 💅')}
+
+function loadChat(chatId){currentChatId=chatId;
+document.getElementById('aiChatList').style.display='none';
+document.getElementById('aiMessages').style.display='flex';
+document.getElementById('aiInputArea').style.display='block';
+document.getElementById('aiMessages').innerHTML='';
+const chat=q0(`SELECT * FROM chats WHERE id=?`,[chatId]);
+document.getElementById('aiChatTitle').textContent=chat?.title||'Conversa';
+aiPending=null;
+const msgs=getChatMessages(chatId);
+if(!msgs.length){addAiMsg('bot','Olá! Como posso ajudar? 💅');return}
+
+msgs.forEach((m,i)=>{
+if(m.role==='user'){addAiMsg('user',m.content)}
+else if(m.role==='bot'){
+// Check if this is the LAST message and has a pending card (no confirm/cancel after)
+const isLast=i===msgs.length-1;
+const nextMsg=msgs[i+1];
+const wasResolved=nextMsg&&(nextMsg.content==='✅ Confirmado'||nextMsg.content==='❌ Cancelado');
+const hasCard=/```json/.test(m.content);
+
+if(isLast&&hasCard&&!wasResolved){
+// Last message has unresolved card — render with buttons
+const rendered=renderBotMsg(m.content,false);
+addAiMsg('bot','',rendered);
+// Restore aiPending
+try{const jm=m.content.match(/```json\s*([\s\S]*?)\s*```/);
+if(jm)aiPending=JSON.parse(jm[1])}catch(e){}
+}else{
+// Resolved or historical — render readonly
+addAiMsg('bot','',renderBotMsg(m.content,true))}}});
+
+const c=document.getElementById('aiMessages');c.scrollTop=c.scrollHeight;
+const msgCount=msgs.length;
+document.getElementById('aiStatus').textContent=msgCount>0?`${msgCount} msgs`:'Assistente'}}
+
+function showChatList(){const list=document.getElementById('aiChatList');const msgs=document.getElementById('aiMessages');const input=document.getElementById('aiInputArea');
+if(list.style.display==='none'){list.style.display='block';msgs.style.display='none';input.style.display='none';
+const chats=getChats();
+list.innerHTML=chats.length?chats.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;margin-bottom:4px;cursor:pointer;transition:.2s;background:${c.id===currentChatId?'rgba(212,175,106,.08)':'transparent'};border:1px solid ${c.id===currentChatId?'rgba(212,175,106,.12)':'transparent'}" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='${c.id===currentChatId?'rgba(212,175,106,.08)':'transparent'}'">
+<div style="flex:1;min-width:0" onclick="loadChat('${c.id}')"><div style="font-size:.82rem;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.title}</div>
+<div style="font-size:.65rem;color:var(--t3)">${new Date(c.updated_at).toLocaleDateString('pt-PT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>
+<button onclick="event.stopPropagation();if(confirm('Apagar esta conversa?'))deleteChat('${c.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:4px;font-size:.8rem"><i class="bi bi-trash3"></i></button></div>`).join(''):'<div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:.84rem">Sem conversas anteriores</div>';
+}else{list.style.display='none';msgs.style.display='flex';input.style.display='block'}}
 
 function getSchemaForAI(){
-const cats=getCatServicos();const dcats=getCatDespesas();const cfg=q1(`SELECT * FROM config`);
-return `ESQUEMA SQLite:
-Tabelas: receitas(id,date,type,categoria,servico,descricao,amount,comissao,client,notes), despesas(id,date,categoria,subcategoria,descricao,amount,pagamento,notes), categorias_servico(id,nome,ativa), servicos(id,categoria_id,nome,preco,duracao,ativo), categorias_despesa(id,nome,ativa), subcategorias_despesa(id,categoria_id,nome,ativa), config(key,value)
+const cats=getCatServicos();const dcats=getCatDespesas();
+// Only send relevant config — exclude prompts (they're already in systemInstruction)
+const cfg=q1(`SELECT * FROM config WHERE key NOT IN ('system_prompt_full','image_prompt','custom_prompt')`);
+return `ESQUEMA:
+Tabelas: receitas(id,date,type,categoria,servico,descricao,amount,comissao,client,notes), despesas(id,date,categoria,subcategoria,descricao,amount,pagamento,notes)
 Serviços: ${[...new Set(cats.map(c=>c.cat))].map(cat=>`${cat}(${cats.filter(c=>c.cat===cat).map(c=>c.srv).join(',')})`).join('; ')}
 Despesas: ${[...new Set(dcats.map(c=>c.cat))].map(cat=>`${cat}(${dcats.filter(c=>c.cat===cat).map(c=>c.sub).join(',')})`).join('; ')}
-Config: ${cfg.map(c=>`${c.key}=${c.value}`).join(', ')}
-IMPORTANTE: Podes executar SQL via action "run_sql" para alterar o esquema, inserir/remover categorias, serviços, etc.`}
+Config: ${cfg.map(c=>`${c.key}=${c.value}`).join(', ')}`}
 
 function getAiSystem(){
-const custom=q0(`SELECT value FROM config WHERE key='system_prompt'`);
-const customPrompt=custom?.value||'';
+const sp=q0(`SELECT value FROM config WHERE key='system_prompt_full'`);
+const cp=q0(`SELECT value FROM config WHERE key='custom_prompt'`);
 const threshold=qv(`SELECT value FROM config WHERE key='ai_confirm_threshold'`)||0;
-return `Tu és a Shay AI, assistente financeiro de uma profissional de beleza.
-Falas português de Portugal. A base de dados é SQLite no browser.
-O amount nas receitas é SEMPRE a parte da utilizadora (50% salão / 100% extra).
+const basePrompt=sp?.value||DEFAULT_SYSTEM_PROMPT;
+const customPrompt=cp?.value||'';
+return `${basePrompt}
 
-ACÇÕES (responde JSON entre \`\`\`json e \`\`\`):
-1. {"action":"add_receita","data":{"date":"YYYY-MM-DD","type":"comissao|extra","categoria":"...","servico":"...","descricao":"...","amount":NUM,"client":"...","notes":""}}
-2. {"action":"add_despesa","data":{"date":"YYYY-MM-DD","categoria":"...","subcategoria":"...","descricao":"...","amount":NUM,"pagamento":"Outro","notes":""}}
-3. {"action":"run_sql","sql":"SQL STATEMENT","description":"o que faz"}
-4. {"action":"deploy_code","description":"...","changes":[{"search":"texto exacto","replace":"novo texto"}]}
+# ACÇÕES DISPONÍVEIS
+Quando quiseres executar uma acção, devolve JSON entre \`\`\`json e \`\`\`.
+NUNCA inventes campos — usa exactamente estes schemas:
 
-REGRAS:
-- ${threshold>0?`Valores abaixo de €${threshold} não precisam confirmação`:'SEMPRE confirma antes de executar'}
-- Se faltam dados, pergunta. Data de hoje: ${new Date().toISOString().slice(0,10)}
-- Dá sugestões proativas
-${customPrompt?'\nPERSONALIZADO:\n'+customPrompt:''}`}
+## Registar Receita
+\`\`\`json
+{"action":"add_receita","data":{"date":"YYYY-MM-DD","type":"comissao","categoria":"Sobrancelhas","servico":"Microblading","descricao":"retoque","amount":45,"client":"Ana","notes":""}}
+\`\`\`
+- type: "comissao" (salão 50%) ou "extra" (gabinete 100%)
+- amount: SEMPRE a parte da utilizadora
+
+## Registar Despesa
+\`\`\`json
+{"action":"add_despesa","data":{"date":"YYYY-MM-DD","categoria":"Marketing","subcategoria":"Redes Sociais","descricao":"Instagram Ads","amount":30,"pagamento":"MB Way","notes":""}}
+\`\`\`
+- categorias: Pessoal, Actividade, Marketing, Produtos
+- pagamento: Multibanco, MB Way, Transferência, Dinheiro, Crédito, Outro
+
+## Executar SQL (alterar esquema/categorias)
+\`\`\`json
+{"action":"run_sql","sql":"INSERT INTO categorias_servico(nome) VALUES('Corpo')","description":"Adiciona categoria Corpo"}
+\`\`\`
+⚠️ PROIBIDO: DROP TABLE, DELETE FROM sem WHERE, TRUNCATE
+
+## Deploy (alterar a app via GitHub)
+\`\`\`json
+{"action":"deploy_code","description":"Muda cor do título","changes":[{"search":"texto exacto actual","replace":"texto novo"}]}
+\`\`\`
+
+# REGRAS
+- ${threshold>0?`Auto-confirma valores abaixo de €${threshold}`:'SEMPRE pede confirmação antes de executar'}
+- Data de hoje: ${new Date().toISOString().slice(0,10)}
+- Só devolve UM bloco JSON por mensagem
+- Se a utilizadora pedir algo ambíguo, pergunta em vez de adivinhar
+- Para consultas (quanto ganhei, etc.), responde em texto — sem JSON
+${customPrompt?'\n# INSTRUÇÕES PERSONALIZADAS\n'+customPrompt:''}`}
 
 function toggleChat(){const c=document.getElementById('aiChat');c.classList.toggle('open');
 if(c.classList.contains('open')&&aiKey)document.getElementById('aiInput').focus();
@@ -784,76 +1079,236 @@ aiKey=k;localStorage.setItem('shayAiKey',k);
 if(gt){ghToken=gt;localStorage.setItem('shayGhToken',gt)}
 if(gr){ghRepo=gr;localStorage.setItem('shayGhRepo',gr)}
 document.getElementById('aiKeySetup').style.display='none';document.getElementById('aiMessages').style.display='flex';document.getElementById('aiInputArea').style.display='block';
-addAiMsg('bot','Olá! Sou a Shay AI com SQLite 💅\n\nPosso:\n• Registar receitas/despesas\n• Consultar dados\n• Pesquisa semântica\n• Alterar categorias/esquema\n'+(ghToken?'• Deploy automático 🚀':''));
+addAiMsg('bot','Olá! Sou a Shay AI 💅\n\nPosso:\n• Registar receitas/despesas\n• Consultar dados\n• Alterar categorias/esquema\n'+(ghToken?'• Deploy automático 🚀':''));
 toast('Shay AI ativada!')}
 
 function initAiChat(){if(aiKey){document.getElementById('aiKeySetup').style.display='none';document.getElementById('aiMessages').style.display='flex';document.getElementById('aiInputArea').style.display='block';
-if(aiHistory.length===0)addAiMsg('bot','Olá! Como posso ajudar? 💅')}}
+// Load last chat or create new
+const chats=getChats();if(chats.length){loadChat(chats[0].id)}else{newChat()}}}
 
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function addAiMsg(who,text,html){const c=document.getElementById('aiMessages');const d=document.createElement('div');d.className='ai-msg '+who;
-d.innerHTML=`<div class="ai-avatar">${who==='bot'?'<i class="bi bi-stars"></i>':'<i class="bi bi-person"></i>'}</div><div class="ai-bubble">${html||text.replace(/\n/g,'<br>')}</div>`;
+const safe=who==='user'&&!html?escHtml(text).replace(/\n/g,'<br>'):html||text.replace(/\n/g,'<br>');
+d.innerHTML=`<div class="ai-avatar">${who==='bot'?'<i class="bi bi-stars"></i>':'<i class="bi bi-person"></i>'}</div><div class="ai-bubble">${safe}</div>`;
 c.appendChild(d);c.scrollTop=c.scrollHeight}
 function showTyping(){const c=document.getElementById('aiMessages');const d=document.createElement('div');d.className='ai-msg bot';d.id='aiTyping';
 d.innerHTML='<div class="ai-avatar"><i class="bi bi-stars"></i></div><div class="ai-typing"><span></span><span></span><span></span></div>';c.appendChild(d);c.scrollTop=c.scrollHeight}
 function hideTyping(){const t=document.getElementById('aiTyping');if(t)t.remove()}
 
 function getDataContext(){const ym=`${cY}-${String(cM+1).padStart(2,'0')}`;const yr=String(cY);
-return `MÊS: ${MN[cM]} ${cY} | Receita: €${qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=?`,ym).toFixed(2)} (Salão: €${qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=? AND type='comissao'`,ym).toFixed(2)}, Extra: €${qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=? AND type='extra'`,ym).toFixed(2)}) | Despesas: €${qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,7)=?`,ym).toFixed(2)} | ANO: Receita €${qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,4)=?`,yr).toFixed(2)} Despesas €${qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,4)=?`,yr).toFixed(2)}`}
+const mRec=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=?`,ym);
+const mSal=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=? AND type='comissao'`,ym);
+const mExt=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=? AND type='extra'`,ym);
+const mDesp=qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,7)=?`,ym);
+const mNserv=qv(`SELECT COUNT(*) FROM receitas WHERE substr(date,1,7)=?`,ym);
+const yRec=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,4)=?`,yr);
+const yDesp=qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,4)=?`,yr);
+// Top services this month
+const topServ=q1(`SELECT servico, COUNT(*) as n, SUM(amount) as total FROM receitas WHERE substr(date,1,7)=? GROUP BY servico ORDER BY total DESC LIMIT 3`,[ym]);
+// Despesas by category this month
+const despCat=q1(`SELECT categoria, SUM(amount) as total FROM despesas WHERE substr(date,1,7)=? GROUP BY categoria ORDER BY total DESC`,[ym]);
+// Last 3 transactions
+const last3=q1(`SELECT 'R' as t, date, servico as desc, amount FROM receitas UNION ALL SELECT 'D', date, descricao, amount FROM despesas ORDER BY date DESC LIMIT 3`);
 
-async function sendAiMsg(){const input=document.getElementById('aiInput');const msg=input.value.trim();if(!msg)return;input.value='';
-addAiMsg('user',msg);showTyping();document.getElementById('aiStatus').textContent='A pensar...';
+return `DADOS ACTUAIS (a utilizadora está a ver ${MN[cM]} ${cY}):
+Mês: ${MN[cM]} ${cY}
+  Receita total: €${mRec.toFixed(2)} (Salão: €${mSal.toFixed(2)} | Extra: €${mExt.toFixed(2)})
+  Despesas: €${mDesp.toFixed(2)}
+  Saldo: €${(mRec-mDesp).toFixed(2)}
+  Serviços realizados: ${mNserv}
+${topServ.length?'  Top serviços: '+topServ.map(s=>`${s.servico}(${s.n}x, €${s.total.toFixed(2)})`).join(', '):''}
+${despCat.length?'  Despesas por cat: '+despCat.map(d=>`${d.categoria}: €${d.total.toFixed(2)}`).join(', '):''}
+Ano ${cY}: Receita €${yRec.toFixed(2)} | Despesas €${yDesp.toFixed(2)} | Lucro €${(yRec-yDesp).toFixed(2)}
+${last3.length?'Últimas: '+last3.map(l=>`${l.t==='R'?'+':'-'}€${l.amount.toFixed(2)} ${l.desc} (${l.date})`).join(' | '):''}`}
+
+let aiSending=false;
+async function sendAiMsg(){if(aiSending)return;
+const input=document.getElementById('aiInput');const msg=input.value.trim();
+const hasImage=!!aiImageData;
+if(!msg&&!hasImage)return;
+
+// If there's a pending card, warn user
+if(aiPending){addAiMsg('bot','⚠️ Tens uma acção pendente por confirmar ou cancelar acima.');return}
+
+aiSending=true;input.value='';input.disabled=true;
+if(!currentChatId)currentChatId=createChat();
+
+// Show user message with image thumbnail if present
+if(hasImage){
+addAiMsg('user','','<div style="margin-bottom:6px"><img src="data:image/jpeg;base64,'+aiImageData+'" style="max-height:80px;border-radius:8px"></div>'+(msg||'<span style="color:var(--t3);font-size:.78rem">📷 Foto enviada</span>'));
+}else{addAiMsg('user',msg)}
+saveChatMsg(currentChatId,'user',msg||(hasImage?'[Foto enviada]':''));
+
+showTyping();document.getElementById('aiStatus').textContent=hasImage?'A analisar foto...':'A pensar...';
 try{const ctx=getDataContext()+'\n'+getSchemaForAI();
-const messages=aiHistory.map(h=>({role:h.role,parts:[{text:h.text}]}));
-messages.push({role:'user',parts:[{text:`${ctx}\n\nUTILIZADOR: ${msg}`}]});
+
+// Build history from DB — clean old context, keep only user intent and AI response
+const dbMsgs=getChatMessages(currentChatId);
+const recentMsgs=dbMsgs.slice(-12);
+
+// Strip context/metadata from historical messages to save tokens
+const messages=[];
+recentMsgs.slice(0,-1).forEach(m=>{
+const role=m.role==='user'?'user':'model';
+// Skip consecutive same-role (Gemini requires alternation)
+if(messages.length>0&&messages[messages.length-1].role===role)return;
+// Clean old context injections from user messages
+let text=m.content;
+if(role==='user'){
+text=text.replace(/DADOS ACTUAIS[\s\S]*?UTILIZADOR:\s*/,'').replace(/^ESQUEMA:[\s\S]*?Config:.*\n/,'');
+// Skip system messages (confirmations)
+if(text==='✅ Confirmado'||text==='❌ Cancelado')return;
+text=text.trim();if(!text)return}
+// Skip bot status messages
+if(role==='model'&&(text.startsWith('Receita registada!')||text.startsWith('Despesa registada!')||text==='OK, cancelado. Diz-me se queres alterar algo.'))return;
+messages.push({role,parts:[{text}]})});
+// Ensure last is model so we can add user
+if(messages.length>0&&messages[messages.length-1].role==='user')messages.pop();
+
+// Estimate token usage (~4 chars per token)
+const historyChars=messages.reduce((s,m)=>s+m.parts[0].text.length,0);
+const ctxChars=ctx.length;
+const totalEstTokens=Math.round((historyChars+ctxChars)/4);
+
+// Warn if context is getting large (>6000 tokens estimated)
+if(totalEstTokens>6000&&dbMsgs.length>20){
+const warn='💡 Conversa longa (~'+totalEstTokens+' tokens). Cria novo chat com + para melhor desempenho.';
+addAiMsg('bot',warn);saveChatMsg(currentChatId,'bot',warn)}
+
+// Ensure messages starts with user role (Gemini requirement)
+if(messages.length>0&&messages[0].role==='model')messages.shift();
+
+// Build current message parts
+const userParts=[];
+if(hasImage){
+const imgPromptCfg=q0(`SELECT value FROM config WHERE key='image_prompt'`);
+const imgPrompt=imgPromptCfg?.value||DEFAULT_IMAGE_PROMPT;
+userParts.push({inlineData:{mimeType:'image/jpeg',data:aiImageData}});
+userParts.push({text:`${ctx}\n\n${imgPrompt}\n${msg?'Mensagem do utilizador: '+msg:''}`});
+}else{
+userParts.push({text:`${ctx}\n\nUTILIZADOR: ${msg}`})}
+messages.push({role:'user',parts:userParts});
+
 const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${aiKey}`,{
 method:'POST',headers:{'Content-Type':'application/json'},
-body:JSON.stringify({contents:messages,systemInstruction:{parts:[{text:getAiSystem()}]},generationConfig:{temperature:0.7,maxOutputTokens:1500}})});
-if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'Erro API')}
+body:JSON.stringify({contents:messages,systemInstruction:{parts:[{text:getAiSystem()}]},generationConfig:{temperature:0.7,maxOutputTokens:2000}})});
+if(!resp.ok){const err=await resp.json();
+const errMsg=err.error?.message||'Erro API';
+if(resp.status===429)throw new Error('Limite de pedidos atingido. Espera uns segundos e tenta novamente.');
+if(resp.status===403)throw new Error('API key inválida ou sem permissões. Verifica em Configurações.');
+throw new Error(errMsg)}
 const data=await resp.json();const reply=data.candidates?.[0]?.content?.parts?.[0]?.text||'Sem resposta';
-aiHistory.push({role:'user',text:msg},{role:'model',text:reply});if(aiHistory.length>20)aiHistory=aiHistory.slice(-16);
-hideTyping();processAiReply(reply)}catch(e){hideTyping();addAiMsg('bot','Erro: '+e.message)}
-document.getElementById('aiStatus').textContent='Assistente financeiro'}
+saveChatMsg(currentChatId,'bot',reply);
+// Clear image after sending
+clearAiImage();
+hideTyping();processAiReply(reply);
+const chat=q0(`SELECT title FROM chats WHERE id=?`,[currentChatId]);
+if(chat)document.getElementById('aiChatTitle').textContent=chat.title;
+}catch(e){hideTyping();const errMsg='Erro: '+e.message;addAiMsg('bot',errMsg);if(currentChatId)saveChatMsg(currentChatId,'bot',errMsg);clearAiImage()}
+aiSending=false;document.getElementById('aiInput').disabled=false;document.getElementById('aiInput').focus();
+const msgCount=currentChatId?getChatMessages(currentChatId).length:0;
+document.getElementById('aiStatus').textContent=msgCount>0?`${msgCount} msgs`:'Assistente'}
 
 // ===== PREVIEW CARD RENDERER =====
-function renderCard(a){
-if(a.action==='add_receita'){const d=a.data;return `<div class="ai-card rec"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(212,175,106,.1);color:var(--g)"><i class="bi bi-cash-coin"></i></div><div><div class="ai-card-type" style="color:var(--g)">Nova Receita</div></div><span class="bb b-${d.type||'comissao'}" style="margin-left:auto">${CL[d.type]||'Salão 50%'}</span></div><div class="ai-card-rows"><div class="ai-card-row"><span class="ai-card-label">Serviço</span><span class="ai-card-val">${d.servico||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Valor</span><span class="ai-card-val amount">${f$(d.amount||0)}</span></div><div class="ai-card-row"><span class="ai-card-label">Categoria</span><span class="ai-card-val">${d.categoria||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Data</span><span class="ai-card-val">${d.date||'hoje'}</span></div>${d.client?`<div class="ai-card-row"><span class="ai-card-label">Cliente</span><span class="ai-card-val">${d.client}</span></div>`:''}</div><div class="ai-card-footer"><button class="ai-yes" onclick="confirmAiAction()"><i class="bi bi-check-lg me-1"></i>Confirmar</button><button class="ai-no" onclick="cancelAiAction()"><i class="bi bi-x-lg me-1"></i>Cancelar</button></div></div>`}
-if(a.action==='add_despesa'){const d=a.data;return `<div class="ai-card desp"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(232,132,92,.1);color:var(--coral)"><i class="bi bi-receipt"></i></div><div><div class="ai-card-type" style="color:var(--coral)">Nova Despesa</div></div><span class="bb b-${(d.categoria||'pessoal').toLowerCase()}" style="margin-left:auto">${d.categoria||'Pessoal'}</span></div><div class="ai-card-rows"><div class="ai-card-row"><span class="ai-card-label">Descrição</span><span class="ai-card-val">${d.descricao||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Valor</span><span class="ai-card-val amount">${f$(d.amount||0)}</span></div><div class="ai-card-row"><span class="ai-card-label">Subcategoria</span><span class="ai-card-val">${d.subcategoria||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Data</span><span class="ai-card-val">${d.date||'hoje'}</span></div></div><div class="ai-card-footer"><button class="ai-yes" onclick="confirmAiAction()"><i class="bi bi-check-lg me-1"></i>Confirmar</button><button class="ai-no" onclick="cancelAiAction()"><i class="bi bi-x-lg me-1"></i>Cancelar</button></div></div>`}
-if(a.action==='run_sql'){return `<div class="ai-card sql"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(176,160,224,.1);color:var(--lav)"><i class="bi bi-database-gear"></i></div><div><div class="ai-card-type" style="color:var(--lav)">SQL</div><div style="font-size:.78rem;color:var(--t2)">${a.description||''}</div></div></div><div class="ai-card-sql">${(a.sql||'').replace(/</g,'&lt;')}</div><div class="ai-card-footer"><button class="ai-yes" onclick="confirmAiAction()"><i class="bi bi-check-lg me-1"></i>Executar</button><button class="ai-no" onclick="cancelAiAction()"><i class="bi bi-x-lg me-1"></i>Cancelar</button></div></div>`}
-if(a.action==='deploy_code'){return `<div class="ai-card deploy"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(232,112,144,.1);color:var(--rose)"><i class="bi bi-rocket-takeoff"></i></div><div><div class="ai-card-type" style="color:var(--rose)">Deploy</div><div style="font-size:.78rem;color:var(--t2)">${a.description||''}</div></div></div><div style="font-size:.75rem;color:var(--t3);margin-top:6px"><i class="bi bi-github me-1"></i>${a.changes?a.changes.length:0} alteração(ões)</div><div class="ai-card-footer"><button class="ai-yes" onclick="confirmAiAction()"><i class="bi bi-rocket-takeoff me-1"></i>Deploy</button><button class="ai-no" onclick="cancelAiAction()"><i class="bi bi-x-lg me-1"></i>Cancelar</button></div></div>`}
+function renderCard(a,readonly){
+const footer=readonly?'':
+`<div class="ai-card-footer"><button class="ai-yes" onclick="confirmAiAction()"><i class="bi bi-check-lg me-1"></i>${a.action==='deploy_code'?'Deploy':a.action==='run_sql'?'Executar':'Confirmar'}</button><button class="ai-no" onclick="cancelAiAction()"><i class="bi bi-x-lg me-1"></i>Cancelar</button></div>`;
+
+if(a.action==='add_receita'){const d=a.data;return `<div class="ai-card rec"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(212,175,106,.1);color:var(--g)"><i class="bi bi-cash-coin"></i></div><div><div class="ai-card-type" style="color:var(--g)">Receita</div></div><span class="bb b-${d.type||'comissao'}" style="margin-left:auto">${CL[d.type]||'Salão 50%'}</span></div><div class="ai-card-rows"><div class="ai-card-row"><span class="ai-card-label">Serviço</span><span class="ai-card-val">${d.servico||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Valor</span><span class="ai-card-val amount">${f$(d.amount||0)}</span></div><div class="ai-card-row"><span class="ai-card-label">Categoria</span><span class="ai-card-val">${d.categoria||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Data</span><span class="ai-card-val">${d.date||'—'}</span></div>${d.client?`<div class="ai-card-row"><span class="ai-card-label">Cliente</span><span class="ai-card-val">${d.client}</span></div>`:''}</div>${footer}</div>`}
+if(a.action==='add_despesa'){const d=a.data;return `<div class="ai-card desp"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(232,132,92,.1);color:var(--coral)"><i class="bi bi-receipt"></i></div><div><div class="ai-card-type" style="color:var(--coral)">Despesa</div></div><span class="bb b-${(d.categoria||'pessoal').toLowerCase()}" style="margin-left:auto">${d.categoria||'Pessoal'}</span></div><div class="ai-card-rows"><div class="ai-card-row"><span class="ai-card-label">Descrição</span><span class="ai-card-val">${d.descricao||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Valor</span><span class="ai-card-val amount">${f$(d.amount||0)}</span></div><div class="ai-card-row"><span class="ai-card-label">Subcategoria</span><span class="ai-card-val">${d.subcategoria||'—'}</span></div><div class="ai-card-row"><span class="ai-card-label">Data</span><span class="ai-card-val">${d.date||'—'}</span></div></div>${footer}</div>`}
+if(a.action==='run_sql'){return `<div class="ai-card sql"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(176,160,224,.1);color:var(--lav)"><i class="bi bi-database-gear"></i></div><div><div class="ai-card-type" style="color:var(--lav)">SQL</div><div style="font-size:.78rem;color:var(--t2)">${a.description||''}</div></div></div><div class="ai-card-sql">${(a.sql||'').replace(/</g,'&lt;')}</div>${footer}</div>`}
+if(a.action==='deploy_code'){return `<div class="ai-card deploy"><div class="ai-card-head"><div class="ai-card-icon" style="background:rgba(232,112,144,.1);color:var(--rose)"><i class="bi bi-rocket-takeoff"></i></div><div><div class="ai-card-type" style="color:var(--rose)">Deploy</div><div style="font-size:.78rem;color:var(--t2)">${a.description||''}</div></div></div><div style="font-size:.75rem;color:var(--t3);margin-top:6px"><i class="bi bi-github me-1"></i>${a.changes?a.changes.length:0} alteração(ões)</div>${footer}</div>`}
 return ''}
+
+// Render a bot message — detect JSON cards and render them (readonly in history)
+function renderBotMsg(content,readonly){
+if(!content)return '';
+const jm=content.match(/```json\s*([\s\S]*?)\s*```/);
+if(jm){try{const a=JSON.parse(jm[1]);
+const clean=content.replace(/```json[\s\S]*?```/g,'').trim();
+const card=renderCard(a,readonly);
+return (clean?clean.replace(/\n/g,'<br>')+'<br>':'')+card}catch(e){
+// Malformed JSON — render as text, strip the code block formatting
+return content.replace(/```json/g,'<div class="ai-card-sql">').replace(/```/g,'</div>').replace(/\n/g,'<br>')}}
+return content.replace(/\n/g,'<br>')}
 
 function processAiReply(reply){const jm=reply.match(/```json\s*([\s\S]*?)\s*```/);let clean=reply.replace(/```json[\s\S]*?```/g,'').trim();
 if(jm){try{const a=JSON.parse(jm[1]);aiPending=a;
-addAiMsg('bot','',(clean?clean.replace(/\n/g,'<br>')+'<br>':'')+renderCard(a));return}catch(e){}}
+addAiMsg('bot','',renderBotMsg(reply,false));return}catch(e){}}
 addAiMsg('bot',clean)}
 
 function confirmAiAction(){if(!aiPending)return;const a=aiPending;aiPending=null;
+// Record the confirmation in chat
+addAiMsg('user','✅ Confirmado');
+if(currentChatId)saveChatMsg(currentChatId,'user','✅ Confirmado');
+
 if(a.action==='add_receita'){const d=a.data;run(`INSERT INTO receitas VALUES(?,?,?,?,?,?,?,?,?,?)`,uid(),d.date||new Date().toISOString().slice(0,10),d.type||'comissao',d.categoria||'',d.servico||'',d.descricao||'',d.amount||0,d.type==='comissao'?d.amount:0,d.client||'',d.notes||'');
-addAiMsg('bot','<i class="bi bi-check-circle" style="color:var(--mint)"></i> Receita registada!');saveDB()}
+const msg=`Receita registada! ${d.servico||''} · ${f$(d.amount||0)} · ${CL[d.type]||''}`;
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);saveDB()}
 else if(a.action==='add_despesa'){const d=a.data;run(`INSERT INTO despesas VALUES(?,?,?,?,?,?,?,?)`,uid(),d.date||new Date().toISOString().slice(0,10),d.categoria||'Pessoal',d.subcategoria||'Outro',d.descricao||'',d.amount||0,d.pagamento||'Outro',d.notes||'');
-addAiMsg('bot','<i class="bi bi-check-circle" style="color:var(--mint)"></i> Despesa registada!');saveDB()}
-else if(a.action==='run_sql'){try{const r=db.exec(a.sql);saveDB();let msg='<i class="bi bi-check-circle" style="color:var(--mint)"></i> Executado!';
-if(r.length){msg+=`<div class="ai-card-sql" style="margin-top:8px">${r[0].columns.join(' | ')}\n${r[0].values.slice(0,10).map(v=>v.join(' | ')).join('\n')}</div>`}
-addAiMsg('bot','',msg)}catch(e){addAiMsg('bot','Erro: '+e.message)}}
-else if(a.action==='deploy_code'){deployToGitHub(a);return}
+const msg=`Despesa registada! ${d.descricao||''} · ${f$(d.amount||0)} · ${d.categoria||''}`;
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);saveDB()}
+else if(a.action==='run_sql'){
+const forbidden=['DROP TABLE','DROP DATABASE','DROP INDEX','TRUNCATE','DELETE FROM receitas;','DELETE FROM despesas;','DELETE FROM config;','DELETE FROM chats;','DELETE FROM chat_messages;','ALTER TABLE receitas DROP','ALTER TABLE despesas DROP'];
+const sqlUp=(a.sql||'').toUpperCase().replace(/\s+/g,' ');
+if(forbidden.some(f=>sqlUp.includes(f.toUpperCase()))){const msg='⚠️ SQL bloqueado por segurança — operação destrutiva não permitida.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
+// Block multiple statements
+if((a.sql.match(/;/g)||[]).length>1){const msg='⚠️ SQL bloqueado — apenas uma instrução por vez.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
+try{const r=db.exec(a.sql);saveDB();let msg='SQL executado: '+(a.description||a.sql.slice(0,50));
+if(r.length){msg+=` (${r[0].values.length} resultados)`}
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}
+catch(e){const msg='Erro SQL: '+e.message;addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}}
+else if(a.action==='deploy_code'){
+if(currentChatId)saveChatMsg(currentChatId,'bot','Deploy iniciado...');
+deployToGitHub(a);return}
 rA()}
 
-function cancelAiAction(){aiPending=null;addAiMsg('bot','Cancelado.')}
+function cancelAiAction(){aiPending=null;
+addAiMsg('user','❌ Cancelado');
+if(currentChatId)saveChatMsg(currentChatId,'user','❌ Cancelado');
+const msg='OK, cancelado. Diz-me se queres alterar algo.';
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}
 
-async function deployToGitHub(action){if(!ghToken||!ghRepo){addAiMsg('bot','GitHub não configurado.');return}
-addAiMsg('bot','<i class="bi bi-hourglass-split me-1"></i> Deploy...');
+async function deployToGitHub(action){if(!ghToken||!ghRepo){
+const msg='GitHub não configurado. Vai a Config para adicionar o token.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
+addAiMsg('bot','Deploy em curso...');
 try{const fileUrl=`https://api.github.com/repos/${ghRepo}/contents/index.html`;
 const getResp=await fetch(fileUrl,{headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github.v3+json'}});
 if(!getResp.ok)throw new Error('Erro acesso repo');const fileData=await getResp.json();
 let content=atob(fileData.content.replace(/\n/g,''));let applied=0;
 if(action.changes){for(const ch of action.changes){if(content.includes(ch.search)){content=content.replace(ch.search,ch.replace);applied++}}}
-if(!applied){addAiMsg('bot','Nenhuma alteração aplicada.');return}
+if(!applied){const msg='Nenhuma alteração aplicada — o código pode já ter sido alterado.';addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);return}
 await fetch(fileUrl,{method:'PUT',headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
 body:JSON.stringify({message:`Shay AI: ${action.description||'update'}`,content:btoa(unescape(encodeURIComponent(content))),sha:fileData.sha})});
 try{const bfUrl=`https://api.github.com/repos/${ghRepo}/contents/beauty-finance.html`;const bf=await fetch(bfUrl,{headers:{'Authorization':`Bearer ${ghToken}`}});
 if(bf.ok){const bfd=await bf.json();await fetch(bfUrl,{method:'PUT',headers:{'Authorization':`Bearer ${ghToken}`,'Content-Type':'application/json'},
 body:JSON.stringify({message:'sync',content:btoa(unescape(encodeURIComponent(content))),sha:bfd.sha})})}}catch(e){}
-addAiMsg('bot',`Deploy feito! 🚀 ${applied} alteração(ões). Recarrega em ~30s.`)}catch(e){addAiMsg('bot','Erro: '+e.message)}}
+const msg=`Deploy feito! ${applied} alteração(ões) aplicada(s). Recarrega a página em ~30s.`;
+addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);rA()
+}catch(e){const msg='Erro no deploy: '+e.message;addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg)}}
+
+// ===== CAMERA / IMAGE =====
+let aiImageData=null;
+
+function handleAiImage(input){if(!input.files||!input.files[0])return;
+const file=input.files[0];const reader=new FileReader();
+reader.onload=function(e){const img=new Image();img.onload=function(){
+// Resize to max 800px for API efficiency
+const max=800;let w=img.width,h=img.height;
+if(w>max||h>max){if(w>h){h=Math.round(h*max/w);w=max}else{w=Math.round(w*max/h);h=max}}
+const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+canvas.getContext('2d').drawImage(img,0,0,w,h);
+aiImageData=canvas.toDataURL('image/jpeg',0.8).split(',')[1];
+document.getElementById('aiImgThumb').src=canvas.toDataURL('image/jpeg',0.3);
+document.getElementById('aiImgPreview').style.display='block';
+// Auto-focus input for adding context
+document.getElementById('aiInput').placeholder='Descreve o que é a foto... (opcional)';
+document.getElementById('aiInput').focus()};
+img.src=e.target.result};reader.readAsDataURL(file);input.value=''}
+
+function clearAiImage(){aiImageData=null;
+document.getElementById('aiImgPreview').style.display='none';
+document.getElementById('aiInput').placeholder='Mensagem ou foto...'}
 
 function aiVoiceInput(){if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){toast('Sem voz','w');return}
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const rec=new SR();rec.lang='pt-PT';rec.continuous=false;rec.interimResults=false;
@@ -883,14 +1338,181 @@ toast(`Backup restaurado! ${tables.length} tabelas carregadas.`)}
 catch(err){toast('Erro: ficheiro inválido — '+err.message,'w')}};
 reader.readAsArrayBuffer(file)}
 
+// ===== CONFIG PAGE =====
+const DEFAULT_SYSTEM_PROMPT=`Tu és a Shay AI, a assistente financeira da aplicação Shay Finance.
+
+# IDENTIDADE
+- Nome: Shay AI
+- Função: Assistente financeiro integrado numa app de gestão para profissional de beleza
+- Personalidade: Simpática, directa, prática. Usas emojis com moderação (1-2 por mensagem)
+- Idioma: Português de Portugal (nunca respondas em inglês)
+- Respostas: Curtas e objectivas. Máximo 3-4 frases para acções simples
+
+# CONTEXTO DO NEGÓCIO
+A utilizadora trabalha como profissional de beleza com dois modelos de receita:
+- COMISSÃO / SALÃO (type: "comissao"): Trabalha num salão e fica com 50% do valor. Normalmente regista o TOTAL DO DIA (soma de todos os serviços). NÃO detalha clientes nem serviços. Ex: "comissão 100" = total da sua parte no dia
+- EXTRA / GABINETE (type: "extra"): Tem um gabinete próprio onde fica com 100%. Aqui SIM detalha serviços e clientes. Ex: "extra micro 50 Ana"
+
+COMO REGISTAR:
+- Comissão/Salão: servico="Serviços do dia", SEM cliente, SEM perguntar que serviços fez
+- Extra/Gabinete: servico=nome do serviço, client=nome da cliente
+
+VOCABULÁRIO (interpretar automaticamente):
+- "extra"/"gabinete"/"sala"/"minha sala"/"100%" → type:"extra"
+- "comissão"/"salão"/"50%" → type:"comissao"
+- "micro" → Microblading | "retoque" → Microblading Retoque | "labial" → Microblading Labial
+- "gel"/"unhas gel" → Gel (Unhas) | "extensão"/"ext" → Extensão (Pestanas) | "lifting"/"lift" → Lifting (Pestanas)
+- "seg social"/"SS" → Despesa Actividade/Seg. Social | "insta"/"instagram" → Despesa Marketing/Redes Sociais
+
+# REGRAS DE OURO
+1. O amount é SEMPRE a parte da utilizadora. NUNCA dividas nem multipliques
+2. SEMPRE confirma antes de executar (mostra card e espera OK)
+3. Para comissão: NÃO exijas serviço nem cliente — regista como "Serviços do dia"
+4. Se diz valor SEM "extra"/"comissão", pergunta: "Foi no salão ou no gabinete?"
+5. Se diz "comissão 100" → registar directo, SEM perguntar detalhes
+6. Se diz "extra" com valor mas sem serviço → "Serviços do dia" type:extra
+7. Múltiplos registos numa frase → propõe UM DE CADA VEZ
+8. Data por defeito = hoje. "ontem"/"segunda" → calcula data
+9. NUNCA DELETE sem WHERE nem DROP TABLE
+10. run_sql → explica em português o que faz
+
+# SUGESTÕES PROATIVAS
+- "Este mês gastas X% em marketing — recomendado 15-20%"
+- "O gabinete extra representa X% da receita"
+- "Média diária no salão: €X"
+- "Tens Seg. Social pendente?"
+
+# EXEMPLOS (forma como a utilizadora fala no dia-a-dia)
+
+User: "comissão 50"
+→ add_receita type:comissao, servico:"Serviços do dia", amount:50, date:hoje
+
+User: "hoje fiz 50 euros de comissão"
+→ add_receita type:comissao, servico:"Serviços do dia", amount:50, date:hoje
+
+User: "50 euros comissão"
+→ add_receita type:comissao, servico:"Serviços do dia", amount:50
+
+User: "20 euros extra extensão de pestanas"
+→ add_receita type:extra, servico:Extensão, categoria:Pestanas, amount:20
+
+User: "extra 20 extensão pestanas Ana"
+→ add_receita type:extra, servico:Extensão, categoria:Pestanas, amount:20, client:Ana
+
+User: "hoje fiz 50 de comissão e 20 extra extensão pestanas"
+→ PRIMEIRO: add_receita type:comissao, servico:"Serviços do dia", amount:50
+→ DEPOIS de confirmar: add_receita type:extra, servico:Extensão, categoria:Pestanas, amount:20
+
+User: "ontem 120 comissão"
+→ add_receita type:comissao, servico:"Serviços do dia", date:2026-03-21, amount:120
+
+User: "extra micro 50 Ana"
+→ add_receita type:extra, servico:Microblading, amount:50, client:Ana
+
+User: "extra gel 30 Maria e extensão 80 Joana"
+→ PRIMEIRO: add_receita type:extra, servico:Gel, amount:30, client:Maria
+→ DEPOIS: add_receita type:extra, servico:Extensão, amount:80, client:Joana
+
+User: "seg social 210"
+→ add_despesa categoria:Actividade, subcategoria:Seg. Social, amount:210
+
+User: "insta 30"
+→ add_despesa categoria:Marketing, subcategoria:Redes Sociais, amount:30
+
+User: "Quanto ganhei este mês?"
+→ Responde com resumo em texto (sem JSON)`;
+
+const DEFAULT_IMAGE_PROMPT=`A utilizadora enviou uma FOTO. Analisa com muita atenção.
+
+# COMO INTERPRETAR
+1. FOLHA/CADERNO COM DADOS:
+   - O formato habitual tem colunas: Dia | 50% (valor da parte dela no salão) | Extra (100% gabinete)
+   - À direita pode ter notas de despesas com sinal negativo (ex: -369 Marketing, -210 Seg.Social)
+   - Os valores na coluna 50% JÁ SÃO a parte dela — NÃO dividas
+   - Extrai CADA LINHA e propõe registar como receitas (e despesas se houver)
+   - Indica o total que encontraste para a utilizadora confirmar
+
+2. RECIBO/FATURA:
+   - Extrai: data, descrição/loja, valor total, possível categoria
+   - Propõe registar como despesa com a categoria mais adequada
+
+3. TABELA DE PREÇOS:
+   - Lê serviços e valores
+   - Propõe actualizar via run_sql
+
+4. FOTO ILEGÍVEL:
+   - Diz o que consegues ver e pede para tirar outra foto com melhor luz/ângulo
+
+# IMPORTANTE
+- Para múltiplos valores, propõe UM DE CADA VEZ (não tentes inserir tudo de uma vez)
+- Mostra sempre o que leste para a utilizadora validar antes de registar
+- Se tens dúvida num valor, pergunta em vez de adivinhar`;
+
+function loadConfigPage(){
+// Load prompts from DB
+const sp=q0(`SELECT value FROM config WHERE key='system_prompt_full'`);
+const ip=q0(`SELECT value FROM config WHERE key='image_prompt'`);
+const cp=q0(`SELECT value FROM config WHERE key='custom_prompt'`);
+document.getElementById('cfgSystemPrompt').value=sp?.value||DEFAULT_SYSTEM_PROMPT;
+document.getElementById('cfgImagePrompt').value=ip?.value||DEFAULT_IMAGE_PROMPT;
+document.getElementById('cfgCustomPrompt').value=cp?.value||'';
+// Load keys
+document.getElementById('cfgGeminiKey').value=aiKey?'••••••••••':'';
+document.getElementById('cfgGhToken').value=ghToken?'••••••••••':'';
+document.getElementById('cfgGhRepo').value=ghRepo||'';
+// Load params
+document.getElementById('cfgComissao').value=qv(`SELECT value FROM config WHERE key='comissao_pct'`)||50;
+document.getElementById('cfgNome').value=(q0(`SELECT value FROM config WHERE key='nome'`)||{}).value||'Shay';
+document.getElementById('cfgAutoConfirm').value=qv(`SELECT value FROM config WHERE key='ai_confirm_threshold'`)||0;
+document.getElementById('cfgLang').value=(q0(`SELECT value FROM config WHERE key='ai_language'`)||{}).value||'pt-PT';
+// Load schema
+const schema=getSchemaForAI();
+document.getElementById('cfgSchema').innerHTML=schema.replace(/\n/g,'<br>').replace(/ /g,'&nbsp;')}
+
+function savePrompts(){
+const sp=document.getElementById('cfgSystemPrompt').value;
+const ip=document.getElementById('cfgImagePrompt').value;
+const cp=document.getElementById('cfgCustomPrompt').value;
+run(`INSERT OR REPLACE INTO config VALUES('system_prompt_full',?)`,[sp]);
+run(`INSERT OR REPLACE INTO config VALUES('image_prompt',?)`,[ip]);
+run(`INSERT OR REPLACE INTO config VALUES('custom_prompt',?)`,[cp]);
+toast('Prompts guardados!')}
+
+function resetPrompt(type){
+if(type==='system')document.getElementById('cfgSystemPrompt').value=DEFAULT_SYSTEM_PROMPT;
+if(type==='image')document.getElementById('cfgImagePrompt').value=DEFAULT_IMAGE_PROMPT;
+if(type==='custom')document.getElementById('cfgCustomPrompt').value=''}
+
+function saveCfgKeys(){
+const gk=document.getElementById('cfgGeminiKey').value;
+const gt=document.getElementById('cfgGhToken').value;
+const gr=document.getElementById('cfgGhRepo').value;
+if(gk&&!gk.includes('•')){aiKey=gk;localStorage.setItem('shayAiKey',gk)}
+if(gt&&!gt.includes('•')){ghToken=gt;localStorage.setItem('shayGhToken',gt)}
+if(gr){ghRepo=gr;localStorage.setItem('shayGhRepo',gr)}
+toast('Chaves guardadas!')}
+
+function saveParams(){
+const com=document.getElementById('cfgComissao').value;
+const nome=document.getElementById('cfgNome').value;
+const ac=document.getElementById('cfgAutoConfirm').value;
+const lang=document.getElementById('cfgLang').value;
+run(`INSERT OR REPLACE INTO config VALUES('comissao_pct',?)`,[com]);
+run(`INSERT OR REPLACE INTO config VALUES('nome',?)`,[nome]);
+run(`INSERT OR REPLACE INTO config VALUES('ai_confirm_threshold',?)`,[ac]);
+run(`INSERT OR REPLACE INTO config VALUES('ai_language',?)`,[lang]);
+toast('Parâmetros guardados!')}
+
 // ===== INIT =====
 async function boot(){
+try{
 document.getElementById('sB').textContent='A carregar...';
 await initDB();goToLastMonth();uM();rA();initAiChat();
 gsap.from('.nb',{y:-20,opacity:0,duration:.5,delay:.1});gsap.from('.sc',{opacity:0,y:25,duration:.4,stagger:.08,delay:.3,ease:'power2.out'});
 gsap.from('.cc',{opacity:0,y:15,duration:.4,stagger:.12,delay:.7});gsap.from('.dc',{opacity:0,y:15,duration:.4,delay:.9});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
-console.log('Shay Finance SQLite loaded ✨')}
+console.log('Shay Finance SQLite loaded ✨');
+}catch(e){document.getElementById('sB').textContent='Erro!';toast('Erro ao iniciar: '+e.message,'w');console.error(e)}}
 boot();
 </script>
 </body>

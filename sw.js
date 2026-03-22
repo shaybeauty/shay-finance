@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shay-finance-v6';
+const CACHE_NAME = 'shay-finance-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -12,7 +12,9 @@ const ASSETS = [
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
   'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.wasm'
 ];
 
 self.addEventListener('install', e => {

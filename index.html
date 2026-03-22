@@ -78,6 +78,17 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 .bo:hover{border-color:var(--g);color:var(--g);box-shadow:0 0 16px var(--glow-g)}
 .bd2{background:none;border:none;color:var(--t3);padding:4px 6px;border-radius:6px;cursor:pointer;transition:.15s;font-size:.85rem}.bd2:hover{color:var(--rose);background:rgba(232,112,144,.06)}
 
+/* Filter Panel */
+.filter-panel{background:linear-gradient(145deg,var(--s1),var(--bg));border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:16px}
+.fp-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}.fp-row:last-child{margin-bottom:0}
+.fp-period{display:flex;align-items:center;gap:6px}
+.fp-sel{background:var(--s2)!important;border:1px solid var(--bd)!important;color:var(--t1)!important;font-size:.72rem!important;padding:5px 28px 5px 10px!important;border-radius:8px!important;min-width:auto!important;width:auto!important}
+.fp-date{background:var(--s2)!important;border:1px solid var(--bd)!important;color:var(--t1)!important;font-size:.7rem!important;padding:4px 8px!important;border-radius:8px!important;width:120px!important}
+.fp-search{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:0 10px;flex:1;max-width:220px}
+.fp-search i{color:var(--t3);font-size:.75rem}
+.fp-search input{background:transparent;border:none;color:var(--t1);font-size:.72rem;padding:6px 0;width:100%;outline:none}
+.fp-search input::placeholder{color:var(--t3)}
+
 /* Timeline */
 .tl-btn{background:var(--s2);border:1px solid var(--bd);color:var(--t3);font-size:.68rem;font-weight:600;padding:5px 12px;border-radius:8px;cursor:pointer;transition:.2s}
 .tl-btn:hover{color:var(--t1);border-color:var(--t3)}
@@ -278,9 +289,28 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 <!-- RECEITAS -->
 <section class="sp" id="pg-receitas">
 <div class="ph"><h2>Receitas</h2><button class="btn bg2 btn-sm" onclick="oM('receita')"><i class="bi bi-plus-lg me-1"></i> Nova Receita</button></div>
-<ul class="nav nt mb-3" id="rT"><li class="nav-item"><a class="nav-link active" href="#" data-filter="all">Todas</a></li>
-<li class="nav-item"><a class="nav-link" href="#" data-filter="comissao"><i class="bi bi-building me-1"></i> Salão 50%</a></li>
-<li class="nav-item"><a class="nav-link" href="#" data-filter="extra"><i class="bi bi-house-door me-1"></i> Extra 100%</a></li></ul>
+<div class="filter-panel" id="fPR">
+<div class="fp-row">
+<div class="fp-period">
+<select class="form-select fp-sel" id="fRPeriod" onchange="rRec()">
+<option value="mes">Este mês</option><option value="ano">Este ano</option><option value="todos">Todos</option><option value="custom">Personalizado</option>
+</select>
+<div id="fRCustom" style="display:none;gap:6px;align-items:center">
+<input type="date" class="form-control fp-date" id="fRDe" onchange="rRec()">
+<span style="color:var(--t3);font-size:.7rem">a</span>
+<input type="date" class="form-control fp-date" id="fRAte" onchange="rRec()">
+</div>
+</div>
+<div class="fp-search"><i class="bi bi-search"></i><input type="text" id="fRSearch" placeholder="Pesquisar..." oninput="rRec()"></div>
+</div>
+<div class="fp-row" style="flex-wrap:wrap;gap:6px">
+<button class="tl-btn active" data-filter="all" onclick="setRecFilter(this)">Todas</button>
+<button class="tl-btn" data-filter="comissao" onclick="setRecFilter(this)"><i class="bi bi-building me-1"></i>Salão</button>
+<button class="tl-btn" data-filter="extra" onclick="setRecFilter(this)"><i class="bi bi-house-door me-1"></i>Extra</button>
+<span style="width:1px;height:20px;background:var(--bd);margin:0 4px"></span>
+<select class="form-select fp-sel" id="fRCatFilter" onchange="rRec()"><option value="">Categoria</option></select>
+</div>
+</div>
 <div class="dc"><div class="table-responsive"><table class="tb"><thead><tr><th>Data</th><th>Serviço</th><th>Cat.</th><th>Tipo</th><th>Minha Receita</th><th>Bruto Salão</th><th></th></tr></thead><tbody id="tRc"></tbody></table></div>
 <div class="es" id="eR" style="display:none"><i class="bi bi-inbox" style="font-size:2.5rem;opacity:.3"></i><p class="mt-2">Nenhuma receita</p></div></div>
 </section>
@@ -288,7 +318,24 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 <!-- DESPESAS -->
 <section class="sp" id="pg-despesas">
 <div class="ph"><h2>Despesas</h2><button class="btn bg2 btn-sm" onclick="oM('despesa')"><i class="bi bi-plus-lg me-1"></i> Nova Despesa</button></div>
-<ul class="nav nt mb-3" id="dT"></ul>
+<div class="filter-panel" id="fPD">
+<div class="fp-row">
+<div class="fp-period">
+<select class="form-select fp-sel" id="fDPeriod" onchange="rDsp()">
+<option value="mes">Este mês</option><option value="ano">Este ano</option><option value="todos">Todos</option><option value="custom">Personalizado</option>
+</select>
+<div id="fDCustom" style="display:none;gap:6px;align-items:center">
+<input type="date" class="form-control fp-date" id="fDDe" onchange="rDsp()">
+<span style="color:var(--t3);font-size:.7rem">a</span>
+<input type="date" class="form-control fp-date" id="fDAte" onchange="rDsp()">
+</div>
+</div>
+<div class="fp-search"><i class="bi bi-search"></i><input type="text" id="fDSearch" placeholder="Pesquisar..." oninput="rDsp()"></div>
+</div>
+<div class="fp-row" style="flex-wrap:wrap;gap:6px" id="dTabs">
+<button class="tl-btn active" data-filter="all" onclick="setDespFilter(this)">Todas</button>
+</div>
+</div>
 <div class="dc"><div class="table-responsive"><table class="tb"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Montante</th><th>Pagamento</th><th></th></tr></thead><tbody id="tDp"></tbody></table></div>
 <div class="es" id="eDP" style="display:none"><i class="bi bi-inbox" style="font-size:2.5rem;opacity:.3"></i><p class="mt-2">Nenhuma despesa</p></div></div>
 </section>
@@ -583,7 +630,8 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 <div class="modal-header"><h5 class="modal-title" id="mDTitle">Nova Despesa</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
 <div class="modal-body"><div class="row g-3">
 <div class="col-6"><label class="fl">Data</label><input type="date" class="form-control" id="fDD"></div>
-<div class="col-6"><label class="fl">Categoria</label><select class="form-select" id="fDC" onchange="updateDespSub(this.value)"></select></div>
+<div class="col-6"><label class="fl">Grupo</label><select class="form-select" id="fDG" onchange="updateDespCascade('group')"></select></div>
+<div class="col-6"><label class="fl">Categoria</label><select class="form-select" id="fDC" onchange="updateDespCascade('cat')"></select></div>
 <div class="col-6"><label class="fl">Subcategoria</label><select class="form-select" id="fDSub"></select></div>
 <div class="col-6" id="fDSubOw" style="display:none"><label class="fl">Especificar</label><input type="text" class="form-control" id="fDSubO" placeholder="Qual?"></div>
 <div class="col-12"><label class="fl">Descrição</label><input type="text" class="form-control" id="fDDs" placeholder="Detalhe da despesa..."></div>
@@ -859,6 +907,13 @@ function getDespAno(){return q1(`SELECT * FROM despesas WHERE substr(date,1,4)=?
 function getCatServicos(){return q1(`SELECT cs.nome as cat, s.nome as srv FROM categorias_servico cs JOIN servicos s ON s.categoria_id=cs.id WHERE cs.ativa=1 AND s.ativo=1 ORDER BY cs.nome,s.nome`)}
 function getCatDespesas(){return q1(`SELECT cd.nome as cat, sd.nome as sub FROM categorias_despesa cd JOIN subcategorias_despesa sd ON sd.categoria_id=cd.id WHERE cd.ativa=1 AND sd.ativa=1 ORDER BY cd.nome,sd.nome`)}
 
+// 3-level category helpers: Group → Category → Subcategory
+function catGroup(name){return (name||'').split(' — ')[0]||name}
+function catName(name){return (name||'').split(' — ')[1]||name}
+function getDespGroups(){return [...new Set(getCatDespesas().map(r=>catGroup(r.cat)))].sort()}
+function getDespCatsByGroup(grupo){return [...new Set(getCatDespesas().filter(r=>catGroup(r.cat)===grupo).map(r=>r.cat))].sort()}
+function getDespSubsByCat(cat){return getCatDespesas().filter(r=>r.cat===cat).map(r=>r.sub)}
+
 // ===== UI HELPERS =====
 function uM(){document.getElementById('mL').textContent=`${MN[cM]} ${cY}`}
 function chM(d){cM+=d;if(cM>11){cM=0;cY++}if(cM<0){cM=11;cY--}uM();rA()}
@@ -899,7 +954,7 @@ updateRecSub();mR.show()}
 else{document.getElementById('mDTitle').textContent='Nova Despesa';
 document.getElementById('fDD').value=new Date().toISOString().slice(0,10);
 ['fDDs','fDA','fDN','fDSubO'].forEach(i=>document.getElementById(i).value='');
-updateDespSub();mD.show()}}
+updateDespCascade('init');mD.show()}}
 
 function eR(id){
 const r=q0(`SELECT * FROM receitas WHERE id=?`,[id]);if(!r)return;
@@ -924,7 +979,7 @@ const d=q0(`SELECT * FROM despesas WHERE id=?`,[id]);if(!d)return;
 editDspId=id;
 document.getElementById('mDTitle').textContent='Editar Despesa';
 document.getElementById('fDD').value=d.date||'';
-updateDespSub(d.categoria);
+updateDespCascade('init',{group:catGroup(d.categoria),cat:d.categoria,sub:d.subcategoria});
 // Set subcategory
 const sSel=document.getElementById('fDSub');
 const subOpts=[...sSel.options].map(o=>o.value);
@@ -954,15 +1009,30 @@ sSel.innerHTML=srvs.map(s=>`<option>${s}</option>`).join('')+`<option value="Out
 sSel.onchange=function(){document.getElementById('fROw').style.display=this.value==='Outro'?'block':'none'};
 document.getElementById('fROw').style.display='none'}
 
-function updateDespSub(keepCat){
-const sel=document.getElementById('fDC');const sSel=document.getElementById('fDSub');
-const cats=[...new Set(getCatDespesas().map(r=>r.cat))];
-const prevCat=keepCat||sel.value;
-sel.innerHTML=cats.map(c=>`<option value="${c}" ${c===prevCat?'selected':''}>${c}</option>`).join('');
-const curCat=sel.value;const subs=getCatDespesas().filter(r=>r.cat===curCat).map(r=>r.sub);
-sSel.innerHTML=subs.map(s=>`<option>${s}</option>`).join('')+`<option value="Outro">Outro...</option>`;
+function updateDespCascade(level,presets){
+const gSel=document.getElementById('fDG');
+const cSel=document.getElementById('fDC');
+const sSel=document.getElementById('fDSub');
+const groups=getDespGroups();
+
+if(level==='group'||level==='init'){
+const prevG=presets?.group||gSel.value;
+gSel.innerHTML=groups.map(g=>`<option value="${g}" ${g===prevG?'selected':''}>${g}</option>`).join('')}
+
+// Populate categories based on selected group
+const curGroup=gSel.value;
+const cats=getDespCatsByGroup(curGroup);
+if(level==='group'||level==='init'){
+const prevC=presets?.cat||cSel.value;
+cSel.innerHTML=cats.map(c=>`<option value="${c}" ${c===prevC?'selected':''}>${catName(c)}</option>`).join('')}
+
+// Populate subcategories based on selected category
+const curCat=cSel.value;
+const subs=getDespSubsByCat(curCat);
+const prevS=presets?.sub||sSel.value;
+sSel.innerHTML=subs.map(s=>`<option ${s===prevS?'selected':''}>${s}</option>`).join('')+`<option value="Outro">Outro...</option>`;
 sSel.onchange=function(){document.getElementById('fDSubOw').style.display=this.value==='Outro'?'block':'none'};
-document.getElementById('fDSubOw').style.display='none'}
+document.getElementById('fDSubOw').style.display=sSel.value==='Outro'?'block':'none'}
 
 // ===== SAVE =====
 function sRec(){const dt=document.getElementById('fRD').value,tp=document.getElementById('fRT').value;
@@ -1036,9 +1106,49 @@ document.querySelectorAll('#tlFilters .tl-btn').forEach(x=>x.classList.remove('a
 this.classList.add('active');rDash()});
 rCh()}
 
+function getFilteredData(type){
+const periodSel=document.getElementById(type==='rec'?'fRPeriod':'fDPeriod');
+const period=periodSel?.value||'mes';
+const ym=`${cY}-${String(cM+1).padStart(2,'0')}`;
+let sql,params=[];
+if(type==='rec'){
+if(period==='mes'){sql=`SELECT * FROM receitas WHERE substr(date,1,7)=? ORDER BY date DESC`;params=[ym]}
+else if(period==='ano'){sql=`SELECT * FROM receitas WHERE substr(date,1,4)=? ORDER BY date DESC`;params=[String(cY)]}
+else if(period==='todos'){sql=`SELECT * FROM receitas ORDER BY date DESC`}
+else{const de=document.getElementById('fRDe').value,ate=document.getElementById('fRAte').value;
+sql=`SELECT * FROM receitas WHERE date>=? AND date<=? ORDER BY date DESC`;params=[de||'2000-01-01',ate||'2099-12-31']}
+}else{
+if(period==='mes'){sql=`SELECT * FROM despesas WHERE substr(date,1,7)=? ORDER BY date DESC`;params=[ym]}
+else if(period==='ano'){sql=`SELECT * FROM despesas WHERE substr(date,1,4)=? ORDER BY date DESC`;params=[String(cY)]}
+else if(period==='todos'){sql=`SELECT * FROM despesas ORDER BY date DESC`}
+else{const de=document.getElementById('fDDe').value,ate=document.getElementById('fDAte').value;
+sql=`SELECT * FROM despesas WHERE date>=? AND date<=? ORDER BY date DESC`;params=[de||'2000-01-01',ate||'2099-12-31']}}
+return q1(sql,params)}
+
+function setRecFilter(btn){document.querySelectorAll('#fPR .fp-row:last-child .tl-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');rRec()}
+function setDespFilter(btn){document.querySelectorAll('#dTabs .tl-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');rDsp()}
+
 function rRec(){
-let rc=getRecMes();const f=document.querySelector('#rT .nav-link.active')?.dataset.filter;
+// Show/hide custom date inputs
+const period=document.getElementById('fRPeriod')?.value||'mes';
+const customDiv=document.getElementById('fRCustom');
+if(customDiv)customDiv.style.display=period==='custom'?'flex':'none';
+
+let rc=getFilteredData('rec');
+// Type filter
+const f=document.querySelector('#fPR .fp-row:last-child .tl-btn.active')?.dataset.filter;
 if(f&&f!=='all')rc=rc.filter(r=>r.type===f);
+// Category filter
+const catF=document.getElementById('fRCatFilter')?.value;
+if(catF)rc=rc.filter(r=>r.categoria===catF);
+// Text search
+const search=(document.getElementById('fRSearch')?.value||'').toLowerCase();
+if(search)rc=rc.filter(r=>(r.servico+r.descricao+r.client+r.categoria+r.notes).toLowerCase().includes(search));
+// Populate category dropdown
+const cats=[...new Set(rc.map(r=>r.categoria).filter(Boolean))].sort();
+const catSel=document.getElementById('fRCatFilter');
+if(catSel){const prev=catSel.value;catSel.innerHTML='<option value="">Categoria</option>'+cats.map(c=>`<option value="${c}" ${c===prev?'selected':''}>${c}</option>`).join('')}
+
 const comPct=parseInt(qv(`SELECT value FROM config WHERE key='comissao_pct'`))||50;
 const brutoMul=100/comPct;
 const tb=document.getElementById('tRc'),em=document.getElementById('eR');
@@ -1046,18 +1156,27 @@ if(!rc.length){tb.innerHTML='';em.style.display='block'}else{em.style.display='n
 tb.innerHTML=rc.map(r=>{const br=r.type==='comissao'?f$(r.amount*brutoMul):'—';return `<tr><td data-label="Data">${fD(r.date)}</td><td data-label="Serviço">${r.servico}${r.descricao?` <span style="color:var(--t2);font-size:.8rem">— ${r.descricao}</span>`:''}${r.client?` <span style="color:var(--t3)">(${r.client})</span>`:''}</td><td data-label="Cat"><span style="color:var(--t3);font-size:.72rem">${r.categoria||''}</span></td><td data-label="Tipo"><span class="bb b-${r.type}">${CL[r.type]}</span></td><td data-label="Receita" class="mn inc" style="font-weight:700">${f$(r.amount)}</td><td data-label="Bruto" class="mn" style="color:var(--t3)">${br}</td><td><button class="bd2" onclick="eR('${r.id}')" title="Editar"><i class="bi bi-pencil"></i></button><button class="bd2" onclick="dR('${r.id}')" title="Apagar"><i class="bi bi-trash3"></i></button></td></tr>`}).join('')}}
 
 function rDsp(){
-// Build tabs dynamically from DB categories
-const dTabs=document.getElementById('dT');
-const activeFilter=document.querySelector('#dT .nav-link.active')?.dataset.filter||'all';
-const despCats=[...new Set(getDespMes().map(d=>d.categoria))].sort();
-dTabs.innerHTML='<li class="nav-item"><a class="nav-link '+(activeFilter==='all'?'active':'')+'" href="#" data-filter="all">Todas</a></li>'+
-despCats.map(c=>'<li class="nav-item"><a class="nav-link '+(activeFilter===c.toLowerCase()?'active':'')+'" href="#" data-filter="'+c.toLowerCase()+'"><i class="'+catIcon(c)+' me-1"></i>'+c.replace(/^(Actividade|Pessoal|Impostos) — /,'')+'</a></li>').join('');
-dTabs.querySelectorAll('.nav-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();dTabs.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));a.classList.add('active');rDsp()}));
-let dp=getDespMes();const f=document.querySelector('#dT .nav-link.active')?.dataset.filter;
-if(f&&f!=='all')dp=dp.filter(d=>d.categoria.toLowerCase()===f);
+// Show/hide custom date inputs
+const period=document.getElementById('fDPeriod')?.value||'mes';
+const customDiv=document.getElementById('fDCustom');
+if(customDiv)customDiv.style.display=period==='custom'?'flex':'none';
+
+let dp=getFilteredData('desp');
+// Group tab filter
+const activeCat=document.querySelector('#dTabs .tl-btn.active')?.dataset.filter||'all';
+// Build group-level tabs from data
+const dTabsEl=document.getElementById('dTabs');
+const despGroups=[...new Set(dp.map(d=>catGroup(d.categoria)))].sort();
+if(dTabsEl){dTabsEl.innerHTML='<button class="tl-btn '+(activeCat==='all'?'active':'')+'" data-filter="all" onclick="setDespFilter(this)">Todas</button>'+
+despGroups.map(g=>'<button class="tl-btn '+(activeCat===g.toLowerCase()?'active':'')+'" data-filter="'+g.toLowerCase()+'" onclick="setDespFilter(this)">'+g+'</button>').join('')}
+if(activeCat&&activeCat!=='all')dp=dp.filter(d=>catGroup(d.categoria).toLowerCase()===activeCat);
+// Text search
+const search=(document.getElementById('fDSearch')?.value||'').toLowerCase();
+if(search)dp=dp.filter(d=>(d.descricao+d.categoria+d.subcategoria+d.pagamento+d.notes).toLowerCase().includes(search));
+
 const tb=document.getElementById('tDp'),em=document.getElementById('eDP');
 if(!dp.length){tb.innerHTML='';em.style.display='block'}else{em.style.display='none';
-tb.innerHTML=dp.map(d=>`<tr><td data-label="Data">${fD(d.date)}</td><td data-label="Desc">${d.descricao}${d.notes?` <span style="color:var(--t3);font-size:.76rem">(${d.notes})</span>`:''}</td><td data-label="Cat"><span class="bb" style="background:${catColor(d.categoria)}15;color:${catColor(d.categoria)};border-color:${catColor(d.categoria)}25"><i class="${catIcon(d.categoria)} me-1"></i>${d.categoria.replace(/^(Actividade|Pessoal|Impostos) — /,'')}</span>${d.subcategoria?` <span style="color:var(--t3);font-size:.72rem">· ${d.subcategoria}</span>`:''}</td><td data-label="Valor"><span class="mn exp">−${f$(d.amount)}</span></td><td data-label="Pag" style="color:var(--t3)">${d.pagamento}</td><td><button class="bd2" onclick="eD('${d.id}')" title="Editar"><i class="bi bi-pencil"></i></button><button class="bd2" onclick="dD('${d.id}')" title="Apagar"><i class="bi bi-trash3"></i></button></td></tr>`).join('')}}
+tb.innerHTML=dp.map(d=>`<tr><td data-label="Data">${fD(d.date)}</td><td data-label="Desc">${d.descricao}${d.notes?` <span style="color:var(--t3);font-size:.76rem">(${d.notes})</span>`:''}</td><td data-label="Cat"><span class="bb" style="background:${catColor(d.categoria)}15;color:${catColor(d.categoria)};border-color:${catColor(d.categoria)}25"><i class="${catIcon(d.categoria)} me-1"></i>${catName(d.categoria)}</span>${d.subcategoria?` <span style="color:var(--t3);font-size:.72rem">· ${d.subcategoria}</span>`:''}</td><td data-label="Valor"><span class="mn exp">−${f$(d.amount)}</span></td><td data-label="Pag" style="color:var(--t3)">${d.pagamento}</td><td><button class="bd2" onclick="eD('${d.id}')" title="Editar"><i class="bi bi-pencil"></i></button><button class="bd2" onclick="dD('${d.id}')" title="Apagar"><i class="bi bi-trash3"></i></button></td></tr>`).join('')}}
 
 // ===== CHARTS =====
 const cO={responsive:true,plugins:{legend:{labels:{color:'#A09888',font:{family:'Manrope',size:11}}}},scales:{x:{ticks:{color:'#605848',font:{size:10}},grid:{color:'rgba(44,44,53,.6)'}},y:{ticks:{color:'#605848',font:{size:10},callback:v=>'€'+v},grid:{color:'rgba(44,44,53,.6)'}}}};

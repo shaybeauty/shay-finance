@@ -2498,16 +2498,15 @@ NOTA: Para detalhes, usa action "query_sql" com SELECT. Podes consultar qualquer
 // ===== AI ROUTER (1st call) + EXECUTION (2nd call) =====
 const ROUTER_PROMPT=`REGRA CRÍTICA: Analisa a mensagem e responde com UM bloco JSON entre \`\`\`json e \`\`\`.
 
-# CONTEXTO DA CONVERSA
-Tens acesso ao HISTÓRICO RECENTE desta conversa. USA-O SEMPRE para:
-1. ENTENDER a que se refere o utilizador — se falámos de um evento/nota/receita, a próxima mensagem provavelmente refere-se ao mesmo
-2. CORRIGIR ERROS — a utilizadora usa voz-para-texto e comete erros frequentes:
-   - "cimento" pode ser "evento", "alimento" pode ser "alimento" ou "pagamento"
-   - "de cimento" pode ser "do evento", "micro blading" pode ser "microblading"
-   - Se uma palavra não faz sentido no contexto, procura a palavra mais parecida foneticamente
-3. INFERIR ENTIDADES — se a conversa anterior mencionou "Beber água" e agora diz "altera a hora desse para 11:45", "desse" = "Beber água"
-4. MANTER CONTINUIDADE — se o utilizador diz "agora muda a data para 25", sabe que se refere ao último item discutido
-5. NUNCA perguntar "qual evento?" se a conversa anterior já identificou claramente o evento/nota/registo
+# CONTEXTO DA CONVERSA — REGRA MAIS IMPORTANTE
+O HISTÓRICO abaixo é a conversa que tivemos até agora. É A TUA MEMÓRIA.
+
+REGRAS OBRIGATÓRIAS:
+1. Se nas mensagens anteriores foi mencionado um evento, nota, receita ou despesa ESPECÍFICA, e a nova mensagem usa "esse", "desse", "aquele", "o evento", "a nota", ou simplesmente dá uma instrução sem especificar qual — REFERE-SE AO ÚLTIMO ITEM DISCUTIDO. NÃO perguntes "qual?".
+2. Se a conversa anterior mostrou um resultado SQL com um ID, título ou dados de um registo, USA ESSES DADOS directamente na próxima acção. Ex: se o SELECT retornou id='abc123' e title='Beber água', e o user diz "altera para 15:00", faz UPDATE WHERE id='abc123'.
+3. ERROS DE VOZ — a utilizadora dita por voz e erra palavras. Se algo não faz sentido, procura a palavra mais parecida foneticamente: "cimento"→"evento", "de cimento"→"do evento", "micro blading"→"microblading".
+4. NUNCA respondas "qual evento?" ou "podes dar mais detalhes?" se a conversa anterior JÁ identificou o item. Age directamente.
+5. Se o user diz "para as 15:00" sem mais contexto, infere que quer alterar a hora do ÚLTIMO evento/item discutido.
 
 COMO DECIDIR (exemplos reais):
 
@@ -2600,15 +2599,24 @@ routerMessages.push({role,parts:[{text}]})});
 if(routerMessages.length>0&&routerMessages[routerMessages.length-1].role==='user')routerMessages.pop();
 if(routerMessages.length>0&&routerMessages[0].role==='model')routerMessages.shift();
 
-// Add current message
+// Add current message with last-entity context
 const userParts=[];
+// Extract last discussed entity from recent bot messages for continuity
+let lastEntityHint='';
+const recentBotMsgs=getChatMessages(currentChatId).filter(m=>m.role==='bot').slice(-3);
+for(const bm of recentBotMsgs){
+const idMatch=bm.content.match(/id[=:]\s*['"]?([a-z0-9]{6,})/i);
+const titleMatch=bm.content.match(/[""]([^""]{2,50})[""]|evento[:\s]+([^\n,]{2,40})|nota[:\s]+([^\n,]{2,40})/i);
+if(idMatch||titleMatch){
+lastEntityHint=`\n[CONTEXTO: O último item discutido nesta conversa foi${idMatch?' id='+idMatch[1]:''}${titleMatch?' "'+( titleMatch[1]||titleMatch[2]||titleMatch[3]).trim()+'"':''}. Se o user se referir a "esse", "desse", "aquele" ou der instruções sem especificar qual, refere-se a ESTE item.]`;break}}
+
 if(hasImage){
 const imgPromptCfg=q0(`SELECT value FROM config WHERE key='image_prompt'`);
 const imgPrompt=imgPromptCfg?.value||DEFAULT_IMAGE_PROMPT;
 userParts.push({inlineData:{mimeType:'image/jpeg',data:aiImageData}});
-userParts.push({text:`${ctx}\n${schema}\n${imgPrompt}\n${msg?'Mensagem: '+msg:''}`});
+userParts.push({text:`${ctx}\n${schema}\n${imgPrompt}${lastEntityHint}\n${msg?'Mensagem: '+msg:''}`});
 }else{
-userParts.push({text:`${ctx}\n${schema}\nUTILIZADOR: ${msg}`})}
+userParts.push({text:`${ctx}\n${schema}${lastEntityHint}\nUTILIZADOR: ${msg}`})}
 routerMessages.push({role:'user',parts:userParts});
 
 const reply=await aiCall(routerMessages,getAiSystem()+'\n\n'+ROUTER_PROMPT,{temperature:0.1});

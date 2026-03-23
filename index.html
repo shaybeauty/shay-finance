@@ -2507,32 +2507,65 @@ type:"OBJECT",
 properties:{
 action:{type:"STRING",description:"Accao: query_sql, add_receita, add_despesa, add_evento, add_nota, update_record, delete_record, run_sql, chat"},
 table:{type:"STRING",description:"Tabela: eventos, notas, receitas, despesas"},
-id:{type:"STRING",description:"ID do registo do ultimo_registo"},
-sql:{type:"STRING",description:"Query SQL"},
-set:{type:"OBJECT",description:"Campos a alterar",properties:{title:{type:"STRING"},date_start:{type:"STRING"},time_start:{type:"STRING"},time_end:{type:"STRING"},done:{type:"INTEGER"},notes:{type:"STRING"},content:{type:"STRING"},color:{type:"STRING"},pinned:{type:"INTEGER"},date:{type:"STRING"},amount:{type:"NUMBER"},descricao:{type:"STRING"}}},
-data:{type:"OBJECT",description:"Dados para criar registos",properties:{date:{type:"STRING"},type:{type:"STRING"},categoria:{type:"STRING"},servico:{type:"STRING"},descricao:{type:"STRING"},amount:{type:"NUMBER"},client:{type:"STRING"},notes:{type:"STRING"},subcategoria:{type:"STRING"},pagamento:{type:"STRING"},title:{type:"STRING"},date_start:{type:"STRING"},time_start:{type:"STRING"},time_end:{type:"STRING"},all_day:{type:"INTEGER"},tipo:{type:"STRING"},recurrence:{type:"STRING"},content:{type:"STRING"},color:{type:"STRING"}}},
+id:{type:"STRING",description:"ID do registo a alterar (do ultimo_registo)"},
+sql:{type:"STRING",description:"Query SQL para query_sql ou run_sql"},
 response:{type:"STRING",description:"Texto para chat"},
-description:{type:"STRING",description:"Descricao da accao"}
+description:{type:"STRING",description:"Descricao da accao"},
+set_title:{type:"STRING",description:"Novo titulo"},
+set_date_start:{type:"STRING",description:"Nova data YYYY-MM-DD"},
+set_time_start:{type:"STRING",description:"Nova hora inicio HH:MM"},
+set_time_end:{type:"STRING",description:"Nova hora fim HH:MM"},
+set_done:{type:"STRING",description:"Marcar feito 1 ou 0"},
+set_notes:{type:"STRING",description:"Novas notas"},
+set_content:{type:"STRING",description:"Novo conteudo"},
+d_date:{type:"STRING",description:"Data YYYY-MM-DD"},
+d_type:{type:"STRING",description:"comissao ou extra"},
+d_categoria:{type:"STRING",description:"Categoria"},
+d_servico:{type:"STRING",description:"Servico"},
+d_descricao:{type:"STRING",description:"Descricao"},
+d_amount:{type:"STRING",description:"Valor numerico"},
+d_client:{type:"STRING",description:"Cliente"},
+d_notes:{type:"STRING",description:"Notas"},
+d_subcategoria:{type:"STRING",description:"Subcategoria"},
+d_pagamento:{type:"STRING",description:"Forma de pagamento"},
+d_title:{type:"STRING",description:"Titulo"},
+d_time_start:{type:"STRING",description:"Hora inicio HH:MM"},
+d_time_end:{type:"STRING",description:"Hora fim HH:MM"},
+d_all_day:{type:"STRING",description:"Todo dia 1 ou 0"},
+d_tipo:{type:"STRING",description:"Tipo: pessoal, lembrete, habito, bloqueio"},
+d_recurrence:{type:"STRING",description:"Recorrencia: daily, weekly, monthly"},
+d_content:{type:"STRING",description:"Conteudo da nota"},
+d_color:{type:"STRING",description:"Cor hex da nota"}
 },required:["action"]};
+
+function intentToDecision(raw){
+const d={action:raw.action,table:raw.table,id:raw.id,sql:raw.sql,response:raw.response,description:raw.description};
+const set={};
+for(const k of Object.keys(raw)){if(k.startsWith('set_')&&raw[k]){const f=k.slice(4);set[f]=raw[k]==='1'||raw[k]==='0'?parseInt(raw[k]):raw[k]}}
+if(Object.keys(set).length)d.set=set;
+const data={};
+for(const k of Object.keys(raw)){if(k.startsWith('d_')&&raw[k]){const f=k.slice(2);data[f]=f==='amount'?parseFloat(raw[k])||0:f==='all_day'?parseInt(raw[k])||0:raw[k]}}
+if(Object.keys(data).length)d.data=data;
+return d}
 
 function getIntentSystem(schema){
 return `Es a assistente da app S-Finance. Classificas pedidos em accoes JSON.
 
 Accoes:
-- query_sql: perguntas sobre dados. Inclui sql com SELECT.
-- add_receita: registar receita. Inclui data com {date,type,categoria,servico,amount,...}
-- add_despesa: registar despesa. Inclui data com {date,categoria,subcategoria,amount,...}
-- add_evento: criar evento. Inclui data com {title,date_start,time_start,...}
-- add_nota: criar nota. Inclui data com {title,content,color}
-- update_record: ALTERAR registo existente. Inclui table, id (do <ultimo_registo>), set com campos a mudar.
-- delete_record: APAGAR registo. Inclui table, id.
-- run_sql: SQL para categorias/esquema.
-- chat: conversa. Inclui response com texto.
+- query_sql: perguntas sobre dados. Usa campo sql com SELECT.
+- add_receita: registar receita. Usa campos d_date, d_type, d_categoria, d_servico, d_amount, d_client
+- add_despesa: registar despesa. Usa campos d_date, d_categoria, d_subcategoria, d_amount, d_pagamento, d_descricao
+- add_evento: criar evento. Usa campos d_title, d_date (YYYY-MM-DD), d_time_start, d_time_end, d_tipo, d_recurrence
+- add_nota: criar nota. Usa campos d_title, d_content, d_color
+- update_record: ALTERAR registo. Usa table, id (do <ultimo_registo>), e campos set_* (set_time_start, set_title, etc)
+- delete_record: APAGAR registo. Usa table e id.
+- run_sql: SQL para categorias. Usa campo sql.
+- chat: conversa. Usa campo response.
 
 REGRAS:
-- "esse/desse/aquele/o evento/a nota" = usa id do <ultimo_registo>
-- "altera/muda/troca" = update_record
-- Erros de voz: "cimento"="evento". Corrige.
+- "esse/desse/aquele/o evento/a nota" = usa o id do <ultimo_registo>
+- "altera/muda/troca" = update_record com set_* campos
+- Erros de voz: "cimento"="evento", "de cimento"="do evento". Corrige.
 - Hoje: ${new Date().toISOString().slice(0,10)}
 ${schema}`}
 
@@ -2586,7 +2619,8 @@ if(isGemini){
 try{
 const reply=await aiCall(routerMessages,getIntentSystem(schema),{
 temperature:0.1,responseMimeType:'application/json',responseSchema:INTENT_SCHEMA});
-decision=JSON.parse(reply);
+const raw=JSON.parse(reply);
+decision=intentToDecision(raw);
 }catch(e){console.warn('Gemini intent:',e)}}
 
 if(!decision){

@@ -1990,6 +1990,7 @@ let aiKey=localStorage.getItem('shayAiKey')||'';
 let ghToken=localStorage.getItem('shayGhToken')||'';
 let ghRepo=localStorage.getItem('shayGhRepo')||'';
 let aiPending=null;
+let lastQueryContext='';
 let currentChatId=null;
 
 function getChats(){return q1(`SELECT * FROM chats ORDER BY updated_at DESC`)}
@@ -2129,6 +2130,8 @@ return data.content?.map(b=>b.text||'').join('\n')||''}
 // Google Gemini format
 const body={contents,generationConfig:{temperature:config.temperature||0.7}};
 if(systemText)body.systemInstruction={parts:[{text:systemText}]};
+if(config.responseMimeType){body.generationConfig.responseMimeType=config.responseMimeType}
+if(config.responseSchema){body.generationConfig.responseSchema=config.responseSchema}
 
 resp=await fetch(`${provider.api_url}?key=${provider.api_key}`,{
 method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -2279,36 +2282,21 @@ function getSchemaForAI(){
 const cats=getCatServicos();const dcats=getCatDespesas();
 // Only send relevant config — exclude prompts (they're already in systemInstruction)
 const cfg=q1(`SELECT * FROM config WHERE key NOT IN ('system_prompt_full','image_prompt','custom_prompt','ai_active_provider','ai_deploy_provider')`);
-return `ESQUEMA:
-Tabelas principais: receitas(id,date,type,categoria,servico,descricao,amount,comissao,client,notes), despesas(id,date,categoria,subcategoria,descricao,amount,pagamento,notes)
-Tabelas pessoais: eventos(id,title,date_start,time_start,time_end,all_day,tipo,recurrence,recurrence_end,done,color,notes,created_at), notas(id,title,content,color,pinned,created_at,updated_at)
-
-REGRA CRÍTICA — IDs: Todas as tabelas usam IDs gerados (UIDs tipo 'lz4abc1x'). NUNCA tentes adivinhar um ID.
-Para EDITAR/APAGAR um registo, PRIMEIRO faz SELECT para descobrir o ID:
-  Passo 1: SELECT id, title FROM eventos WHERE title LIKE '%ginásio%' ORDER BY created_at DESC LIMIT 1
-  Passo 2: UPDATE eventos SET time_start='18:00' WHERE id='<id encontrado no passo 1>'
-
-Exemplos de manipulação de eventos:
-  Consultar: SELECT id, title, date_start, time_start FROM eventos WHERE date_start='2026-03-22' ORDER BY created_at DESC
-  Alterar hora: UPDATE eventos SET time_start='14:00', time_end='15:00' WHERE id='<id>'
-  Marcar feito: UPDATE eventos SET done=1 WHERE id='<id>'
-  Apagar: DELETE FROM eventos WHERE id='<id>'
-
-Exemplos de manipulação de notas:
-  Consultar: SELECT id, title FROM notas ORDER BY updated_at DESC
-  Editar: UPDATE notas SET content='novo texto', updated_at=datetime() WHERE id='<id>'
-  Pin: UPDATE notas SET pinned=1 WHERE id='<id>'
-
-Tabelas de configuração (árvore hierárquica):
-- categorias_servico(id,nome,ativa) → servicos(id,categoria_id→categorias_servico.id,nome,preco,duracao,ativo)
-- categorias_despesa(id,nome,ativa) → subcategorias_despesa(id,categoria_id→categorias_despesa.id,nome,ativa)
-
-Para INSERT com FK, usa subquery: INSERT INTO servicos(categoria_id,nome) VALUES((SELECT id FROM categorias_servico WHERE nome='X'),'Y')
-Para INSERT nova categoria+sub: primeiro INSERT INTO categorias_despesa(nome) VALUES('X'), depois INSERT INTO subcategorias_despesa(categoria_id,nome) VALUES((SELECT id FROM categorias_despesa WHERE nome='X'),'Y')
-
-Serviços actuais: ${[...new Set(cats.map(c=>c.cat))].map(cat=>`${cat}(${cats.filter(c=>c.cat===cat).map(c=>c.srv).join(',')})`).join('; ')}
-Despesas actuais: ${[...new Set(dcats.map(c=>c.cat))].map(cat=>`${cat}(${dcats.filter(c=>c.cat===cat).map(c=>c.sub).join(',')})`).join('; ')}
-Config: ${cfg.map(c=>`${c.key}=${c.value}`).join(', ')}`}
+return `<esquema>
+  <tabela nome="receitas" campos="id, date, type, categoria, servico, descricao, amount, comissao, client, notes"/>
+  <tabela nome="despesas" campos="id, date, categoria, subcategoria, descricao, amount, pagamento, notes"/>
+  <tabela nome="eventos" campos="id, title, date_start, time_start, time_end, all_day, tipo, recurrence, done, notes, created_at"/>
+  <tabela nome="notas" campos="id, title, content, color, pinned, created_at, updated_at"/>
+  <tabela nome="categorias_servico" campos="id, nome, ativa"/>
+  <tabela nome="servicos" campos="id, categoria_id, nome, preco, duracao, ativo" fk="categoria_id→categorias_servico.id"/>
+  <tabela nome="categorias_despesa" campos="id, nome, ativa"/>
+  <tabela nome="subcategorias_despesa" campos="id, categoria_id, nome, ativa" fk="categoria_id→categorias_despesa.id"/>
+  <regra>O id é SEMPRE devolvido nos SELECTs automaticamente. Para UPDATE/DELETE usa WHERE id='valor_do_resultado'.</regra>
+</esquema>
+<categorias>
+  <servicos>${[...new Set(cats.map(c=>c.cat))].map(cat=>`${cat}(${cats.filter(c=>c.cat===cat).map(c=>c.srv).join(',')})`).join('; ')}</servicos>
+  <despesas>${[...new Set(dcats.map(c=>c.cat))].map(cat=>`${cat}(${dcats.filter(c=>c.cat===cat).map(c=>c.sub).join(',')})`).join('; ')}</despesas>
+</categorias>`}
 
 function getAiSystem(){
 const sp=q0(`SELECT value FROM config WHERE key='system_prompt_full'`);
@@ -2489,167 +2477,156 @@ const mNserv=qv(`SELECT COUNT(*) FROM receitas WHERE substr(date,1,7)=?`,ym);
 const nDesp=qv(`SELECT COUNT(*) FROM despesas WHERE substr(date,1,7)=?`,ym);
 const yRec=qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,4)=?`,yr);
 const yDesp=qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,4)=?`,yr);
-return `MÊS ACTUAL: ${MN[cM]} ${cY} (${ym})
-Receita: €${mRec.toFixed(2)} (Salão: €${mSal.toFixed(2)} | Extra: €${mExt.toFixed(2)}) | ${mNserv} serviços
-Despesas: €${mDesp.toFixed(2)} (${nDesp} registos) | Saldo: €${(mRec-mDesp).toFixed(2)}
-Ano ${cY}: Receita €${yRec.toFixed(2)} | Despesas €${yDesp.toFixed(2)} | Lucro €${(yRec-yDesp).toFixed(2)}
-NOTA: Para detalhes, usa action "query_sql" com SELECT. Podes consultar qualquer tabela.`}
+return `<dados_mes>
+  <mes>${MN[cM]} ${cY}</mes>
+  <periodo>${ym}</periodo>
+  <hoje>${new Date().toISOString().slice(0,10)}</hoje>
+  <receita_total>€${mRec.toFixed(2)}</receita_total>
+  <receita_salao>€${mSal.toFixed(2)}</receita_salao>
+  <receita_extra>€${mExt.toFixed(2)}</receita_extra>
+  <despesas>€${mDesp.toFixed(2)}</despesas>
+  <saldo>€${(mRec-mDesp).toFixed(2)}</saldo>
+  <servicos>${mNserv}</servicos>
+  <num_despesas>${nDesp}</num_despesas>
+  <ano_receita>€${yRec.toFixed(2)}</ano_receita>
+  <ano_despesas>€${yDesp.toFixed(2)}</ano_despesas>
+  <ano_lucro>€${(yRec-yDesp).toFixed(2)}</ano_lucro>
+</dados_mes>`}
+
+function buildLastContext(){
+if(!lastQueryContext)return '';
+return `
+<ultimo_registo>
+${lastQueryContext}
+</ultimo_registo>`}
 
 // ===== AI ROUTER (1st call) + EXECUTION (2nd call) =====
-const ROUTER_PROMPT=`REGRA CRÍTICA: Analisa a mensagem e responde com UM bloco JSON entre \`\`\`json e \`\`\`.
+// Intent schema for Gemini structured output
+const INTENT_SCHEMA={
+type:"OBJECT",
+properties:{
+action:{type:"STRING",description:"Accao: query_sql, add_receita, add_despesa, add_evento, add_nota, update_record, delete_record, run_sql, chat"},
+table:{type:"STRING",description:"Tabela: eventos, notas, receitas, despesas"},
+id:{type:"STRING",description:"ID do registo do ultimo_registo"},
+sql:{type:"STRING",description:"Query SQL"},
+set:{type:"OBJECT",description:"Campos a alterar",properties:{title:{type:"STRING"},date_start:{type:"STRING"},time_start:{type:"STRING"},time_end:{type:"STRING"},done:{type:"INTEGER"},notes:{type:"STRING"},content:{type:"STRING"},color:{type:"STRING"},pinned:{type:"INTEGER"},date:{type:"STRING"},amount:{type:"NUMBER"},descricao:{type:"STRING"}}},
+data:{type:"OBJECT",description:"Dados para criar registos",properties:{date:{type:"STRING"},type:{type:"STRING"},categoria:{type:"STRING"},servico:{type:"STRING"},descricao:{type:"STRING"},amount:{type:"NUMBER"},client:{type:"STRING"},notes:{type:"STRING"},subcategoria:{type:"STRING"},pagamento:{type:"STRING"},title:{type:"STRING"},date_start:{type:"STRING"},time_start:{type:"STRING"},time_end:{type:"STRING"},all_day:{type:"INTEGER"},tipo:{type:"STRING"},recurrence:{type:"STRING"},content:{type:"STRING"},color:{type:"STRING"}}},
+response:{type:"STRING",description:"Texto para chat"},
+description:{type:"STRING",description:"Descricao da accao"}
+},required:["action"]};
 
-# CONTEXTO DA CONVERSA — REGRA MAIS IMPORTANTE
-O HISTÓRICO abaixo é a conversa que tivemos até agora. É A TUA MEMÓRIA.
+function getIntentSystem(schema){
+return `Es a assistente da app S-Finance. Classificas pedidos em accoes JSON.
 
-REGRAS OBRIGATÓRIAS:
-1. Se nas mensagens anteriores foi mencionado um evento, nota, receita ou despesa ESPECÍFICA, e a nova mensagem usa "esse", "desse", "aquele", "o evento", "a nota", ou simplesmente dá uma instrução sem especificar qual — REFERE-SE AO ÚLTIMO ITEM DISCUTIDO. NÃO perguntes "qual?".
-2. Se a conversa anterior mostrou um resultado SQL com um ID, título ou dados de um registo, USA ESSES DADOS directamente na próxima acção. Ex: se o SELECT retornou id='abc123' e title='Beber água', e o user diz "altera para 15:00", faz UPDATE WHERE id='abc123'.
-3. ERROS DE VOZ — a utilizadora dita por voz e erra palavras. Se algo não faz sentido, procura a palavra mais parecida foneticamente: "cimento"→"evento", "de cimento"→"do evento", "micro blading"→"microblading".
-4. NUNCA respondas "qual evento?" ou "podes dar mais detalhes?" se a conversa anterior JÁ identificou o item. Age directamente.
-5. Se o user diz "para as 15:00" sem mais contexto, infere que quer alterar a hora do ÚLTIMO evento/item discutido.
+Accoes:
+- query_sql: perguntas sobre dados. Inclui sql com SELECT.
+- add_receita: registar receita. Inclui data com {date,type,categoria,servico,amount,...}
+- add_despesa: registar despesa. Inclui data com {date,categoria,subcategoria,amount,...}
+- add_evento: criar evento. Inclui data com {title,date_start,time_start,...}
+- add_nota: criar nota. Inclui data com {title,content,color}
+- update_record: ALTERAR registo existente. Inclui table, id (do <ultimo_registo>), set com campos a mudar.
+- delete_record: APAGAR registo. Inclui table, id.
+- run_sql: SQL para categorias/esquema.
+- chat: conversa. Inclui response com texto.
 
-COMO DECIDIR (exemplos reais):
+REGRAS:
+- "esse/desse/aquele/o evento/a nota" = usa id do <ultimo_registo>
+- "altera/muda/troca" = update_record
+- Erros de voz: "cimento"="evento". Corrige.
+- Hoje: ${new Date().toISOString().slice(0,10)}
+${schema}`}
 
-→ "query_sql" — Perguntas sobre dados:
-  "quanto gastei este mês", "quanto ganhei em Janeiro", "qual o meu melhor mês",
-  "mostra as despesas de marketing", "quanto fiz no gabinete", "total de comissões",
-  "quanto paguei de seg social", "compara Janeiro com Fevereiro", "qual o serviço mais rentável",
-  "quantas micros fiz", "média por dia", "lista as despesas acima de 100€"
-
-→ "add_receita" — Registar receita/serviço:
-  "comissão 50", "extra 20 extensão Ana", "fiz uma micro 80€",
-  "hoje fiz 3 serviços no salão: 50+30+45", "gabinete 35€ gel Maria",
-  "fiz micro retoque 60 extra", "45 de comissão lifting"
-
-→ "add_despesa" — Registar despesa:
-  "gastei 30 em material", "paguei seg social 210€", "insta 50€",
-  "renda 400", "telemóvel 50€ multibanco", "comprei kerastase 67€",
-  "gasolina 40 transferência", "formação 150€"
-
-→ "run_sql" — Alterar categorias/esquema/eventos/notas:
-  "adiciona categoria Corpo", "remove subcategoria X",
-  "muda o nome da categoria Unhas para Nail Art",
-  "adiciona um serviço Lash Lift na categoria Pestanas",
-  "altera a hora do evento ginásio para as 19h",
-  "apaga o evento dentista", "marca o lembrete como feito",
-  "muda o título da nota Material para Encomendas"
-  IMPORTANTE: para editar eventos/notas, PRIMEIRO faz SELECT para encontrar o ID, DEPOIS UPDATE/DELETE com esse ID
-
-→ "deploy_code" — Alterar visual/código da app:
-  "muda a cor do título", "adiciona item Clientes ao menu",
-  "torna os botões maiores", "altera o layout dos cards"
-
-→ "add_evento" — Criar evento na agenda pessoal:
-  "marca ginásio segunda às 18h", "dentista dia 28 às 11h",
-  "lembrete beber água todos os dias às 10h", "férias 1 a 15 agosto",
-  "aniversário mãe 15 abril", "formação segundas de manhã",
-  "lembrar de pagar renda dia 1"
-
-→ "add_nota" — Criar nota no bloco de notas:
-  "anota: encomendar pigmentos", "nota: ideias para instagram",
-  "aponta isto: ligar Teresa sobre sábado",
-  "lista de material: pigmentos, cola, luvas"
-
-→ "chat" — Conversa, saudação, ajuda:
-  "olá", "obrigada", "como funciona", "ajuda", "o que consegues fazer"
-
-FORMATOS (usa exactamente estes):
-\`\`\`json
+// Keep ROUTER_PROMPT as fallback for Anthropic
+const ROUTER_PROMPT=`Analisa a mensagem e responde com JSON entre \`\`\`json e \`\`\`.
+Accoes: query_sql, add_receita, add_despesa, add_evento, add_nota, run_sql, chat.
+Se o user quer ALTERAR um registo e tens o id no contexto, devolve:
+{"action":"query_sql","sql":"UPDATE tabela SET campo=valor WHERE id='<id>'","description":"..."}
+Formatos:
 {"action":"query_sql","sql":"SELECT ...","description":"..."}
-\`\`\`
-\`\`\`json
-{"action":"add_receita","data":{"date":"YYYY-MM-DD","type":"comissao","categoria":"...","servico":"...","descricao":"...","amount":0,"client":"","notes":""}}
-\`\`\`
-\`\`\`json
-{"action":"add_despesa","data":{"date":"YYYY-MM-DD","categoria":"...","subcategoria":"...","descricao":"...","amount":0,"pagamento":"...","notes":""}}
-\`\`\`
-\`\`\`json
-{"action":"add_evento","data":{"title":"...","date_start":"YYYY-MM-DD","time_start":"HH:MM","time_end":"HH:MM","all_day":0,"tipo":"pessoal","recurrence":null,"notes":""}}
-\`\`\`
-\`\`\`json
-{"action":"add_nota","data":{"title":"...","content":"..."}}
-\`\`\`
-\`\`\`json
-{"action":"run_sql","sql":"INSERT/UPDATE/DELETE ...","description":"..."}
-\`\`\`
-\`\`\`json
-{"action":"deploy_code","description":"o que mudar"}
-\`\`\`
-\`\`\`json
-{"action":"chat","response":"resposta em texto"}
-\`\`\``;
+{"action":"add_receita","data":{...}} | {"action":"add_despesa","data":{...}}
+{"action":"add_evento","data":{...}} | {"action":"add_nota","data":{...}}
+{"action":"run_sql","sql":"...","description":"..."} | {"action":"chat","response":"..."}`;
 
 async function routeAndExecute(msg,hasImage,ctx){
-// STEP 1: Router call — classify intent
 document.getElementById('aiStatus').textContent='A decidir...';
-
 const schema=getSchemaForAI();
 const routerMessages=[];
 
-// Build history for context (last 10 msgs for conversation continuity)
+// Build history
 const dbMsgs=getChatMessages(currentChatId).slice(-12);
 dbMsgs.slice(0,-1).forEach(m=>{
 const role=m.role==='user'?'user':'model';
 if(routerMessages.length>0&&routerMessages[routerMessages.length-1].role===role)return;
 let text=m.content;
-if(role==='user'){text=text.replace(/MÊS ACTUAL[\s\S]*?UTILIZADOR:\s*/,'');
-if(text==='✅ Confirmado'||text==='❌ Cancelado')return;text=text.trim();if(!text)return}
-if(role==='model'&&(text.startsWith('Receita registada!')||text.startsWith('Despesa registada!')))return;
+if(role==='user'){text=text.replace(/<[^>]+>/g,'').trim();
+if(text==='Confirmado'||text==='Cancelado'||!text)return}
+if(role==='model'&&(/^(Receita|Despesa) registada|^[^\w]/.test(text)))return;
 routerMessages.push({role,parts:[{text}]})});
 if(routerMessages.length>0&&routerMessages[routerMessages.length-1].role==='user')routerMessages.pop();
 if(routerMessages.length>0&&routerMessages[0].role==='model')routerMessages.shift();
 
-// Add current message with last-entity context
+// Build message
 const userParts=[];
-// Extract last discussed entity from recent bot messages for continuity
-let lastEntityHint='';
-const recentBotMsgs=getChatMessages(currentChatId).filter(m=>m.role==='bot').slice(-3);
-for(const bm of recentBotMsgs){
-const idMatch=bm.content.match(/id[=:]\s*['"]?([a-z0-9]{6,})/i);
-const titleMatch=bm.content.match(/[""]([^""]{2,50})[""]|evento[:\s]+([^\n,]{2,40})|nota[:\s]+([^\n,]{2,40})/i);
-if(idMatch||titleMatch){
-lastEntityHint=`\n[CONTEXTO: O último item discutido nesta conversa foi${idMatch?' id='+idMatch[1]:''}${titleMatch?' "'+( titleMatch[1]||titleMatch[2]||titleMatch[3]).trim()+'"':''}. Se o user se referir a "esse", "desse", "aquele" ou der instruções sem especificar qual, refere-se a ESTE item.]`;break}}
-
+const lastCtx=buildLastContext();
 if(hasImage){
 const imgPromptCfg=q0(`SELECT value FROM config WHERE key='image_prompt'`);
 const imgPrompt=imgPromptCfg?.value||DEFAULT_IMAGE_PROMPT;
 userParts.push({inlineData:{mimeType:'image/jpeg',data:aiImageData}});
-userParts.push({text:`${ctx}\n${schema}\n${imgPrompt}${lastEntityHint}\n${msg?'Mensagem: '+msg:''}`});
+userParts.push({text:`${ctx}\n${schema}${lastCtx}\n<pedido>${msg||'Analisa esta foto'}</pedido>`});
 }else{
-userParts.push({text:`${ctx}\n${schema}${lastEntityHint}\nUTILIZADOR: ${msg}`})}
+userParts.push({text:`${ctx}\n${schema}${lastCtx}\n<pedido>${msg}</pedido>`})}
 routerMessages.push({role:'user',parts:userParts});
 
-const reply=await aiCall(routerMessages,getAiSystem()+'\n\n'+ROUTER_PROMPT,{temperature:0.1});
-saveChatMsg(currentChatId,'bot',reply);
-
-// STEP 2: Parse router decision — robust JSON extraction
+const provider=getActiveProvider();
+const isGemini=provider&&provider.empresa!=='Anthropic';
 let decision=null;
+
+if(isGemini){
+// Gemini: forced JSON structured output
 try{
-// Try code-fenced JSON first
-const fenced=reply.match(/```json\s*([\s\S]*?)\s*```/);
-if(fenced){decision=JSON.parse(fenced[1])}
-else{
-// Try finding JSON object in text — match the outermost balanced braces
-const start=reply.indexOf('{');
-if(start>=0){
-let depth=0,end=-1;
-for(let i=start;i<reply.length;i++){if(reply[i]==='{')depth++;if(reply[i]==='}')depth--;if(depth===0){end=i;break}}
-if(end>start)decision=JSON.parse(reply.slice(start,end+1))}}
-}catch(e){decision=null;console.warn('Router parse:',e.message)}
-
-const textBefore=decision?reply.replace(/```json[\s\S]*?```/g,'').replace(/\{[\s\S]*\}/g,'').trim():'';
-
-// Normalize action field
-if(decision){
-if(!decision.action&&decision.intent){decision.action=decision.intent;delete decision.intent}
-if(!decision.action)decision.action='chat'}
+const reply=await aiCall(routerMessages,getIntentSystem(schema),{
+temperature:0.1,responseMimeType:'application/json',responseSchema:INTENT_SCHEMA});
+decision=JSON.parse(reply);
+}catch(e){console.warn('Gemini intent:',e)}}
 
 if(!decision){
-const clean=reply.replace(/```json[\s\S]*?```/g,'').trim();
-hideTyping();addAiMsg('bot',clean||'Não percebi. Tenta reformular.');return}
+// Fallback: text routing (Anthropic or Gemini failure)
+const reply=await aiCall(routerMessages,getAiSystem()+'\n\n'+ROUTER_PROMPT,{temperature:0.1});
+saveChatMsg(currentChatId,'bot',reply);
+try{const f=reply.match(/```json\s*([\s\S]*?)\s*```/);
+if(f){decision=JSON.parse(f[1])}
+else{const s=reply.indexOf('{');if(s>=0){let d=0,e=-1;
+for(let i=s;i<reply.length;i++){if(reply[i]==='{')d++;if(reply[i]==='}')d--;if(d===0){e=i;break}}
+if(e>s)decision=JSON.parse(reply.slice(s,e+1))}}}catch(e){}}
 
-console.log('Router:',decision.action,decision);
+if(decision&&!decision.action&&decision.intent){decision.action=decision.intent}
+if(!decision||!decision.action){hideTyping();addAiMsg('bot','Nao percebi. Tenta reformular.');return}
+console.log('Intent:',decision.action,decision);
+const textBefore='';
 
+try{
+// update_record — direct UPDATE
+if(decision.action==='update_record'&&decision.id&&decision.table&&decision.set){
+hideTyping();
+const sets=Object.entries(decision.set).filter(([k,v])=>v!==null&&v!==undefined&&v!=='');
+if(!sets.length){addAiMsg('bot','Nao percebi o que queres alterar.');return}
+const sqlSet=sets.map(([k])=>`${k}=?`).join(', ');
+const vals=sets.map(([,v])=>v);vals.push(decision.id);
+run(`UPDATE ${decision.table} SET ${sqlSet} WHERE id=?`,vals);
+lastQueryContext=`id="${decision.id}" tabela="${decision.table}"`;
+const desc=sets.map(([k,v])=>`${k} → ${v}`).join(', ');
+const msg2=`✅ Actualizado: ${desc}`;
+addAiMsg('bot',msg2);if(currentChatId)saveChatMsg(currentChatId,'bot',msg2);rA();return}
+
+// delete_record — direct DELETE
+if(decision.action==='delete_record'&&decision.id&&decision.table){
+hideTyping();
+run(`DELETE FROM ${decision.table} WHERE id=?`,[decision.id]);
+lastQueryContext='';
+const msg2='🗑️ Registo apagado.';
+addAiMsg('bot',msg2);if(currentChatId)saveChatMsg(currentChatId,'bot',msg2);rA();return}
+
+// Other actions
 try{
 if((decision.action==='query_sql'||decision.action==='query')&&decision.sql){
 hideTyping();
@@ -2665,8 +2642,10 @@ if(decision.action==='add_evento'){
 hideTyping();
 const d=decision.data||decision;
 const now=new Date().toISOString();
+const evId=uid();
 run(`INSERT INTO eventos(id,title,date_start,time_start,time_end,all_day,tipo,recurrence,notes,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)`,
-[uid(),d.title||'Evento',d.date_start||new Date().toISOString().slice(0,10),d.time_start||null,d.time_end||null,d.all_day||0,d.tipo||'pessoal',d.recurrence||null,d.notes||null,now]);
+[evId,d.title||'Evento',d.date_start||new Date().toISOString().slice(0,10),d.time_start||null,d.time_end||null,d.all_day||0,d.tipo||'pessoal',d.recurrence||null,d.notes||null,now]);
+lastQueryContext=`id="${evId}" titulo="${d.title||'Evento'}" data="${d.date_start||new Date().toISOString().slice(0,10)}" tabela="eventos"`;
 const msg=`📅 Evento criado: ${d.title}${d.date_start?' · '+d.date_start:''}${d.time_start?' às '+d.time_start:''}${d.recurrence?' ('+d.recurrence+')':''}`;
 addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);rA();return}
 
@@ -2674,8 +2653,10 @@ if(decision.action==='add_nota'){
 hideTyping();
 const d=decision.data||decision;
 const now=new Date().toISOString();
+const ntId=uid();
 run(`INSERT INTO notas(id,title,content,color,pinned,created_at,updated_at) VALUES(?,?,?,?,0,?,?)`,
-[uid(),d.title||'Nota',d.content||'',d.color||'#B8A8F0',now,now]);
+[ntId,d.title||'Nota',d.content||'',d.color||'#B8A8F0',now,now]);
+lastQueryContext=`id="${ntId}" titulo="${d.title||'Nota'}" tabela="notas"`;
 const msg=`📝 Nota criada: ${d.title}`;
 addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);rA();return}
 
@@ -2693,6 +2674,7 @@ addAiMsg('bot','',(textBefore?textBefore.replace(/\n/g,'<br>')+'<br>':'')+render
 }catch(e){
 hideTyping();
 addAiMsg('bot',textBefore||'Não percebi. Podes reformular?')}
+}catch(e2){hideTyping();addAiMsg('bot','Erro: '+e2.message)}
 }
 let aiSending=false;
 async function sendAiMsg(){if(aiSending)return;
@@ -2793,6 +2775,25 @@ answerContainer.style.display='block';
 answerContainer.innerHTML=finalAnswer.replace(/\n/g,'<br>');
 if(currentChatId)saveChatMsg(currentChatId,'bot',finalAnswer);
 
+// Save context from query results for next message
+const lastQ=queryLog[queryLog.length-1];
+if(lastQ&&lastQ.results&&lastQ.results.rows&&lastQ.results.rows.length>0){
+const cols=lastQ.results.columns;const row=lastQ.results.rows[0];
+const obj={};cols.forEach((c,i)=>obj[c]=row[i]);
+const parts=[];
+if(obj.id)parts.push(`id="${obj.id}"`);
+if(obj.title)parts.push(`titulo="${obj.title}"`);
+if(obj.date_start)parts.push(`data="${obj.date_start}"`);
+if(obj.date)parts.push(`data="${obj.date}"`);
+if(obj.time_start)parts.push(`hora="${obj.time_start}"`);
+if(obj.descricao)parts.push(`descricao="${obj.descricao}"`);
+if(obj.amount)parts.push(`valor="${obj.amount}"`);
+// Determine table
+const tabMatch=lastQ.sql.match(/FROM\s+(\w+)/i);
+if(tabMatch)parts.push(`tabela="${tabMatch[1]}"`);
+lastQueryContext=parts.length?parts.join(' '):''}
+else{lastQueryContext=''}
+
 // Scroll
 document.getElementById('aiMessages').scrollTop=document.getElementById('aiMessages').scrollHeight;
 }catch(e){
@@ -2803,7 +2804,13 @@ aiSending=false;document.getElementById('aiInput').disabled=false;document.getEl
 document.getElementById('aiStatus').textContent='Assistente'}
 
 function execQuery(sql){
-try{const r=db.exec(sql);
+try{
+// Force id in SELECT if querying main tables and id not already requested
+let fixedSql=sql;
+const selectMatch=sql.match(/^\s*SELECT\s+(?!.*\bid\b)(.*?)\s+FROM\s+(eventos|notas|receitas|despesas)\b/i);
+if(selectMatch){fixedSql=sql.replace(/^(\s*SELECT\s+)/i,'$1id, ')}
+
+const r=db.exec(fixedSql);
 if(!r.length)return{columns:[],rows:[],count:0,text:'Sem resultados.'};
 return{columns:r[0].columns,rows:r[0].values.slice(0,30),count:r[0].values.length,
 text:r[0].columns.join(' | ')+'\n'+r[0].values.slice(0,20).map(row=>row.map(v=>v===null?'—':v).join(' | ')).join('\n')}
@@ -2832,24 +2839,23 @@ document.getElementById('aiStatus').textContent=`A analisar (${step}/${MAX_QUERY
 
 const logText=queryLog.map((q,i)=>`Passo ${i+1}: ${q.description}\nSQL: ${q.sql}\nResultados (${q.results.count} linhas):\n${q.results.text}`).join('\n\n');
 
-const prompt=`Executei ${queryLog.length} consulta(s):
-
+const prompt=`<resultados_anteriores>
 ${logText}
+</resultados_anteriores>
+${lastQueryContext?`<ultimo_registo ${lastQueryContext}/>`:'' }
 
-DECIDE:
-- Resultados SUFICIENTES → responde em texto português, com valores em €. NÃO devolvas JSON.
-- Precisas de MAIS DADOS → devolve:
+<instrucao>
+Passo ${step} de ${MAX_QUERY_STEPS}.${step>=MAX_QUERY_STEPS?' ÚLTIMO — responde agora com texto.':''}
+Se tens dados suficientes, responde em texto português com valores em €.
+Se precisas de alterar o registo, usa o id do ultimo_registo:
 \`\`\`json
-{"action":"query_sql","sql":"SELECT ...","description":"porquê"}
+{"action":"run_sql","sql":"UPDATE tabela SET campo=valor WHERE id='<id>'","description":"..."}
 \`\`\`
-- Precisas de ALTERAR dados (UPDATE/DELETE) → devolve:
+Se precisas de mais dados:
 \`\`\`json
-{"action":"run_sql","sql":"UPDATE/DELETE ...","description":"porquê"}
+{"action":"query_sql","sql":"SELECT ...","description":"..."}
 \`\`\`
-
-Tabelas: receitas(id,date,type,categoria,servico,descricao,amount,client), despesas(id,date,categoria,subcategoria,descricao,amount,pagamento), eventos(id,title,date_start,time_start,time_end,tipo,done,notes,created_at), notas(id,title,content,color,pinned)
-IMPORTANTE: Para editar/apagar, PRIMEIRO encontra o ID com SELECT, depois usa UPDATE/DELETE WHERE id='<id encontrado>'.
-Passo ${step}/${MAX_QUERY_STEPS}.${step>=MAX_QUERY_STEPS?' ÚLTIMO — responde agora.':''}`;
+</instrucao>`;
 
 let reply='';
 try{reply=await aiCall([{role:'user',parts:[{text:prompt}]}],'Responde em português de Portugal. Sê directa e prática. Usa € nos valores. IMPORTANTE: Se a conversa anterior identificou um evento/nota/registo específico, usa essa informação para resolver a query actual. Corrige erros ortográficos do utilizador (usa voz-para-texto).',{temperature:0.3})}

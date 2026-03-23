@@ -1,10 +1,13 @@
-const CACHE_NAME = 'shay-finance-v12';
+const CACHE_NAME = 'shay-finance-v45';
 const CDN_ASSETS = [
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
   'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
   'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js',
+  'https://cdn.jsdelivr.net/npm/gsap@3.14/dist/gsap.min.js',
+  'https://cdn.jsdelivr.net/npm/gsap@3.14/dist/Observer.min.js',
+  'https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js',
+  'https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.wasm'

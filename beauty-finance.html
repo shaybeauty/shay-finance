@@ -18,6 +18,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14/dist/Observer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
@@ -1302,6 +1303,7 @@ touchRatio:1,
 threshold:10,
 followFinger:true,
 autoHeight:true,
+noSwipingSelector:'#fcCalendar',
 on:{
 slideChangeTransitionStart:function(){
 const idx=this.activeIndex;
@@ -1325,6 +1327,36 @@ firstEls.forEach(el=>{el.style.opacity='1';el.style.transform='none'})}
 
 function goSlide(idx){if(dashSwiper)dashSwiper.slideTo(idx)}
 function switchDashTab(tab){const map={resumo:0,agenda:1,notas:2};goSlide(map[tab]||0)}
+
+// Calendar smart swipe — Observer distinguishes gentle vs aggressive
+gsap.registerPlugin(Observer);
+;(function(){
+let totalDx=0;
+Observer.create({
+target:'#fcCalendar',
+type:'touch,pointer',
+dragMinimum:5,
+lockAxis:true,
+onDragStart:()=>{totalDx=0},
+onDrag:(self)=>{totalDx+=(self.deltaX||0)},
+onDragEnd:(self)=>{
+const vel=Math.abs(self.velocityX);
+const dist=Math.abs(totalDx);
+if(dist<30)return; // too short, ignore
+
+// AGGRESSIVE: fast flick or long drag → change slide
+if(vel>500||dist>200){
+if(dashSwiper){
+if(totalDx<0)dashSwiper.slideNext();
+else dashSwiper.slidePrev()}
+return}
+
+// GENTLE: slow, short → change month/week in calendar
+if(fcCalendar){
+if(totalDx<-50){fcCalendar.next();updateFcTitle()}
+else if(totalDx>50){fcCalendar.prev();updateFcTitle()}}}
+})
+})();
 
 // ===== EVENTOS (Agenda) =====
 const EVT_COLORS={pessoal:'#B8A8F0',lembrete:'#4EEAA0',habito:'#5CB8FF',bloqueio:'#605848'};

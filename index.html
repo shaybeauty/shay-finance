@@ -2043,15 +2043,16 @@ const wasResolved=nextMsg&&(nextMsg.content==='✅ Confirmado'||nextMsg.content=
 const hasCard=/```json/.test(m.content);
 
 if(isLast&&hasCard&&!wasResolved){
-// Last message has unresolved card — render with buttons
-const rendered=renderBotMsg(m.content,false);
-addAiMsg('bot','',rendered);
-// Restore aiPending
-try{const jm=m.content.match(/```json\s*([\s\S]*?)\s*```/);
-if(jm)aiPending=JSON.parse(jm[1])}catch(e){}
+// Last message has unresolved card — try render with buttons
+try{const jm=m.content.match(/```json\s*([\s\S]*?)\s*```/)||m.content.match(/\{[\s\S]*"action"[\s\S]*\}/);
+if(jm){const parsed=JSON.parse(jm[1]||jm[0]);
+aiPending=parsed;addAiMsg('bot','',renderCard(parsed,false))}
+else{addAiMsg('bot',m.content.replace(/```json[\s\S]*?```/g,'').replace(/\n/g,'<br>'))}}catch(e){addAiMsg('bot',m.content.replace(/\n/g,'<br>'))}
 }else{
-// Resolved or historical — render readonly
-addAiMsg('bot','',renderBotMsg(m.content,true))}}});
+// Resolved or historical
+const clean=m.content.replace(/```json[\s\S]*?```/g,'').trim();
+if(clean)addAiMsg('bot',clean.replace(/\n/g,'<br>'));
+else addAiMsg('bot',m.content.replace(/\n/g,'<br>'))}}});
 
 const c=document.getElementById('aiMessages');c.scrollTop=c.scrollHeight;
 const msgCount=msgs.length;
@@ -2612,13 +2613,15 @@ Categorias de despesa: ${[...new Set(dcats.map(c=>c.cat))].map(cat=>`${cat}(${dc
 
 Tabelas: receitas(id,date,type,categoria,servico,descricao,amount,comissao,client,notes), despesas(id,date,categoria,subcategoria,descricao,amount,pagamento,notes), eventos(id,title,date_start,time_start,time_end,all_day,tipo,recurrence,done,notes,created_at), notas(id,title,content,color,pinned,created_at,updated_at)
 
-REGRAS:
-- Nos SELECTs, SEMPRE inclui o campo id
-- Para alterar registos, usa a funcao alterar_registo com o id do contexto
-- "esse/desse/aquele" = ultimo registo mencionado na conversa
-- Erros de voz: "cimento"="evento", corrige automaticamente
-- Responde SEMPRE em portugues de Portugal
-- Valores monetarios em euros`}
+REGRAS CRITICAS:
+- USA SEMPRE as ferramentas disponiveis. NUNCA respondas com texto quando podes usar uma funcao.
+- "altera/muda/troca X" → chama alterar_registo IMEDIATAMENTE. NAO perguntes "queres alterar?". FAZ.
+- "apaga/remove X" → chama apagar_registo IMEDIATAMENTE. NAO perguntes "tens a certeza?". FAZ.
+- "esse/desse/aquele/o evento/a nota" → refere-se ao ULTIMO registo da conversa. Usa o id do contexto.
+- Erros de voz: "acidente"="evento", "cimento"="evento", "de cimento"="do evento". Corrige e age.
+- Nos SELECTs, SEMPRE inclui id como primeiro campo.
+- Responde em portugues de Portugal. Valores em euros.
+- NAO uses markdown (** ou *). Texto simples.`}
 
 // Main AI router with Function Calling
 async function routeAndExecute(msg,hasImage){
@@ -2654,8 +2657,9 @@ try{
 const body={
 contents:history,
 tools:AI_TOOLS,
+tool_config:{function_calling_config:{mode:"AUTO"}},
 systemInstruction:{parts:[{text:getAiSystemFC()}]},
-generationConfig:{temperature:0.2}};
+generationConfig:{temperature:0.1}};
 
 const resp=await fetch(`${provider.api_url}?key=${provider.api_key}`,{
 method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});

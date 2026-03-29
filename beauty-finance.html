@@ -2699,7 +2699,7 @@ addAiMsg('bot','',renderCard(result,false));
 if(currentChatId)saveChatMsg(currentChatId,'bot',JSON.stringify(result));
 return}
 
-// Send result back to Gemini for natural language response
+// Send result back to Gemini for natural language response (or another function call)
 const followUp={
 contents:[
 ...history,
@@ -2707,26 +2707,30 @@ contents:[
 {role:'user',parts:[{functionResponse:{name,response:{content:result}}}]}
 ],
 tools:AI_TOOLS,
+toolConfig:{functionCallingConfig:{mode:"AUTO"}},
 systemInstruction:{parts:[{text:getAiSystemFC()}]},
-generationConfig:{temperature:0.5}};
+generationConfig:{temperature:0.3}};
 
 const resp2=await fetch(`${provider.api_url}?key=${provider.api_key}`,{
 method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(followUp)});
 
 if(resp2.ok){
 const data2=await resp2.json();
-const text2=data2.candidates?.[0]?.content?.parts?.[0]?.text||'';
+const parts2=data2.candidates?.[0]?.content?.parts||[];
 
-// Check if Gemini wants another function call
-const fc2=data2.candidates?.[0]?.content?.parts?.find(p=>p.functionCall);
+// Check for another function call FIRST (e.g. alterar_registo after consultar)
+const fc2=parts2.find(p=>p.functionCall);
 if(fc2){
 const result2=executeToolCall(fc2.functionCall.name,fc2.functionCall.args);
+if(result2.is_chat){hideTyping();addAiMsg('bot',result2.mensagem);if(currentChatId)saveChatMsg(currentChatId,'bot',result2.mensagem);rA();return}
 if(result2.needs_confirmation){hideTyping();aiPending=result2;addAiMsg('bot','',renderCard(result2,false));return}
-// Simple confirmation for 2nd call
+// Direct execution result — show confirmation
 hideTyping();
-const confirmMsg=result2.mensagem||'Feito!';
-addAiMsg('bot',confirmMsg);if(currentChatId)saveChatMsg(currentChatId,'bot',confirmMsg);rA();return}
+const msg3=result2.mensagem||'Feito!';
+addAiMsg('bot',msg3);if(currentChatId)saveChatMsg(currentChatId,'bot',msg3);rA();return}
 
+// Text response
+const text2=parts2.find(p=>p.text)?.text||'';
 hideTyping();
 if(text2){addAiMsg('bot',text2.replace(/\*\*/g,''));if(currentChatId)saveChatMsg(currentChatId,'bot',text2)}
 else{const fallback=result.mensagem||'Feito!';addAiMsg('bot',fallback);if(currentChatId)saveChatMsg(currentChatId,'bot',fallback)}}

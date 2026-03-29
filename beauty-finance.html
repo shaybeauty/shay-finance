@@ -2543,7 +2543,13 @@ description:"Executa SQL directo para alterar categorias, servicos, subcategoria
 parameters:{type:"object",properties:{
 sql:{type:"string",description:"SQL INSERT/UPDATE/DELETE"},
 descricao:{type:"string",description:"O que faz esta query"}
-},required:["sql","descricao"]}}
+},required:["sql","descricao"]}},
+
+{name:"responder",
+description:"Responde ao utilizador com texto quando nao e necessario consultar ou alterar dados. Usa para saudacoes, ajuda, agradecimentos, perguntas gerais.",
+parameters:{type:"object",properties:{
+texto:{type:"string",description:"A resposta em portugues de Portugal"}
+},required:["texto"]}}
 ]}];
 
 // Tool executors — each function the Gemini can call
@@ -2595,6 +2601,9 @@ return{sucesso:false,erro:'DELETE/DROP sem WHERE bloqueado'};
 if(sqlUp.includes('CONFIG')||sqlUp.includes('AI_PROVIDERS'))
 return{sucesso:false,erro:'Tabela protegida'};
 return{needs_confirmation:true,action:'run_sql',sql:args.sql,description:args.descricao}}
+
+case 'responder':
+return{sucesso:true,mensagem:args.texto||'Como posso ajudar?',is_chat:true}
 
 default:return{sucesso:false,erro:'Funcao desconhecida: '+name}}}
 
@@ -2657,7 +2666,7 @@ try{
 const body={
 contents:history,
 tools:AI_TOOLS,
-tool_config:{function_calling_config:{mode:"AUTO"}},
+toolConfig:{functionCallingConfig:{mode:"ANY"}},
 systemInstruction:{parts:[{text:getAiSystemFC()}]},
 generationConfig:{temperature:0.1}};
 
@@ -2676,6 +2685,11 @@ console.log('FC:',name,args);
 
 // Execute the function
 const result=executeToolCall(name,args);
+
+// If it's a chat response, show directly
+if(result.is_chat){
+hideTyping();addAiMsg('bot',result.mensagem);
+if(currentChatId)saveChatMsg(currentChatId,'bot',result.mensagem);return}
 
 // If needs confirmation (receita/despesa/sql) — show card
 if(result.needs_confirmation){

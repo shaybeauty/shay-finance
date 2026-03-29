@@ -2503,7 +2503,7 @@ date_start:{type:"string",description:"Data YYYY-MM-DD"},
 time_start:{type:"string",description:"Hora inicio HH:MM"},
 time_end:{type:"string",description:"Hora fim HH:MM (opcional)"},
 tipo:{type:"string",enum:["pessoal","lembrete","habito","bloqueio"],description:"Tipo de evento"},
-recurrence:{type:"string",enum:["daily","weekly","monthly",""],description:"Recorrencia (vazio se nao repete)"},
+recurrence:{type:"string",description:"Recorrencia: daily, weekly, monthly ou vazio para nao repetir"},
 notes:{type:"string",description:"Notas adicionais"}
 },required:["title","date_start"]}},
 
@@ -2535,7 +2535,7 @@ categoria:{type:"string",description:"Categoria da despesa"},
 subcategoria:{type:"string",description:"Subcategoria"},
 descricao:{type:"string",description:"Descricao da despesa"},
 amount:{type:"number",description:"Valor em euros"},
-pagamento:{type:"string",enum:["Multibanco","MB Way","Transferência","Dinheiro","Crédito","Outro"],description:"Forma de pagamento"}
+pagamento:{type:"string",enum:["Multibanco","MB Way","Transferencia","Dinheiro","Credito","Outro"],description:"Forma de pagamento"}
 },required:["amount","descricao"]}},
 
 {name:"executar_sql",

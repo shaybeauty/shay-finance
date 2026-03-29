@@ -2632,147 +2632,120 @@ REGRAS CRITICAS:
 - Responde em portugues de Portugal. Valores em euros.
 - NAO uses markdown (** ou *). Texto simples.`}
 
-// Main AI router with Function Calling
+// Main AI router with Function Calling (do/while loop pattern from Google examples)
 async function routeAndExecute(msg,hasImage){
 document.getElementById('aiStatus').textContent='A pensar...';
 const provider=getActiveProvider();
 const isGemini=provider&&provider.empresa!=='Anthropic';
 
-// Build conversation history
-const history=[];
+// Build conversation contents
+const contents=[];
+
+// Add chat history
 const dbMsgs=getChatMessages(currentChatId).slice(-14);
 dbMsgs.slice(0,-1).forEach(m=>{
 const role=m.role==='user'?'user':'model';
-if(history.length>0&&history[history.length-1].role===role)return;
+if(contents.length>0&&contents[contents.length-1].role===role)return;
 let text=m.content;
 if(!text||text==='✅ Confirmado'||text==='❌ Cancelado')return;
 if(role==='model'&&/^(📅|📝|✅|🗑️|Receita registada|Despesa registada)/.test(text))return;
-history.push({role,parts:[{text}]})});
-if(history.length>0&&history[history.length-1].role==='user')history.pop();
-if(history.length>0&&history[0].role==='model')history.shift();
+contents.push({role,parts:[{text}]})});
+if(contents.length>0&&contents[contents.length-1].role==='user')contents.pop();
+if(contents.length>0&&contents[0].role==='model')contents.shift();
 
-// Current message
-const userParts=[];
+// Add current message
 if(hasImage&&aiImageData){
 const imgPrompt=q0(`SELECT value FROM config WHERE key='image_prompt'`)?.value||DEFAULT_IMAGE_PROMPT;
-userParts.push({inlineData:{mimeType:'image/jpeg',data:aiImageData}});
-userParts.push({text:imgPrompt+'\n'+(msg||'Analisa esta foto')})}
-else{userParts.push({text:msg})}
-history.push({role:'user',parts:userParts});
+contents.push({role:'user',parts:[
+{inlineData:{mimeType:'image/jpeg',data:aiImageData}},
+{text:imgPrompt+'\n'+(msg||'Analisa esta foto')}]});
+}else{
+contents.push({role:'user',parts:[{text:msg}]})}
 
-if(isGemini&&!hasImage){
-// === GEMINI FUNCTION CALLING ===
+if(!isGemini||hasImage){
+// Anthropic fallback — simple text call
 try{
-const body={
-contents:history,
+const reply=await aiCall(contents,getAiSystemFC(),{temperature:0.3});
+hideTyping();
+addAiMsg('bot',reply.replace(/\*\*/g,''));
+if(currentChatId)saveChatMsg(currentChatId,'bot',reply);
+}catch(e){hideTyping();addAiMsg('bot','Erro: '+e.message)}
+return}
+
+// === GEMINI FUNCTION CALLING LOOP ===
+const url=`${provider.api_url}?key=${provider.api_key}`;
+const MAX_LOOPS=5;
+let loopCount=0;
+let finalText='';
+
+try{
+let hasFC=true;
+while(hasFC&&loopCount<MAX_LOOPS){
+loopCount++;
+document.getElementById('aiStatus').textContent=loopCount>1?`A processar (${loopCount})...`:'A pensar...';
+
+const payload={
+contents,
 tools:AI_TOOLS,
-toolConfig:{functionCallingConfig:{mode:"ANY"}},
 systemInstruction:{parts:[{text:getAiSystemFC()}]},
 generationConfig:{temperature:0.1}};
 
-const resp=await fetch(`${provider.api_url}?key=${provider.api_key}`,{
-method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+const resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error?.message||`Erro ${resp.status}`)}
 
-if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||`Erro ${resp.status}`)}
 const data=await resp.json();
 const parts=data.candidates?.[0]?.content?.parts||[];
 
-// Check for function call
+// Check for functionCall
 const fcPart=parts.find(p=>p.functionCall);
+
 if(fcPart){
 const{name,args}=fcPart.functionCall;
-console.log('FC:',name,args);
+console.log(`FC[${loopCount}]:`,name,args);
 
 // Execute the function
 const result=executeToolCall(name,args);
 
-// If it's a chat response, show directly
+// Chat response — show directly, stop loop
 if(result.is_chat){
 hideTyping();addAiMsg('bot',result.mensagem);
-if(currentChatId)saveChatMsg(currentChatId,'bot',result.mensagem);return}
+if(currentChatId)saveChatMsg(currentChatId,'bot',result.mensagem);rA();return}
 
-// If needs confirmation (receita/despesa/sql) — show card
+// Needs confirmation — show card, stop loop
 if(result.needs_confirmation){
-hideTyping();
-aiPending=result;
+hideTyping();aiPending=result;
 addAiMsg('bot','',renderCard(result,false));
-if(currentChatId)saveChatMsg(currentChatId,'bot',JSON.stringify(result));
-return}
+if(currentChatId)saveChatMsg(currentChatId,'bot',JSON.stringify(result));rA();return}
 
-// Send result back to Gemini for natural language response (or another function call)
-const followUp={
-contents:[
-...history,
-{role:'model',parts:[{functionCall:{name,args}}]},
-{role:'user',parts:[{functionResponse:{name,response:{content:result}}}]}
-],
-tools:AI_TOOLS,
-toolConfig:{functionCallingConfig:{mode:"AUTO"}},
-systemInstruction:{parts:[{text:getAiSystemFC()}]},
-generationConfig:{temperature:0.3}};
+// Normal result — add to contents and loop
+// Add model's functionCall
+contents.push({role:'model',parts:[{functionCall:{name,args}}]});
+// Add our functionResponse
+contents.push({role:'user',parts:[{functionResponse:{name,response:{content:result}}}]});
 
-const resp2=await fetch(`${provider.api_url}?key=${provider.api_key}`,{
-method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(followUp)});
-
-if(resp2.ok){
-const data2=await resp2.json();
-const parts2=data2.candidates?.[0]?.content?.parts||[];
-
-// Check for another function call FIRST (e.g. alterar_registo after consultar)
-const fc2=parts2.find(p=>p.functionCall);
-if(fc2){
-const result2=executeToolCall(fc2.functionCall.name,fc2.functionCall.args);
-if(result2.is_chat){hideTyping();addAiMsg('bot',result2.mensagem);if(currentChatId)saveChatMsg(currentChatId,'bot',result2.mensagem);rA();return}
-if(result2.needs_confirmation){hideTyping();aiPending=result2;addAiMsg('bot','',renderCard(result2,false));return}
-// Direct execution result — show confirmation
-hideTyping();
-const msg3=result2.mensagem||'Feito!';
-addAiMsg('bot',msg3);if(currentChatId)saveChatMsg(currentChatId,'bot',msg3);rA();return}
-
-// Text response
-const text2=parts2.find(p=>p.text)?.text||'';
-hideTyping();
-if(text2){addAiMsg('bot',text2.replace(/\*\*/g,''));if(currentChatId)saveChatMsg(currentChatId,'bot',text2)}
-else{const fallback=result.mensagem||'Feito!';addAiMsg('bot',fallback);if(currentChatId)saveChatMsg(currentChatId,'bot',fallback)}}
-else{hideTyping();const fallback=result.mensagem||'Feito!';addAiMsg('bot',fallback);if(currentChatId)saveChatMsg(currentChatId,'bot',fallback)}
-rA();return}
-
-// No function call — text response (chat)
+// If it was a direct action (alter/delete/create), show result and continue loop
+if(result.sucesso&&result.mensagem&&!result.dados){
+// Let Gemini generate a nice response with the result
+}
+}else{
+// No functionCall — text response, exit loop
+hasFC=false;
 const textPart=parts.find(p=>p.text);
-if(textPart){
-hideTyping();addAiMsg('bot',textPart.text.replace(/\*\*/g,''));
-if(currentChatId)saveChatMsg(currentChatId,'bot',textPart.text);return}
+finalText=textPart?.text||''}}
 
-}catch(e){console.error('FC error:',e);
-// Fall through to Anthropic fallback
-}}
-
-// === ANTHROPIC / FALLBACK ===
-try{
-const reply=await aiCall(history,getAiSystemFC(),{temperature:0.3});
+// Show final response
 hideTyping();
-// Try parse JSON action from reply
-const jm=reply.match(/```json\s*([\s\S]*?)\s*```/);
-if(jm){
-try{const decision=JSON.parse(jm[1]);
-if(decision.action==='add_receita'||decision.action==='add_despesa'||decision.action==='run_sql'){
-aiPending=decision;addAiMsg('bot','',renderCard(decision,false));
-if(currentChatId)saveChatMsg(currentChatId,'bot',reply);return}
-if(decision.action==='add_evento'){
-const r=executeToolCall('criar_evento',decision.data||decision);
-addAiMsg('bot',r.mensagem);if(currentChatId)saveChatMsg(currentChatId,'bot',r.mensagem);rA();return}
-if(decision.action==='add_nota'){
-const r=executeToolCall('criar_nota',decision.data||decision);
-addAiMsg('bot',r.mensagem);if(currentChatId)saveChatMsg(currentChatId,'bot',r.mensagem);rA();return}
-if(decision.action==='query_sql'&&decision.sql){
-const r=execQuery(decision.sql);
-addAiMsg('bot',r.text);if(currentChatId)saveChatMsg(currentChatId,'bot',r.text);return}
-}catch(e){}}
-// Plain text response
-const clean=reply.replace(/```json[\s\S]*?```/g,'').trim();
-addAiMsg('bot',clean||'Como posso ajudar?');
-if(currentChatId)saveChatMsg(currentChatId,'bot',clean||reply)
-}catch(e){hideTyping();addAiMsg('bot','Erro: '+e.message)}}
+if(finalText){
+addAiMsg('bot',finalText.replace(/\*\*/g,''));
+if(currentChatId)saveChatMsg(currentChatId,'bot',finalText)}
+else if(loopCount>=MAX_LOOPS){
+addAiMsg('bot','Atingi o limite de operações. Tenta reformular.')}
+rA();
+
+}catch(e){
+console.error('FC loop error:',e);
+hideTyping();addAiMsg('bot','Erro: '+e.message);
+if(currentChatId)saveChatMsg(currentChatId,'bot','Erro: '+e.message)}}
 
 // Send message handler
 let aiSending=false;

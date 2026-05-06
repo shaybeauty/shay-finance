@@ -1913,9 +1913,9 @@ if(!recData.length&&!despData.length){toast('Ficheiro vazio.','w');return}
 
 // Count existing IDs for merge preview
 let recNew=0,recUpdate=0,despNew=0,despUpdate=0;
-recData.forEach(row=>{const id=row['ID']||row['id']||'';
+recData.forEach(row=>{const id=m.id||row['ID']||row['id']||'';
 if(id&&q0(`SELECT id FROM receitas WHERE id=?`,[id]))recUpdate++;else recNew++});
-despData.forEach(row=>{const id=row['ID']||row['id']||'';
+despData.forEach(row=>{const id=m.id||row['ID']||row['id']||'';
 if(id&&q0(`SELECT id FROM despesas WHERE id=?`,[id]))despUpdate++;else despNew++});
 
 iB={receitas:recData,despesas:despData,multi:true};
@@ -1943,14 +1943,15 @@ document.getElementById('iTypeSingle').style.display='block';
 sM(j)}
 }catch(err){toast('Erro a ler ficheiro: '+err.message,'w')}};r.readAsArrayBuffer(file)}
 
-function sM(data){document.getElementById('iP').style.display='block';const cols=Object.keys(data[0]),fs=['(Ignorar)','data','descricao','montante','categoria','tipo','servico','cliente','notas','pagamento','subcategoria'],
-fL={'(Ignorar)':'(Ignorar)',data:'Data',descricao:'Descrição',montante:'Valor (€)',categoria:'Categoria',tipo:'Tipo (Salão/Extra)',servico:'Serviço',cliente:'Cliente',notas:'Notas',pagamento:'Pagamento',subcategoria:'Subcategoria'};
+function sM(data){document.getElementById('iP').style.display='block';const cols=Object.keys(data[0]),fs=['(Ignorar)','id','data','descricao','montante','categoria','tipo','servico','cliente','notas','pagamento','subcategoria'],
+fL={'(Ignorar)':'(Ignorar)',id:'ID',data:'Data',descricao:'Descrição',montante:'Valor (€)',categoria:'Categoria',tipo:'Tipo (Salão/Extra)',servico:'Serviço',cliente:'Cliente',notas:'Notas',pagamento:'Pagamento',subcategoria:'Subcategoria'};
 const pv=data.slice(0,2);let h='<thead><tr><th>Coluna</th><th>Campo</th><th>Amostra</th></tr></thead><tbody>';
 cols.forEach(c=>{const s=pv.map(r=>r[c]).filter(v=>v!=='').slice(0,2).join(', '),g=gF(c);
 h+=`<tr><td style="font-weight:600;color:var(--t1)">${c}</td><td><select class="form-select form-select-sm" data-col="${c}" style="max-width:180px">${fs.map(f=>`<option value="${f}"${f===g?' selected':''}>${fL[f]}</option>`).join('')}</select></td><td style="color:var(--t3);font-size:.8rem;font-style:italic">${s||'—'}</td></tr>`});
 document.getElementById('mT').innerHTML=h+'</tbody>';gsap.from('#iP',{opacity:0,y:15,duration:.3})}
 
 function gF(c){c=c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+if(c==='id')return'id';
 if(c==='data'||c==='date')return'data';
 if(c.includes('servico')||c==='servico')return'servico';
 if(c.includes('descric'))return'descricao';
@@ -2007,7 +2008,7 @@ let nR=0,nD=0,nUp=0;
 if(iB.receitas){
 iB.receitas.forEach(row=>{
 const m={};Object.entries(mpR).forEach(([ec,f])=>m[f]=row[ec]);
-const id=row['ID']||row['id']||'';
+const id=m.id||row['ID']||row['id']||'';
 const dt=parseDate(m.data||row['Data']||row['data']);
 const am=parseAmt(m.montante||row['Minha Receita€']||row['Minha Receita']||0);
 if(am<=0)return;
@@ -2025,7 +2026,7 @@ const dCols=Object.keys(iB.despesas[0]);
 const mpD={};dCols.forEach(c=>{const g=gF(c);if(g!=='(Ignorar)')mpD[c]=g});
 iB.despesas.forEach(row=>{
 const m={};Object.entries(mpD).forEach(([ec,f])=>m[f]=row[ec]);
-const id=row['ID']||row['id']||'';
+const id=m.id||row['ID']||row['id']||'';
 const dt=parseDate(m.data||row['Data']||row['data']);
 const am=parseAmt(m.montante||row['Montante€']||row['Montante']||0);
 if(am<=0)return;
@@ -2048,7 +2049,7 @@ let n=0,nUp2=0;
 
 iB.forEach(row=>{
 const m={};Object.entries(mp).forEach(([ec,f])=>m[f]=row[ec]);
-const id=row['ID']||row['id']||'';
+const id=m.id||row['ID']||row['id']||'';
 const dt=parseDate(m.data);
 const am=parseAmt(m.montante);
 if(am<=0)return;

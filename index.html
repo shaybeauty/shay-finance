@@ -1913,9 +1913,9 @@ if(!recData.length&&!despData.length){toast('Ficheiro vazio.','w');return}
 
 // Count existing IDs for merge preview
 let recNew=0,recUpdate=0,despNew=0,despUpdate=0;
-recData.forEach(row=>{const id=m.id||row['ID']||row['id']||'';
+recData.forEach(row=>{const id=row['ID']||row['id']||'';
 if(id&&q0(`SELECT id FROM receitas WHERE id=?`,[id]))recUpdate++;else recNew++});
-despData.forEach(row=>{const id=m.id||row['ID']||row['id']||'';
+despData.forEach(row=>{const id=row['ID']||row['id']||'';
 if(id&&q0(`SELECT id FROM despesas WHERE id=?`,[id]))despUpdate++;else despNew++});
 
 iB={receitas:recData,despesas:despData,multi:true};

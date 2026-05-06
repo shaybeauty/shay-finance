@@ -925,16 +925,27 @@ Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O
 <div id="aiMessages" style="display:none;flex:1;overflow-y:auto;padding:16px;gap:12px;flex-direction:column"></div>
 <!-- Chat Input -->
 <div id="aiInputArea" style="display:none;padding:12px 16px;border-top:1px solid var(--bd);flex-shrink:0">
-<!-- Image preview bar -->
+<!-- Image/file preview bar -->
 <div id="aiImgPreview" style="display:none;margin-bottom:8px;position:relative">
 <img id="aiImgThumb" style="max-height:80px;border-radius:10px;border:1px solid var(--bd)">
 <button onclick="clearAiImage()" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--rose);border:none;color:#fff;font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="bi bi-x"></i></button>
+</div>
+<div id="aiFilePreview" style="display:none;margin-bottom:8px;position:relative;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;display:none">
+<div style="display:flex;align-items:center;gap:8px">
+<i class="bi bi-file-earmark" style="font-size:1.2rem;color:var(--g)"></i>
+<div style="flex:1;min-width:0"><div id="aiFileName" style="font-size:.78rem;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div><div id="aiFileSize" style="font-size:.65rem;color:var(--t3)"></div></div>
+<button onclick="clearAiFile()" style="width:22px;height:22px;border-radius:50%;background:var(--rose);border:none;color:#fff;font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-x"></i></button>
+</div>
 </div>
 <div style="display:flex;gap:8px;align-items:center">
 <button id="aiMicBtn" onclick="aiVoiceInput()" style="background:rgba(212,175,106,.1);border:1px solid rgba(212,175,106,.15);color:var(--g);width:40px;height:40px;border-radius:12px;flex-shrink:0;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;font-size:1rem"><i class="bi bi-mic"></i></button>
 <div style="position:relative">
 <button id="aiCamBtn" style="background:rgba(212,175,106,.1);border:1px solid rgba(212,175,106,.15);color:var(--g);width:40px;height:40px;border-radius:12px;flex-shrink:0;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;font-size:1rem"><i class="bi bi-camera"></i></button>
 <input type="file" id="aiCamInput" accept="image/*" capture="environment" onchange="handleAiImage(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+</div>
+<div style="position:relative">
+<button style="background:rgba(212,175,106,.1);border:1px solid rgba(212,175,106,.15);color:var(--g);width:40px;height:40px;border-radius:12px;flex-shrink:0;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;font-size:1rem"><i class="bi bi-paperclip"></i></button>
+<input type="file" id="aiFileInput" accept="image/*,.pdf,.xlsx,.xls,.csv,.txt,.json" onchange="handleAiFile(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer">
 </div>
 <input type="text" id="aiInput" class="form-control" placeholder="Mensagem ou foto..." style="font-size:.84rem!important;padding:10px 14px!important" onkeydown="if(event.key==='Enter')sendAiMsg()">
 <button onclick="sendAiMsg()" style="background:linear-gradient(135deg,var(--g),var(--gD));border:none;color:#0C0C10;width:40px;height:40px;border-radius:12px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem"><i class="bi bi-send"></i></button>
@@ -1852,27 +1863,63 @@ let iB=null;
 function hF(file){const r=new FileReader();r.onload=function(e){
 try{
 const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
-// Auto-detect Receitas and Despesas sheets
-const recSheet=wb.SheetNames.find(s=>/receita/i.test(s));
-const despSheet=wb.SheetNames.find(s=>/despesa/i.test(s));
+const sheets=wb.SheetNames;
+
+// Auto-detect sheets
+const recSheet=sheets.find(s=>/receita/i.test(s));
+const despSheet=sheets.find(s=>/despesa/i.test(s)&&!/categ/i.test(s));
+const catServSheet=sheets.find(s=>/categ.*servi/i.test(s));
+const catDespSheet=sheets.find(s=>/categ.*desp/i.test(s));
+
+let imported=[];
+
+// Import categories first (if present)
+if(catServSheet){
+const catData=XLSX.utils.sheet_to_json(wb.Sheets[catServSheet],{defval:''});
+let nCat=0;
+catData.forEach(row=>{
+const cat=row['Categoria']||row['categoria']||'';
+const srv=row['Serviço']||row['servico']||row['Serviço']||'';
+if(!cat||!srv)return;
+db.run(`INSERT OR IGNORE INTO categorias_servico(nome) VALUES(?)`,[cat]);
+const r2=db.exec(`SELECT id FROM categorias_servico WHERE nome=?`,[cat]);
+if(r2.length){const cid=r2[0].values[0][0];
+db.run(`INSERT OR IGNORE INTO servicos(categoria_id,nome) VALUES(?,?)`,[cid,srv]);nCat++}});
+if(nCat)imported.push(`${nCat} serviços`)}
+
+if(catDespSheet){
+const catData=XLSX.utils.sheet_to_json(wb.Sheets[catDespSheet],{defval:''});
+let nCat=0;
+catData.forEach(row=>{
+const cat=row['Categoria Completa']||row['Categoria']||row['categoria']||'';
+const sub=row['Subcategoria']||row['subcategoria']||'';
+if(!cat||!sub)return;
+db.run(`INSERT OR IGNORE INTO categorias_despesa(nome) VALUES(?)`,[cat]);
+const r2=db.exec(`SELECT id FROM categorias_despesa WHERE nome=?`,[cat]);
+if(r2.length){const cid=r2[0].values[0][0];
+db.run(`INSERT OR IGNORE INTO subcategorias_despesa(categoria_id,nome) VALUES(?,?)`,[cid,sub]);nCat++}});
+if(nCat)imported.push(`${nCat} subcategorias`)}
+
+// Save categories to IndexedDB
+if(imported.length)saveDB();
+
 if(recSheet&&despSheet){
-// Multi-sheet import
 const recData=XLSX.utils.sheet_to_json(wb.Sheets[recSheet],{defval:''});
 const despData=XLSX.utils.sheet_to_json(wb.Sheets[despSheet],{defval:''});
 if(!recData.length&&!despData.length){toast('Ficheiro vazio.','w');return}
 iB={receitas:recData,despesas:despData,multi:true};
-toast(`Detectadas ${recData.length} receitas e ${despData.length} despesas`);
+const catMsg=imported.length?` + ${imported.join(' + ')}`:'';
+toast(`Detectadas ${recData.length} receitas e ${despData.length} despesas${catMsg}`);
 sM(recData.length?recData:despData);
 document.getElementById('iTp').value=recData.length?'receita':'despesa';
-// Add info about multi-sheet
 document.getElementById('iP').insertAdjacentHTML('afterbegin',
 `<div class="p-2 mb-3" style="background:rgba(95,212,160,.06);border:1px solid rgba(95,212,160,.15);border-radius:10px;font-size:.78rem;color:var(--mint)">
-<i class="bi bi-check-circle me-1"></i> Ficheiro com 2 folhas: <strong>${recData.length} receitas</strong> + <strong>${despData.length} despesas</strong>. Importação automática de ambas.
+<i class="bi bi-check-circle me-1"></i> Ficheiro completo: <strong>${recData.length} receitas</strong> + <strong>${despData.length} despesas</strong>${catMsg?` + <strong>${catMsg.slice(3)}</strong>`:''}.
 </div>`);
 }else{
-// Single sheet
 const j=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
-if(!j.length){toast('Vazio.','w');return}iB=j;sM(j)}
+if(!j.length){toast('Vazio.','w');return}iB=j;sM(j);
+if(imported.length)toast(`Categorias importadas: ${imported.join(' + ')}`)}
 }catch(err){toast('Erro a ler ficheiro: '+err.message,'w')}};r.readAsArrayBuffer(file)}
 
 function sM(data){document.getElementById('iP').style.display='block';const cols=Object.keys(data[0]),fs=['(Ignorar)','data','descricao','montante','categoria','tipo','servico','cliente','notas','pagamento','subcategoria'],
@@ -1882,13 +1929,13 @@ cols.forEach(c=>{const s=pv.map(r=>r[c]).filter(v=>v!=='').slice(0,2).join(', ')
 h+=`<tr><td style="font-weight:600;color:var(--t1)">${c}</td><td><select class="form-select form-select-sm" data-col="${c}" style="max-width:180px">${fs.map(f=>`<option value="${f}"${f===g?' selected':''}>${fL[f]}</option>`).join('')}</select></td><td style="color:var(--t3);font-size:.8rem;font-style:italic">${s||'—'}</td></tr>`});
 document.getElementById('mT').innerHTML=h+'</tbody>';gsap.from('#iP',{opacity:0,y:15,duration:.3})}
 
-function gF(c){c=c.toLowerCase();
+function gF(c){c=c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 if(c==='data'||c==='date')return'data';
-if(c.includes('serviço')||c.includes('servico')||c==='serviço')return'servico';
-if(c.includes('descri'))return'descricao';
-if(c.includes('valor')||c.includes('montante')||c.includes('amount'))return'montante';
+if(c.includes('servico')||c==='servico')return'servico';
+if(c.includes('descric'))return'descricao';
+if(c.includes('minha receita')||c.includes('valor')||c.includes('montante')||c.includes('amount'))return'montante';
 if(c.includes('subcateg'))return'subcategoria';
-if(c.includes('categ'))return'categoria';
+if(c.includes('categ')&&!c.includes('subcateg'))return'categoria';
 if(c.includes('tipo'))return'tipo';
 if(c.includes('client'))return'cliente';
 if(c.includes('nota')||c.includes('obs'))return'notas';
@@ -2680,6 +2727,8 @@ let finalText='';
 
 try{
 let hasFC=true;
+const fcTrail=[];  // Debug trail
+
 while(hasFC&&loopCount<MAX_LOOPS){
 loopCount++;
 document.getElementById('aiStatus').textContent=loopCount>1?`A processar (${loopCount})...`:'A pensar...';
@@ -2706,6 +2755,9 @@ console.log(`FC[${loopCount}]:`,name,args);
 // Execute the function
 const result=executeToolCall(name,args);
 
+// Log to debug trail
+fcTrail.push({step:loopCount,fn:name,args,result:{sucesso:result.sucesso,total:result.total,mensagem:result.mensagem,dados:result.dados?result.dados.split('\n').slice(0,5).join('\n'):undefined}});
+
 // Chat response — show directly, stop loop
 if(result.is_chat){
 hideTyping();addAiMsg('bot',result.mensagem);
@@ -2718,25 +2770,32 @@ addAiMsg('bot','',renderCard(result,false));
 if(currentChatId)saveChatMsg(currentChatId,'bot',JSON.stringify(result));rA();return}
 
 // Normal result — add to contents and loop
-// Add model's functionCall
 contents.push({role:'model',parts:[{functionCall:{name,args}}]});
-// Add our functionResponse
 contents.push({role:'user',parts:[{functionResponse:{name,response:{content:result}}}]});
-
-// If it was a direct action (alter/delete/create), show result and continue loop
-if(result.sucesso&&result.mensagem&&!result.dados){
-// Let Gemini generate a nice response with the result
-}
 }else{
-// No functionCall — text response, exit loop
 hasFC=false;
 const textPart=parts.find(p=>p.text);
 finalText=textPart?.text||''}}
 
-// Show final response
+// Show final response with debug expander
 hideTyping();
+let debugHtml='';
+if(fcTrail.length>0){
+debugHtml=`<div class="fc-debug" style="margin-top:8px"><details><summary style="font-size:.65rem;color:var(--t3);cursor:pointer;user-select:none"><i class="bi bi-gear me-1"></i>${fcTrail.length} função(ões) chamada(s)</summary><div style="margin-top:6px;font-size:.65rem;font-family:'JetBrains Mono',monospace;color:var(--t3);background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:8px;max-height:200px;overflow:auto">${
+fcTrail.map(t=>{
+let info=`<div style="margin-bottom:6px;border-bottom:1px solid var(--bd);padding-bottom:4px"><span style="color:var(--mint)">⚡ ${t.fn}</span>`;
+if(t.args.sql)info+=`<br><span style="color:var(--g)">SQL:</span> ${escHtml(t.args.sql)}`;
+else if(t.args.campo)info+=`<br><span style="color:var(--g)">${t.args.tabela}.${t.args.campo}</span> → ${escHtml(t.args.valor)}`;
+else{const a=Object.entries(t.args).map(([k,v])=>`${k}=${v}`).join(', ');if(a)info+=`<br>${escHtml(a)}`}
+if(t.result.total!==undefined)info+=`<br><span style="color:var(--lav)">${t.result.total} resultado(s)</span>`;
+if(t.result.mensagem)info+=`<br><span style="color:var(--mint)">${escHtml(t.result.mensagem)}</span>`;
+if(t.result.dados)info+=`<br><pre style="margin:2px 0;white-space:pre-wrap;font-size:.6rem">${escHtml(t.result.dados)}</pre>`;
+return info+'</div>'}).join('')
+}</div></details></div>`}
+
 if(finalText){
-addAiMsg('bot',finalText.replace(/\*\*/g,''));
+const cleanText=finalText.replace(/\*\*/g,'');
+addAiMsg('bot','',`<div>${cleanText.replace(/\n/g,'<br>')}</div>${debugHtml}`);
 if(currentChatId)saveChatMsg(currentChatId,'bot',finalText)}
 else if(loopCount>=MAX_LOOPS){
 addAiMsg('bot','Atingi o limite de operações. Tenta reformular.')}
@@ -2750,27 +2809,35 @@ if(currentChatId)saveChatMsg(currentChatId,'bot','Erro: '+e.message)}}
 // Send message handler
 let aiSending=false;
 async function sendAiMsg(){if(aiSending)return;
-const input=document.getElementById('aiInput');const msg=input.value.trim();
+const input=document.getElementById('aiInput');let msg=input.value.trim();
 const hasImage=!!aiImageData;
-if(!msg&&!hasImage)return;
+const hasFile=!!aiFileData;
+if(!msg&&!hasImage&&!hasFile)return;
 if(aiPending){addAiMsg('bot','⚠️ Tens uma acção pendente por confirmar ou cancelar acima.');return}
+
+// Prepend file content to message if attached
+if(hasFile&&aiFileData.type==='text'){
+const fileContext=`[Ficheiro anexado: ${aiFileData.name}]\n${aiFileData.content}`;
+msg=msg?(fileContext+'\n\nPedido: '+msg):fileContext}
 
 aiSending=true;input.value='';input.disabled=true;
 if(!currentChatId)currentChatId=createChat();
 
 if(hasImage){
 addAiMsg('user','','<div style="margin-bottom:6px"><img src="data:image/jpeg;base64,'+aiImageData+'" style="max-height:80px;border-radius:8px"></div>'+(msg||'<span style="color:var(--t3);font-size:.78rem">📷 Foto enviada</span>'));
+}else if(hasFile){
+addAiMsg('user','','<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><i class="bi bi-file-earmark" style="color:var(--g)"></i><span style="font-size:.78rem;color:var(--t2)">'+escHtml(aiFileData.name)+'</span></div>'+(input.value?escHtml(input.value):'<span style="color:var(--t3);font-size:.78rem">📎 Ficheiro anexado</span>'));
 }else{addAiMsg('user',msg)}
-saveChatMsg(currentChatId,'user',msg||(hasImage?'[Foto enviada]':''));
+saveChatMsg(currentChatId,'user',msg||(hasImage?'[Foto enviada]':(hasFile?'[Ficheiro: '+aiFileName+']':'')));
 
-showTyping();document.getElementById('aiStatus').textContent=hasImage?'A analisar foto...':'A pensar...';
+showTyping();document.getElementById('aiStatus').textContent=hasImage?'A analisar foto...':(hasFile?'A analisar ficheiro...':'A pensar...');
 
 try{
 await routeAndExecute(msg,hasImage);
-clearAiImage();
+clearAiImage();clearAiFile();
 const chat=q0(`SELECT title FROM chats WHERE id=?`,[currentChatId]);
 if(chat)document.getElementById('aiChatTitle').textContent=chat.title;
-}catch(e){hideTyping();addAiMsg('bot','Erro: '+e.message);clearAiImage()}
+}catch(e){hideTyping();addAiMsg('bot','Erro: '+e.message);clearAiImage();clearAiFile()}
 aiSending=false;input.disabled=false;input.focus();
 const msgCount=currentChatId?getChatMessages(currentChatId).length:0;
 const _p=getActiveProvider();document.getElementById('aiStatus').textContent=(_p?_p.nome:'IA')+(msgCount?' · '+msgCount+' msgs':'')}
@@ -2992,23 +3059,108 @@ addAiMsg('bot',msg);if(currentChatId)saveChatMsg(currentChatId,'bot',msg);rA()
 let aiImageData=null;
 
 function handleAiImage(input){if(!input.files||!input.files[0])return;
-const file=input.files[0];const reader=new FileReader();
-reader.onload=function(e){const img=new Image();img.onload=function(){
-// Resize to max 800px for API efficiency
-const max=800;let w=img.width,h=img.height;
-if(w>max||h>max){if(w>h){h=Math.round(h*max/w);w=max}else{w=Math.round(w*max/h);h=max}}
+const file=input.files[0];
+const MAX_PURE=10*1024*1024; // 10MB — abaixo disto, envia puro
+
+const reader=new FileReader();
+reader.onload=function(e){
+const base64Full=e.target.result;
+
+if(file.size<=MAX_PURE){
+aiImageData=base64Full.split(',')[1];
+document.getElementById('aiImgThumb').src=base64Full;
+document.getElementById('aiImgPreview').style.display='block';
+document.getElementById('aiInput').placeholder=`Descreve a foto... (${(file.size/1024/1024).toFixed(1)}MB)`;
+document.getElementById('aiInput').focus();return}
+
+// >10MB — comprimir para ~10MB mantendo máxima qualidade
+document.getElementById('aiInput').placeholder='A optimizar imagem grande...';
+const img=new Image();img.onload=function(){
+let w=img.width,h=img.height;
+// Reduzir resolução apenas o necessário
+const maxDim=Math.max(w,h);
+if(maxDim>4000){const scale=4000/maxDim;w=Math.round(w*scale);h=Math.round(h*scale)}
 const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
 canvas.getContext('2d').drawImage(img,0,0,w,h);
-aiImageData=canvas.toDataURL('image/jpeg',0.8).split(',')[1];
+// Alta qualidade — tentar 0.92 primeiro
+let dataUrl=canvas.toDataURL('image/jpeg',0.92);
+if(dataUrl.length>13000000)dataUrl=canvas.toDataURL('image/jpeg',0.85);
+if(dataUrl.length>13000000)dataUrl=canvas.toDataURL('image/jpeg',0.75);
+aiImageData=dataUrl.split(',')[1];
+const mb=(aiImageData.length*0.75/1024/1024).toFixed(1);
 document.getElementById('aiImgThumb').src=canvas.toDataURL('image/jpeg',0.3);
 document.getElementById('aiImgPreview').style.display='block';
-// Auto-focus input for adding context
-document.getElementById('aiInput').placeholder='Descreve o que é a foto... (opcional)';
+document.getElementById('aiInput').placeholder=`Descreve a foto... (${mb}MB)`;
 document.getElementById('aiInput').focus()};
-img.src=e.target.result};reader.readAsDataURL(file);input.value=''}
+img.src=e.target.result};
+reader.readAsDataURL(file);input.value=''}
 
 function clearAiImage(){aiImageData=null;
 document.getElementById('aiImgPreview').style.display='none';
+document.getElementById('aiInput').placeholder='Mensagem ou foto...'}
+
+let aiFileData=null;let aiFileName='';
+
+function handleAiFile(input){if(!input.files||!input.files[0])return;
+const file=input.files[0];
+const maxSize=5*1024*1024; // 5MB
+if(file.size>maxSize){toast('Ficheiro demasiado grande (máx 5MB)','w');input.value='';return}
+
+const isImage=/^image\//i.test(file.type);
+if(isImage){
+// Treat images like camera — send as image to Gemini
+handleAiImage(input);return}
+
+// For non-image files: read as text/data
+aiFileName=file.name;
+const ext=file.name.split('.').pop().toLowerCase();
+
+if(['xlsx','xls'].includes(ext)){
+// Excel: parse with SheetJS and send as text
+const reader=new FileReader();
+reader.onload=function(e){
+try{
+const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
+let text='';
+wb.SheetNames.forEach(sn=>{
+const data=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
+if(data.length){text+=`\n--- Folha: ${sn} (${data.length} linhas) ---\n`;
+const cols=Object.keys(data[0]);text+=cols.join(' | ')+'\n';
+data.slice(0,50).forEach(row=>text+=cols.map(c=>row[c]).join(' | ')+'\n');
+if(data.length>50)text+=`... e mais ${data.length-50} linhas\n`}});
+aiFileData={type:'text',content:text,name:file.name};
+showFilePreview(file.name,file.size,'bi-file-earmark-spreadsheet');
+}catch(err){toast('Erro a ler Excel: '+err.message,'w')}};
+reader.readAsArrayBuffer(file)}
+else if(['csv','txt','json'].includes(ext)){
+// Text files: read as text
+const reader=new FileReader();
+reader.onload=function(e){
+let text=e.target.result;
+if(text.length>20000)text=text.slice(0,20000)+'\n... (truncado a 20000 caracteres)';
+aiFileData={type:'text',content:text,name:file.name};
+const icon=ext==='csv'?'bi-filetype-csv':ext==='json'?'bi-filetype-json':'bi-file-text';
+showFilePreview(file.name,file.size,icon)};
+reader.readAsText(file)}
+else if(ext==='pdf'){
+// PDF: can't parse in browser easily, just note it
+aiFileData={type:'text',content:`[Ficheiro PDF: ${file.name}, ${(file.size/1024).toFixed(0)}KB - não é possível ler o conteúdo directamente]`,name:file.name};
+showFilePreview(file.name,file.size,'bi-filetype-pdf')}
+else{
+toast('Tipo de ficheiro não suportado','w')}
+input.value=''}
+
+function showFilePreview(name,size,icon){
+document.getElementById('aiFileName').textContent=name;
+document.getElementById('aiFileSize').textContent=size<1024?size+' B':size<1048576?(size/1024).toFixed(1)+' KB':(size/1048576).toFixed(1)+' MB';
+const preview=document.getElementById('aiFilePreview');
+preview.style.display='block';
+preview.querySelector('i').className='bi '+icon;
+document.getElementById('aiInput').placeholder=`Pergunta sobre ${name}...`;
+document.getElementById('aiInput').focus()}
+
+function clearAiFile(){aiFileData=null;aiFileName='';
+document.getElementById('aiFilePreview').style.display='none';
 document.getElementById('aiInput').placeholder='Mensagem ou foto...'}
 
 function aiVoiceInput(){if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){toast('Sem voz','w');return}

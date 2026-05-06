@@ -560,18 +560,23 @@ h1,h2,h3,h4,h5,.serif{font-family:'Manrope',sans-serif;font-weight:800;letter-sp
 <i class="bi bi-cloud-arrow-up" style="font-size:2.5rem;color:var(--gD)"></i>
 <h5 class="serif mt-2" style="font-size:1.1rem">Arraste o ficheiro aqui</h5>
 <p style="font-size:.82rem;color:var(--t3)">.xlsx, .xls, .csv</p></div>
-<div id="iP" style="display:none" class="mt-4"><h5 class="mb-3" style="font-size:.9rem;font-weight:600"><i class="bi bi-table me-1" style="color:var(--g)"></i>Mapeamento</h5>
+<div id="iP" style="display:none" class="mt-4">
+<div id="iPInfo"></div>
+<h5 class="mb-3" style="font-size:.9rem;font-weight:600"><i class="bi bi-table me-1" style="color:var(--g)"></i>Mapeamento de Colunas</h5>
 <div class="table-responsive"><table class="tb" id="mT"></table></div>
 <div class="d-flex gap-2 mt-3 flex-wrap align-items-end">
-<div><label class="fl">Importar como</label><select class="form-select" id="iTp" style="max-width:200px"><option value="receita">Receitas</option><option value="despesa">Despesas</option></select></div>
-<div><label class="fl">Modo</label><select class="form-select" id="iMode" style="max-width:280px"><option value="replace">Substituir meses do ficheiro</option><option value="add">Adicionar (pode duplicar)</option><option value="clear_all">Limpar TUDO e importar</option></select></div>
-<button class="btn bg2" onclick="cImp()"><i class="bi bi-check-lg me-1"></i> Confirmar</button>
+<div><label class="fl">Modo</label><select class="form-select" id="iMode" style="max-width:280px">
+<option value="merge">Merge (actualiza existentes + adiciona novos)</option>
+<option value="add">Adicionar tudo (pode duplicar)</option>
+<option value="clear_all">Limpar TUDO e importar</option></select></div>
+<div id="iTypeSingle" style="display:none"><label class="fl">Importar como</label><select class="form-select" id="iTp" style="max-width:180px"><option value="receita">Receitas</option><option value="despesa">Despesas</option></select></div>
+<button class="btn bg2" onclick="cImp()"><i class="bi bi-check-lg me-1"></i> Importar</button>
 <button class="btn bo" onclick="xImp()">Cancelar</button></div>
 <div class="mt-3 p-3" style="background:var(--s2);border-radius:10px;border:1px solid var(--bd)">
 <p style="font-size:.78rem;color:var(--t2);margin:0"><i class="bi bi-info-circle me-1" style="color:var(--g)"></i>
-Os valores são sempre a <strong>tua parte</strong> (50% salão / 100% extra). O bruto é calculado automaticamente.<br>
-<strong>Substituir meses:</strong> Apaga dados dos meses do ficheiro antes de importar (ideal para reimportar)<br>
-<strong>Adicionar:</strong> Acrescenta sem apagar &nbsp;|&nbsp; <strong>Limpar TUDO:</strong> Reset total</p></div></div>
+<strong>Merge:</strong> Se a linha tem ID que já existe na app → actualiza. Se não tem ID ou é novo → cria.<br>
+<strong>Adicionar:</strong> Cria registos novos sem verificar duplicados.<br>
+<strong>Limpar tudo:</strong> Apaga todos os dados antes de importar.</p></div></div>
 <hr style="border-color:var(--bd)" class="my-4">
 <div class="d-flex align-items-center gap-3 flex-wrap"><span style="font-size:.85rem;font-weight:500"><i class="bi bi-shield-exclamation me-1" style="color:var(--rose)"></i>Gestão de Dados</span>
 <button class="btn btn-sm" style="background:rgba(224,122,138,.1);color:var(--rose);border:1px solid rgba(224,122,138,.2);border-radius:8px;font-size:.78rem;font-weight:500" onclick="clearAllData()"><i class="bi bi-trash3 me-1"></i> Limpar todos os dados</button></div></div>
@@ -1871,55 +1876,71 @@ const despSheet=sheets.find(s=>/despesa/i.test(s)&&!/categ/i.test(s));
 const catServSheet=sheets.find(s=>/categ.*servi/i.test(s));
 const catDespSheet=sheets.find(s=>/categ.*desp/i.test(s));
 
-let imported=[];
+let infoParts=[];
 
-// Import categories first (if present)
+// Import categories immediately (if present)
 if(catServSheet){
 const catData=XLSX.utils.sheet_to_json(wb.Sheets[catServSheet],{defval:''});
-let nCat=0;
+let n=0;
 catData.forEach(row=>{
 const cat=row['Categoria']||row['categoria']||'';
-const srv=row['Serviço']||row['servico']||row['Serviço']||'';
+const srv=row['Serviço']||row['servico']||'';
 if(!cat||!srv)return;
 db.run(`INSERT OR IGNORE INTO categorias_servico(nome) VALUES(?)`,[cat]);
 const r2=db.exec(`SELECT id FROM categorias_servico WHERE nome=?`,[cat]);
-if(r2.length){const cid=r2[0].values[0][0];
-db.run(`INSERT OR IGNORE INTO servicos(categoria_id,nome) VALUES(?,?)`,[cid,srv]);nCat++}});
-if(nCat)imported.push(`${nCat} serviços`)}
+if(r2.length){db.run(`INSERT OR IGNORE INTO servicos(categoria_id,nome) VALUES(?,?)`,[r2[0].values[0][0],srv]);n++}});
+if(n)infoParts.push(`${n} serviços`)}
 
 if(catDespSheet){
 const catData=XLSX.utils.sheet_to_json(wb.Sheets[catDespSheet],{defval:''});
-let nCat=0;
+let n=0;
 catData.forEach(row=>{
 const cat=row['Categoria Completa']||row['Categoria']||row['categoria']||'';
 const sub=row['Subcategoria']||row['subcategoria']||'';
 if(!cat||!sub)return;
 db.run(`INSERT OR IGNORE INTO categorias_despesa(nome) VALUES(?)`,[cat]);
 const r2=db.exec(`SELECT id FROM categorias_despesa WHERE nome=?`,[cat]);
-if(r2.length){const cid=r2[0].values[0][0];
-db.run(`INSERT OR IGNORE INTO subcategorias_despesa(categoria_id,nome) VALUES(?,?)`,[cid,sub]);nCat++}});
-if(nCat)imported.push(`${nCat} subcategorias`)}
+if(r2.length){db.run(`INSERT OR IGNORE INTO subcategorias_despesa(categoria_id,nome) VALUES(?,?)`,[r2[0].values[0][0],sub]);n++}});
+if(n)infoParts.push(`${n} subcategorias`)}
 
-// Save categories to IndexedDB
-if(imported.length)saveDB();
+if(infoParts.length)saveDB();
 
+// Multi-sheet (Receitas + Despesas)
 if(recSheet&&despSheet){
 const recData=XLSX.utils.sheet_to_json(wb.Sheets[recSheet],{defval:''});
 const despData=XLSX.utils.sheet_to_json(wb.Sheets[despSheet],{defval:''});
 if(!recData.length&&!despData.length){toast('Ficheiro vazio.','w');return}
+
+// Count existing IDs for merge preview
+let recNew=0,recUpdate=0,despNew=0,despUpdate=0;
+recData.forEach(row=>{const id=row['ID']||row['id']||'';
+if(id&&q0(`SELECT id FROM receitas WHERE id=?`,[id]))recUpdate++;else recNew++});
+despData.forEach(row=>{const id=row['ID']||row['id']||'';
+if(id&&q0(`SELECT id FROM despesas WHERE id=?`,[id]))despUpdate++;else despNew++});
+
 iB={receitas:recData,despesas:despData,multi:true};
-const catMsg=imported.length?` + ${imported.join(' + ')}`:'';
-toast(`Detectadas ${recData.length} receitas e ${despData.length} despesas${catMsg}`);
+
+// Show preview info
+const infoHtml=`<div class="p-2 mb-3" style="background:rgba(95,212,160,.06);border:1px solid rgba(95,212,160,.15);border-radius:10px;font-size:.78rem;color:var(--mint)">
+<i class="bi bi-check-circle me-1"></i> <strong>Receitas:</strong> ${recNew} novas${recUpdate?' + '+recUpdate+' actualizações':''} &nbsp;|&nbsp;
+<strong>Despesas:</strong> ${despNew} novas${despUpdate?' + '+despUpdate+' actualizações':''}
+${infoParts.length?' &nbsp;|&nbsp; <strong>Categorias:</strong> '+infoParts.join(' + '):''}
+</div>`;
+document.getElementById('iPInfo').innerHTML=infoHtml;
+document.getElementById('iTypeSingle').style.display='none';
+
+// Show mapping for receitas (first sheet with data)
 sM(recData.length?recData:despData);
-document.getElementById('iTp').value=recData.length?'receita':'despesa';
-document.getElementById('iP').insertAdjacentHTML('afterbegin',
-`<div class="p-2 mb-3" style="background:rgba(95,212,160,.06);border:1px solid rgba(95,212,160,.15);border-radius:10px;font-size:.78rem;color:var(--mint)">
-<i class="bi bi-check-circle me-1"></i> Ficheiro completo: <strong>${recData.length} receitas</strong> + <strong>${despData.length} despesas</strong>${catMsg?` + <strong>${catMsg.slice(3)}</strong>`:''}.
-</div>`);
+document.getElementById('iP').style.display='block';
 }else{
+// Single sheet
 const j=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
-if(!j.length){toast('Vazio.','w');return}iB=j;sM(j);
-if(imported.length)toast(`Categorias importadas: ${imported.join(' + ')}`)}
+if(!j.length){toast('Vazio.','w');return}
+iB=j;
+document.getElementById('iPInfo').innerHTML=infoParts.length?
+`<div class="p-2 mb-3" style="background:rgba(95,212,160,.06);border:1px solid rgba(95,212,160,.15);border-radius:10px;font-size:.78rem;color:var(--mint)"><i class="bi bi-check-circle me-1"></i> Categorias importadas: ${infoParts.join(' + ')}</div>`:'';
+document.getElementById('iTypeSingle').style.display='block';
+sM(j)}
 }catch(err){toast('Erro a ler ficheiro: '+err.message,'w')}};r.readAsArrayBuffer(file)}
 
 function sM(data){document.getElementById('iP').style.display='block';const cols=Object.keys(data[0]),fs=['(Ignorar)','data','descricao','montante','categoria','tipo','servico','cliente','notas','pagamento','subcategoria'],
@@ -1944,67 +1965,107 @@ return'(Ignorar)'}
 
 function cImp(){if(!iB)return;
 dbBatchMode=true;
+const mode=document.getElementById('iMode').value;
+if(mode==='clear_all'){if(!confirm('Apagar TODOS os dados?'))return;run(`DELETE FROM receitas`);run(`DELETE FROM despesas`)}
+
+// Helper: parse date from various formats
+function parseDate(d){
+if(!d)return new Date().toISOString().slice(0,10);
+if(d instanceof Date)return d.toISOString().slice(0,10);
+d=String(d);
+if(d.includes('/')){const p=d.split('/');if(p.length===3)return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`}
+return d}
+
+// Helper: parse amount
+function parseAmt(v){return parseFloat(String(v).replace(/[^0-9.,\-]/g,'').replace(',','.'))||0}
+
+// Helper: merge/insert a row into a table
+function mergeRow(table,id,data){
+if(mode==='merge'&&id){
+const exists=q0(`SELECT id FROM ${table} WHERE id=?`,[id]);
+if(exists){
+// UPDATE existing
+const sets=Object.entries(data).filter(([k])=>k!=='id').map(([k])=>`${k}=?`).join(',');
+const vals=Object.entries(data).filter(([k])=>k!=='id').map(([,v])=>v);
+vals.push(id);
+run(`UPDATE ${table} SET ${sets} WHERE id=?`,...vals);
+return 'updated'}}
+// INSERT new
+const newId=id||uid();
+if(table==='receitas'){
+run(`INSERT INTO receitas VALUES(?,?,?,?,?,?,?,?,?,?)`,newId,data.date,data.type,data.categoria,data.servico,data.descricao,data.amount,data.comissao,data.client,data.notes)}
+else{
+run(`INSERT INTO despesas VALUES(?,?,?,?,?,?,?,?)`,newId,data.date,data.categoria,data.subcategoria,data.descricao,data.amount,data.pagamento,data.notes)}
+return 'inserted'}
 
 // Multi-sheet import
 if(iB.multi){
-const mode=document.getElementById('iMode').value;
-if(mode==='clear_all'){if(!confirm('Apagar TODOS os dados?'))return;run(`DELETE FROM receitas`);run(`DELETE FROM despesas`)}
-let nR=0,nD=0;
+const mpR={};document.querySelectorAll('#mT select').forEach(s=>{if(s.value!=='(Ignorar)')mpR[s.dataset.col]=s.value});
+let nR=0,nD=0,nUp=0;
 
 // Import receitas
-if(iB.receitas&&iB.receitas.length){
-const mpR={};document.querySelectorAll('#mT select').forEach(s=>{if(s.value!=='(Ignorar)')mpR[s.dataset.col]=s.value});
-// Collect periods for replace mode
-if(mode==='replace'){const periods=new Set();iB.receitas.forEach(row=>{const m={};Object.entries(mpR).forEach(([ec,f])=>m[f]=row[ec]);
-let dt=m.data||'';if(dt instanceof Date)dt=dt.toISOString().slice(0,10);if(dt.length>=7)periods.add(dt.slice(0,7))});
-periods.forEach(ym=>run(`DELETE FROM receitas WHERE substr(date,1,7)=?`,ym))}
-iB.receitas.forEach(row=>{const m={};Object.entries(mpR).forEach(([ec,f])=>m[f]=row[ec]);
-let dt=m.data||new Date().toISOString().slice(0,10);
-if(dt instanceof Date)dt=dt.toISOString().slice(0,10);else if(typeof dt==='string'&&dt.includes('/')){const p=dt.split('/');if(p.length===3)dt=`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`}
-const am=parseFloat(String(m.montante).replace(/[^0-9.,\-]/g,'').replace(',','.'))||0;if(am<=0)return;
-const tp=(m.tipo||'').toLowerCase().includes('extra')?'extra':'comissao';const cm=tp==='comissao'?am:0;
-const servico=m.servico||m.descricao||'Serviços do dia';
-run(`INSERT INTO receitas VALUES(?,?,?,?,?,?,?,?,?,?)`,uid(),dt,tp,m.categoria||'',servico,m.servico?m.descricao||'':'',am,cm,m.cliente||'',m.notas||'');nR++})}
+if(iB.receitas){
+iB.receitas.forEach(row=>{
+const m={};Object.entries(mpR).forEach(([ec,f])=>m[f]=row[ec]);
+const id=row['ID']||row['id']||'';
+const dt=parseDate(m.data||row['Data']||row['data']);
+const am=parseAmt(m.montante||row['Minha Receita€']||row['Minha Receita']||0);
+if(am<=0)return;
+const tp=(m.tipo||row['Tipo']||'').toLowerCase().includes('extra')?'extra':'comissao';
+const result=mergeRow('receitas',id,{
+date:dt,type:tp,categoria:m.categoria||row['Categoria']||'',
+servico:m.servico||row['Serviço']||row['Servico']||m.descricao||'',
+descricao:m.descricao||'',amount:am,comissao:tp==='comissao'?am:0,
+client:m.cliente||row['Cliente']||'',notes:m.notas||row['Notas']||''});
+if(result==='updated')nUp++;else nR++})}
 
-// Import despesas
-if(iB.despesas&&iB.despesas.length){
-const cols2=Object.keys(iB.despesas[0]);
-const mpD={};cols2.forEach(c=>{const g=gF(c);if(g!=='(Ignorar)')mpD[c]=g});
-// Replace mode: delete despesas periods first
-if(mode==='replace'){const dPeriods=new Set();iB.despesas.forEach(row=>{const m={};Object.entries(mpD).forEach(([ec,f])=>m[f]=row[ec]);
-let dt=m.data||'';if(dt instanceof Date)dt=dt.toISOString().slice(0,10);if(dt.length>=7)dPeriods.add(dt.slice(0,7))});
-dPeriods.forEach(ym=>run(`DELETE FROM despesas WHERE substr(date,1,7)=?`,ym))}
-iB.despesas.forEach(row=>{const m={};Object.entries(mpD).forEach(([ec,f])=>m[f]=row[ec]);
-let dt=m.data||new Date().toISOString().slice(0,10);
-if(dt instanceof Date)dt=dt.toISOString().slice(0,10);else if(typeof dt==='string'&&dt.includes('/')){const p=dt.split('/');if(p.length===3)dt=`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`}
-const am=parseFloat(String(m.montante).replace(/[^0-9.,\-]/g,'').replace(',','.'))||0;if(am<=0)return;
-run(`INSERT INTO despesas VALUES(?,?,?,?,?,?,?,?)`,uid(),dt,m.categoria||'Pessoal',m.subcategoria||'Outro',m.descricao||'Importado',am,m.pagamento||'Outro',m.notas||'');nD++})}
+// Import despesas (auto-detect columns from despesas sheet)
+if(iB.despesas){
+const dCols=Object.keys(iB.despesas[0]);
+const mpD={};dCols.forEach(c=>{const g=gF(c);if(g!=='(Ignorar)')mpD[c]=g});
+iB.despesas.forEach(row=>{
+const m={};Object.entries(mpD).forEach(([ec,f])=>m[f]=row[ec]);
+const id=row['ID']||row['id']||'';
+const dt=parseDate(m.data||row['Data']||row['data']);
+const am=parseAmt(m.montante||row['Montante€']||row['Montante']||0);
+if(am<=0)return;
+const result=mergeRow('despesas',id,{
+date:dt,categoria:m.categoria||row['Categoria']||'',
+subcategoria:m.subcategoria||row['Subcategoria']||'',
+descricao:m.descricao||row['Descrição']||row['Descricao']||'',
+amount:am,pagamento:m.pagamento||row['Pagamento']||'',
+notes:m.notas||row['Notas']||''});
+if(result==='updated')nUp++;else nD++})}
 
-goToLastMonth();saveDB();rA();xImp();nav('dashboard');toast(`Importado: ${nR} receitas + ${nD} despesas!`);dbBatchMode=false;return}
+goToLastMonth();saveDB();rA();xImp();nav('dashboard');
+toast(`Importado: ${nR} receitas + ${nD} despesas${nUp?' + '+nUp+' actualizados':''}`);
+dbBatchMode=false;return}
 
-// Single sheet import (original logic)
+// Single sheet import
 const mp={};document.querySelectorAll('#mT select').forEach(s=>{if(s.value!=='(Ignorar)')mp[s.dataset.col]=s.value});
-const it=document.getElementById('iTp').value;const mode=document.getElementById('iMode').value;
-const parsed=[];
-iB.forEach(row=>{const m={};Object.entries(mp).forEach(([ec,f])=>m[f]=row[ec]);let dt=m.data||new Date().toISOString().slice(0,10);
-if(dt instanceof Date)dt=dt.toISOString().slice(0,10);else if(typeof dt==='string'&&dt.includes('/')){const p=dt.split('/');if(p.length===3)dt=`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`}
-const am=parseFloat(String(m.montante).replace(/[^0-9.,\-]/g,'').replace(',','.'))||0;if(am<=0)return;
-parsed.push({dt,am,m})});
+const it=document.getElementById('iTp').value;
+let n=0,nUp2=0;
 
-if(mode==='clear_all'){if(!confirm('Apagar TODOS os dados?'))return;run(`DELETE FROM receitas`);run(`DELETE FROM despesas`)}
-else if(mode==='replace'){const periods=new Set();parsed.forEach(p=>{const d=new Date(p.dt);periods.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`)});
-periods.forEach(ym=>{if(it==='receita')run(`DELETE FROM receitas WHERE substr(date,1,7)=?`,ym);else run(`DELETE FROM despesas WHERE substr(date,1,7)=?`,ym)})}
+iB.forEach(row=>{
+const m={};Object.entries(mp).forEach(([ec,f])=>m[f]=row[ec]);
+const id=row['ID']||row['id']||'';
+const dt=parseDate(m.data);
+const am=parseAmt(m.montante);
+if(am<=0)return;
 
-let n=0;
-parsed.forEach(p=>{const{dt,am,m}=p;
-if(it==='receita'){const tp=(m.tipo||'').toLowerCase().includes('extra')?'extra':'comissao';const cm=tp==='comissao'?am:0;
-const servico=m.servico||m.descricao||'Importado';
-const cat=m.categoria||'';
-const desc=m.servico?m.descricao||'':'';
-run(`INSERT INTO receitas VALUES(?,?,?,?,?,?,?,?,?,?)`,uid(),dt,tp,cat,servico,desc,am,cm,m.cliente||'',m.notas||'')}
-else{run(`INSERT INTO despesas VALUES(?,?,?,?,?,?,?,?)`,uid(),dt,m.categoria||'Pessoal',m.subcategoria||'Outro',m.descricao||'Importado',am,m.pagamento||'Outro',m.notas||'')}n++});
+if(it==='receita'){
+const tp=(m.tipo||'').toLowerCase().includes('extra')?'extra':'comissao';
+mergeRow('receitas',id,{date:dt,type:tp,categoria:m.categoria||'',
+servico:m.servico||m.descricao||'Importado',descricao:'',amount:am,
+comissao:tp==='comissao'?am:0,client:m.cliente||'',notes:m.notas||''})}
+else{
+mergeRow('despesas',id,{date:dt,categoria:m.categoria||'',
+subcategoria:m.subcategoria||'',descricao:m.descricao||'Importado',
+amount:am,pagamento:m.pagamento||'',notes:m.notas||''})}
+n++});
 
-goToLastMonth();saveDB();rA();xImp();nav('dashboard');toast(`${n} registos importados (SQLite)!`);dbBatchMode=false}
+goToLastMonth();saveDB();rA();xImp();nav('dashboard');
+toast(`${n} registos importados!`);dbBatchMode=false}
 
 function clearAllData(){if(!confirm('Apagar TODOS os dados?'))return;run(`DELETE FROM receitas`);run(`DELETE FROM despesas`);rA();toast('Dados apagados.')}
 function xImp(){document.getElementById('iP').style.display='none';iB=null;fI.value=''}
@@ -2016,16 +2077,12 @@ if(r&&r.date){const d=new Date(r.date);cM=d.getMonth();cY=d.getFullYear();uM()}}
 function expXL(){const wb=XLSX.utils.book_new();
 const rec=q1(`SELECT * FROM receitas ORDER BY date`);
 const comPctExp=parseInt(qv(`SELECT value FROM config WHERE key='comissao_pct'`))||50;const brutoMulExp=100/comPctExp;
-XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rec.map(r=>({Data:r.date,Categoria:r.categoria,Serviço:r.servico,Descrição:r.descricao,Tipo:r.type==='comissao'?`Salão ${comPctExp}%`:'Extra 100%','Minha Receita€':r.amount,'Bruto Salão€':r.type==='comissao'?r.amount*brutoMulExp:r.amount,Cliente:r.client,Notas:r.notes}))),'Receitas');
+XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rec.map(r=>({ID:r.id,Data:r.date,Tipo:r.type==='comissao'?`Salão ${comPctExp}%`:'Extra 100%',Categoria:r.categoria,Serviço:r.servico,Descrição:r.descricao,'Minha Receita€':r.amount,'Bruto Salão€':r.type==='comissao'?r.amount*brutoMulExp:r.amount,Cliente:r.client,Notas:r.notes}))),'Receitas');
 const desp=q1(`SELECT * FROM despesas ORDER BY date`);
-XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(desp.map(d=>({Data:d.date,Categoria:d.categoria,Subcategoria:d.subcategoria,Descrição:d.descricao,'Montante€':d.amount,Pagamento:d.pagamento,Notas:d.notes}))),'Despesas');
+XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(desp.map(d=>({ID:d.id,Data:d.date,Categoria:d.categoria,Subcategoria:d.subcategoria,Descrição:d.descricao,'Montante€':d.amount,Pagamento:d.pagamento,Notas:d.notes}))),'Despesas');
 const res=MN.map((m,i)=>{const ym=`${cY}-${String(i+1).padStart(2,'0')}`;
 return{Mês:m,'Receita€':qv(`SELECT COALESCE(SUM(amount),0) FROM receitas WHERE substr(date,1,7)=?`,ym),'Despesas€':qv(`SELECT COALESCE(SUM(amount),0) FROM despesas WHERE substr(date,1,7)=?`,ym)}});
 XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(res),'Resumo');
-// Export schema
-const schema=q1(`SELECT sql FROM sqlite_master WHERE type='table'`);
-XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(schema),'Esquema SQL');
-// Export categories tree
 const catServ=getCatServicos().map(c=>({Tipo:'Serviço',Categoria:c.cat,Subcategoria:c.srv}));
 const catDesp=getCatDespesas().map(c=>({Tipo:'Despesa',Categoria:c.cat,Subcategoria:c.sub}));
 XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([...catServ,...catDesp]),'Categorias');
